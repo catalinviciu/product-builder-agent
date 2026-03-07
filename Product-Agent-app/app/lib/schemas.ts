@@ -83,15 +83,16 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
 
 // ── Status system ─────────────────────────────────────────────────────────
 
-export type EntityStatus = "now" | "next" | "later" | "done" | "archived";
+export type EntityStatus = "commit" | "explore" | "draft" | "done" | "archived" | "dropped";
 export type ProductLineStatus = "active" | "closed" | "archived";
 
 export const ENTITY_STATUS_META: Record<EntityStatus, { label: string; color: string; dotColor: string }> = {
-  now:      { label: "Now",      color: "text-emerald-400 bg-emerald-400/10 border-emerald-400/25", dotColor: "bg-emerald-400" },
-  next:     { label: "Next",     color: "text-blue-400 bg-blue-400/10 border-blue-400/25",         dotColor: "bg-blue-400" },
-  later:    { label: "Later",    color: "text-zinc-400 bg-zinc-400/10 border-zinc-400/25",         dotColor: "bg-zinc-400" },
+  draft:    { label: "Draft",    color: "text-zinc-400 bg-zinc-400/10 border-zinc-400/25",         dotColor: "bg-zinc-400" },
+  explore:  { label: "Explore",  color: "text-blue-400 bg-blue-400/10 border-blue-400/25",         dotColor: "bg-blue-400" },
+  commit:   { label: "Commit",   color: "text-emerald-400 bg-emerald-400/10 border-emerald-400/25", dotColor: "bg-emerald-400" },
   done:     { label: "Done",     color: "text-violet-400 bg-violet-400/10 border-violet-400/25",   dotColor: "bg-violet-400" },
   archived: { label: "Archived", color: "text-zinc-500 bg-zinc-500/10 border-zinc-500/25",         dotColor: "bg-zinc-600" },
+  dropped:  { label: "Dropped",  color: "text-rose-400 bg-rose-400/10 border-rose-400/25",         dotColor: "bg-rose-400" },
 };
 
 export const PRODUCT_LINE_STATUS_META: Record<ProductLineStatus, { label: string; color: string; dotColor: string }> = {
@@ -100,7 +101,7 @@ export const PRODUCT_LINE_STATUS_META: Record<ProductLineStatus, { label: string
   archived: { label: "Archived", color: "text-zinc-500 bg-zinc-500/10 border-zinc-500/25",          dotColor: "bg-zinc-600" },
 };
 
-export const ENTITY_STATUSES: EntityStatus[] = ["now", "next", "later", "done", "archived"];
+export const ENTITY_STATUSES: EntityStatus[] = ["draft", "explore", "commit", "done", "archived", "dropped"];
 export const PRODUCT_LINE_STATUSES: ProductLineStatus[] = ["active", "closed", "archived"];
 
 // ── Block system ──────────────────────────────────────────────────────────

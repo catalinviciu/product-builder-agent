@@ -495,7 +495,7 @@ function AddChildForm({ parentId, childLevel, onClose }: { parentId: string; chi
       title: title.trim(),
       icon: childMeta.icon,
       description: description.trim(),
-      status: "later",
+      status: "draft",
       parentId,
       children: [],
       blocks: [],
@@ -541,10 +541,10 @@ function AddChildForm({ parentId, childLevel, onClose }: { parentId: string; chi
 // ── Kanban column config ──────────────────────────────────────────────────
 
 const KANBAN_COLUMNS = [
-  { key: "later", label: "Later", statuses: ["later"] as EntityStatus[],            accentBorder: "border-zinc-400/30",    dotColor: "bg-zinc-400" },
-  { key: "next",  label: "Next",  statuses: ["next"] as EntityStatus[],             accentBorder: "border-blue-400/30",    dotColor: "bg-blue-400" },
-  { key: "now",   label: "Now",   statuses: ["now"] as EntityStatus[],              accentBorder: "border-emerald-400/30", dotColor: "bg-emerald-400" },
-  { key: "done",  label: "Done",  statuses: ["done", "archived"] as EntityStatus[], accentBorder: "border-violet-400/30",  dotColor: "bg-violet-400" },
+  { key: "draft",   label: "Draft",    statuses: ["draft"] as EntityStatus[],                        accentBorder: "border-zinc-400/30",    dotColor: "bg-zinc-400" },
+  { key: "explore", label: "Explore",  statuses: ["explore"] as EntityStatus[],                      accentBorder: "border-blue-400/30",    dotColor: "bg-blue-400" },
+  { key: "commit",  label: "Commit",   statuses: ["commit"] as EntityStatus[],                       accentBorder: "border-emerald-400/30", dotColor: "bg-emerald-400" },
+  { key: "done",    label: "Done",     statuses: ["done", "archived", "dropped"] as EntityStatus[],  accentBorder: "border-violet-400/30",  dotColor: "bg-violet-400" },
 ];
 
 function KanbanColumn({ columnKey, label, dotColor, accentBorder, children, count }: {
@@ -614,7 +614,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
     const { active, over } = event;
     if (!over) return;
     const columnKey = over.id as string;
-    const statusMap: Record<string, EntityStatus> = { later: "later", next: "next", now: "now", done: "done" };
+    const statusMap: Record<string, EntityStatus> = { draft: "draft", explore: "explore", commit: "commit", done: "done" };
     const newStatus = statusMap[columnKey];
     if (newStatus) {
       updateEntity(active.id as string, { status: newStatus });
@@ -627,10 +627,17 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
     <div className="flex flex-col gap-3 mt-2">
       {/* Header with view toggle */}
       {(children.length > 0 || childLevel) && (
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-            {levelMeta.childrenLabel}
-          </span>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-baseline gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 shrink-0">
+              {levelMeta.childrenLabel}
+            </span>
+            {childLevel && (
+              <span className="text-[11px] text-muted-foreground/30 italic hidden sm:inline">
+                {LEVEL_META[childLevel].description}
+              </span>
+            )}
+          </div>
           {children.length > 0 && (
             <div className="flex items-center gap-1">
               <button
@@ -685,12 +692,12 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none flex md:grid">
             {KANBAN_COLUMNS.map((col) => {
               const doneItems = children.filter((c) => c.status === "done");
-              const archivedItems = children.filter((c) => c.status === "archived");
+              const archivedOrDroppedItems = children.filter((c) => c.status === "archived" || c.status === "dropped");
               const colChildren = col.key === "done"
                 ? doneItems
                 : children.filter((c) => col.statuses.includes(c.status));
 
-              const totalCount = col.key === "done" ? doneItems.length + archivedItems.length : colChildren.length;
+              const totalCount = col.key === "done" ? doneItems.length + archivedOrDroppedItems.length : colChildren.length;
 
               return (
                 <KanbanColumn
@@ -701,7 +708,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                   accentBorder={col.accentBorder}
                   count={totalCount}
                 >
-                  {colChildren.length === 0 && (col.key !== "done" || archivedItems.length === 0) && (
+                  {colChildren.length === 0 && (col.key !== "done" || archivedOrDroppedItems.length === 0) && (
                     <p className="text-xs text-muted-foreground/30 italic px-1 py-3 text-center">No items</p>
                   )}
                   {colChildren.map((child) => {
@@ -722,16 +729,16 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                     );
                   })}
                   {/* Archived toggle in Done column */}
-                  {col.key === "done" && archivedItems.length > 0 && (
+                  {col.key === "done" && archivedOrDroppedItems.length > 0 && (
                     <>
                       <button
                         onClick={() => setShowArchived(!showArchived)}
                         className="cursor-pointer text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors flex items-center gap-1.5 px-1 py-1"
                       >
                         <ChevronDown size={12} className={cn("transition-transform", showArchived && "rotate-180")} />
-                        {showArchived ? "Hide" : "Show"} {archivedItems.length} archived
+                        {showArchived ? "Hide" : "Show"} {archivedOrDroppedItems.length} archived/dropped
                       </button>
-                      {showArchived && archivedItems.map((child) => {
+                      {showArchived && archivedOrDroppedItems.map((child) => {
                         const { preview, badge } = getChildCardProps(child);
                         return (
                           <ChildEntityCard
@@ -805,7 +812,7 @@ function AddRootEntityForm({ onClose }: { onClose: () => void }) {
       title: title.trim(),
       icon: boMeta.icon,
       description: description.trim(),
-      status: "later",
+      status: "draft",
       children: [],
       blocks: [],
     };

@@ -16,7 +16,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     level: "business_outcome",
     title: "Increase annual revenue by 20%",
     icon: "Target",
-    status: "now",
+    status: "commit",
     description: "FreshCart needs to grow from €12M to €14.4M ARR by end of FY 2026. This is the primary growth target agreed with the board and underpins our Series B fundraise narrative.",
     children: ["po-1a", "po-1b"],
     blocks: [
@@ -31,7 +31,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     level: "business_outcome",
     title: "Expand to 3 new European cities by Q4 2026",
     icon: "Target",
-    status: "now",
+    status: "commit",
     description: "FreshCart operates in 4 cities today. Expanding to Vienna, Copenhagen, and Lisbon unlocks a €2.8B addressable market and demonstrates geographic scalability for investors.",
     children: ["po-2a"],
     blocks: [
@@ -46,7 +46,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     level: "product_outcome",
     title: "Increase weekly active orderers by 15%",
     icon: "TrendingUp",
-    status: "now",
+    status: "commit",
     parentId: "bo-1",
     description: "Our core retention metric. Currently 48K users place at least one order per week. Target: 55.2K weekly active orderers. This directly feeds revenue because our average order is €38 — each additional weekly orderer is worth ~€1,976/year.",
     children: ["opp-1", "opp-2"],
@@ -63,7 +63,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     level: "product_outcome",
     title: "Increase average order value by 10%",
     icon: "TrendingUp",
-    status: "now",
+    status: "commit",
     parentId: "bo-1",
     description: "Current AOV is €38. Target: €41.80. Growing basket size is the most capital-efficient path to revenue growth — no additional delivery cost per incremental item.",
     children: ["opp-3"],
@@ -80,7 +80,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     level: "product_outcome",
     title: "Achieve 10K orders/month within 3 months of city launch",
     icon: "TrendingUp",
-    status: "now",
+    status: "commit",
     parentId: "bo-2",
     description: "Each new city must reach operational viability (10K orders/month) within 90 days of launch. Below this threshold, unit economics don't work and we bleed cash on fixed warehouse/delivery costs.",
     children: ["opp-4"],
@@ -95,7 +95,7 @@ const FRESHCART_ENTITIES: EntityStore = {
 
   // ── Opportunities ────────────────────────────────────────────────────────
   "opp-1": {
-    id: "opp-1", level: "opportunity", title: "Cart abandonment from poor substitution suggestions", icon: "Lightbulb", status: "now", parentId: "po-1a",
+    id: "opp-1", level: "opportunity", title: "Cart abandonment from poor substitution suggestions", icon: "Lightbulb", status: "commit", parentId: "po-1a",
     description: "When items are out of stock, our current substitution logic picks alternatives based on category + price. Users frequently reject these substitutions, leading to incomplete orders and frustration. 23% of orders with substitutions result in the user removing items entirely rather than accepting the suggestion.",
     children: ["sol-1", "sol-2"],
     blocks: [
@@ -106,7 +106,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "opp-2": {
-    id: "opp-2", level: "opportunity", title: "First-time users don't understand delivery time slots", icon: "Lightbulb", status: "now", parentId: "po-1a",
+    id: "opp-2", level: "opportunity", title: "First-time users don't understand delivery time slots", icon: "Lightbulb", status: "commit", parentId: "po-1a",
     description: "Our onboarding flow asks new users to select a delivery time slot before their first order. The current slot picker is a text-based list of times. 31% of first-time users abandon during slot selection — the highest drop-off point in the checkout funnel.",
     children: ["sol-3"],
     blocks: [
@@ -117,7 +117,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "opp-3": {
-    id: "opp-3", level: "opportunity", title: "Users miss complementary items they'd want", icon: "Lightbulb", status: "now", parentId: "po-1b",
+    id: "opp-3", level: "opportunity", title: "Users miss complementary items they'd want", icon: "Lightbulb", status: "commit", parentId: "po-1b",
     description: "Users shop for individual ingredients but think in terms of meals. They frequently forget items that would complete a recipe or complement their basket. Post-order surveys show 42% of users wish they'd \"remembered to add something\" — most commonly herbs, sauces, or side ingredients.",
     children: ["sol-4"],
     blocks: [
@@ -128,7 +128,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "opp-4": {
-    id: "opp-4", level: "opportunity", title: "Local store partnerships take too long to close", icon: "Lightbulb", status: "now", parentId: "po-2a",
+    id: "opp-4", level: "opportunity", title: "Local store partnerships take too long to close", icon: "Lightbulb", status: "commit", parentId: "po-2a",
     description: "Onboarding a new store partner currently takes 3-6 weeks from first contact to live catalog. The process requires a sales rep visit, paper contract signing, manual catalog upload, and quality verification. This bottleneck means we can't launch a new city with sufficient store coverage.",
     children: ["sol-5"],
     blocks: [
@@ -141,7 +141,7 @@ const FRESHCART_ENTITIES: EntityStore = {
 
   // ── Solutions ────────────────────────────────────────────────────────────
   "sol-1": {
-    id: "sol-1", level: "solution", title: "ML-powered substitution engine with preference learning", icon: "Puzzle", status: "now", parentId: "opp-1",
+    id: "sol-1", level: "solution", title: "ML-powered substitution engine with preference learning", icon: "Puzzle", status: "commit", parentId: "opp-1",
     description: "Replace the current category+price substitution logic with an ML model that learns individual user preferences. The model considers: past purchase history, dietary tags (vegan, gluten-free), brand preferences, and explicit substitution rules set by the user.\n\nThe engine ranks substitution candidates by predicted acceptance probability and presents the top 3 options to the user (instead of forcing a single suggestion).",
     children: ["asm-1", "asm-2"],
     blocks: [
@@ -152,7 +152,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "sol-2": {
-    id: "sol-2", level: "solution", title: "Real-time chat with personal shopper during picking", icon: "Puzzle", status: "now", parentId: "opp-1",
+    id: "sol-2", level: "solution", title: "Real-time chat with personal shopper during picking", icon: "Puzzle", status: "commit", parentId: "opp-1",
     description: "When a picker encounters an out-of-stock item, they send a real-time notification to the customer with a photo of the shelf and available alternatives. The customer can respond via chat to approve a substitution, reject it, or suggest their own alternative.",
     children: ["asm-3", "asm-4"],
     blocks: [
@@ -163,7 +163,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "sol-3": {
-    id: "sol-3", level: "solution", title: "Interactive onboarding with visual slot picker", icon: "Puzzle", status: "now", parentId: "opp-2",
+    id: "sol-3", level: "solution", title: "Interactive onboarding with visual slot picker", icon: "Puzzle", status: "commit", parentId: "opp-2",
     description: "Replace the text-based time slot list with a visual calendar-style picker. Show delivery windows as colored blocks (green = available, amber = filling up, grey = full). Add a \"Fastest available\" button as the default option.",
     children: ["asm-5", "asm-6"],
     blocks: [
@@ -174,7 +174,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "sol-4": {
-    id: "sol-4", level: "solution", title: "Recipe-based cart builder (\"Make this meal\")", icon: "Puzzle", status: "now", parentId: "opp-3",
+    id: "sol-4", level: "solution", title: "Recipe-based cart builder (\"Make this meal\")", icon: "Puzzle", status: "commit", parentId: "opp-3",
     description: "Add a \"Meals\" tab that suggests recipes based on the user's current cart contents and past orders. When a user taps a recipe, all missing ingredients are added to the cart with one tap.",
     children: ["asm-7", "asm-8"],
     blocks: [
@@ -185,7 +185,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "sol-5": {
-    id: "sol-5", level: "solution", title: "Self-serve store onboarding portal", icon: "Puzzle", status: "now", parentId: "opp-4",
+    id: "sol-5", level: "solution", title: "Self-serve store onboarding portal", icon: "Puzzle", status: "commit", parentId: "opp-4",
     description: "Build a web portal where store owners can create an account, upload their catalog, set delivery zones and hours, sign the partnership agreement digitally, and go live — all without talking to a sales rep.",
     children: ["asm-9", "asm-10"],
     blocks: [
@@ -198,7 +198,7 @@ const FRESHCART_ENTITIES: EntityStore = {
 
   // ── Assumptions ──────────────────────────────────────────────────────────
   "asm-1": {
-    id: "asm-1", level: "assumption", title: "Users will trust AI-suggested substitutions", icon: "HelpCircle", status: "now", parentId: "sol-1",
+    id: "asm-1", level: "assumption", title: "Users will trust AI-suggested substitutions", icon: "HelpCircle", status: "commit", parentId: "sol-1",
     description: "We believe that users will accept substitution suggestions from an ML model at a higher rate than the current rule-based system. The key risk is that users may distrust \"AI\" recommendations for food.",
     children: ["tst-1"],
     blocks: [
@@ -207,7 +207,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "asm-2": {
-    id: "asm-2", level: "assumption", title: "Purchase history predicts substitution preferences", icon: "HelpCircle", status: "now", parentId: "sol-1",
+    id: "asm-2", level: "assumption", title: "Purchase history predicts substitution preferences", icon: "HelpCircle", status: "commit", parentId: "sol-1",
     description: "We believe that a user's past purchase behavior (brands bought, dietary patterns, price sensitivity) is a strong enough signal to predict which substitutions they'll accept.",
     children: ["tst-2"],
     blocks: [
@@ -216,7 +216,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "asm-3": {
-    id: "asm-3", level: "assumption", title: "Customers respond within 2-minute picking window", icon: "HelpCircle", status: "now", parentId: "sol-2",
+    id: "asm-3", level: "assumption", title: "Customers respond within 2-minute picking window", icon: "HelpCircle", status: "commit", parentId: "sol-2",
     description: "The personal shopper chat only works if customers respond fast enough that the picker doesn't have to wait. Our picking process allows ~2 minutes per item.",
     children: ["tst-3"],
     blocks: [
@@ -225,7 +225,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "asm-4": {
-    id: "asm-4", level: "assumption", title: "Shopper labor cost is less than substitution refund cost", icon: "HelpCircle", status: "now", parentId: "sol-2",
+    id: "asm-4", level: "assumption", title: "Shopper labor cost is less than substitution refund cost", icon: "HelpCircle", status: "commit", parentId: "sol-2",
     description: "The chat feature adds time to the picking process (~3-5 minutes per substitution event). This additional labor cost must be less than what we currently spend on substitution-related refunds.",
     children: ["tst-4"],
     blocks: [
@@ -234,7 +234,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "asm-5": {
-    id: "asm-5", level: "assumption", title: "Visual slot picker reduces first-order drop-off", icon: "HelpCircle", status: "now", parentId: "sol-3",
+    id: "asm-5", level: "assumption", title: "Visual slot picker reduces first-order drop-off", icon: "HelpCircle", status: "commit", parentId: "sol-3",
     description: "We believe that replacing the text-based slot list with a visual calendar picker and a \"fastest available\" default will significantly reduce the 31% first-order drop-off at the slot selection step.",
     children: ["tst-5"],
     blocks: [
@@ -243,7 +243,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "asm-6": {
-    id: "asm-6", level: "assumption", title: "Users prefer choosing slots over 'fastest available'", icon: "HelpCircle", status: "now", parentId: "sol-3",
+    id: "asm-6", level: "assumption", title: "Users prefer choosing slots over 'fastest available'", icon: "HelpCircle", status: "commit", parentId: "sol-3",
     description: "We assume most first-time users will use \"fastest available\" for their first order, but will switch to manual slot selection for subsequent orders.",
     children: ["tst-6"],
     blocks: [
@@ -252,7 +252,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "asm-7": {
-    id: "asm-7", level: "assumption", title: "Users plan meals, not individual items", icon: "HelpCircle", status: "now", parentId: "sol-4",
+    id: "asm-7", level: "assumption", title: "Users plan meals, not individual items", icon: "HelpCircle", status: "commit", parentId: "sol-4",
     description: "The recipe-based cart builder only works if users actually think about meals before or during shopping. If most users shop opportunistically, recipe suggestions won't match their mental model.",
     children: ["tst-7"],
     blocks: [
@@ -261,7 +261,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "asm-8": {
-    id: "asm-8", level: "assumption", title: "Recipe suggestions increase items per cart by >=3", icon: "HelpCircle", status: "now", parentId: "sol-4",
+    id: "asm-8", level: "assumption", title: "Recipe suggestions increase items per cart by >=3", icon: "HelpCircle", status: "commit", parentId: "sol-4",
     description: "For this feature to meaningfully impact AOV, each recipe suggestion accepted must add at least 3 items to the cart (≈€6-10 in value).",
     children: ["tst-8"],
     blocks: [
@@ -270,7 +270,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "asm-9": {
-    id: "asm-9", level: "assumption", title: "Store owners can complete onboarding without a sales rep", icon: "HelpCircle", status: "now", parentId: "sol-5",
+    id: "asm-9", level: "assumption", title: "Store owners can complete onboarding without a sales rep", icon: "HelpCircle", status: "commit", parentId: "sol-5",
     description: "We believe that store owners can successfully navigate a self-serve web portal to create an account, upload their catalog, set delivery parameters, and sign a digital contract — all without human assistance.",
     children: ["tst-9"],
     blocks: [
@@ -279,7 +279,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "asm-10": {
-    id: "asm-10", level: "assumption", title: "Catalog upload can be automated from POS exports", icon: "HelpCircle", status: "now", parentId: "sol-5",
+    id: "asm-10", level: "assumption", title: "Catalog upload can be automated from POS exports", icon: "HelpCircle", status: "commit", parentId: "sol-5",
     description: "Most stores use a POS system that can export product catalogs. We assume we can build parsers for the top 5 POS systems (covering ~70% of target stores).",
     children: ["tst-10"],
     blocks: [
@@ -290,7 +290,7 @@ const FRESHCART_ENTITIES: EntityStore = {
 
   // ── Tests ────────────────────────────────────────────────────────────────
   "tst-1": {
-    id: "tst-1", level: "test", title: "Fake-door test for AI substitution opt-in", icon: "FlaskConical", status: "now", parentId: "asm-1",
+    id: "tst-1", level: "test", title: "Fake-door test for AI substitution opt-in", icon: "FlaskConical", status: "commit", parentId: "asm-1",
     description: "At least 40% of users who encounter a substitution will opt into \"Smart Substitutions powered by AI\" when presented with a toggle during checkout.",
     children: [],
     blocks: [
@@ -301,7 +301,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "tst-2": {
-    id: "tst-2", level: "test", title: "Offline model accuracy test on 6 months of purchase data", icon: "FlaskConical", status: "now", parentId: "asm-2",
+    id: "tst-2", level: "test", title: "Offline model accuracy test on 6 months of purchase data", icon: "FlaskConical", status: "commit", parentId: "asm-2",
     description: "An ML model trained on 6 months of purchase history can predict accepted substitutions with >=70% accuracy (vs. 52% baseline).",
     children: [],
     blocks: [
@@ -312,7 +312,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "tst-3": {
-    id: "tst-3", level: "test", title: "SMS response time study with 200 orders", icon: "FlaskConical", status: "now", parentId: "asm-3",
+    id: "tst-3", level: "test", title: "SMS response time study with 200 orders", icon: "FlaskConical", status: "commit", parentId: "asm-3",
     description: "At least 60% of customers will respond to a substitution notification within 2 minutes during active orders.",
     children: [],
     blocks: [
@@ -323,7 +323,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "tst-4": {
-    id: "tst-4", level: "test", title: "4-week P&L comparison: chat orders vs. control", icon: "FlaskConical", status: "now", parentId: "asm-4",
+    id: "tst-4", level: "test", title: "4-week P&L comparison: chat orders vs. control", icon: "FlaskConical", status: "commit", parentId: "asm-4",
     description: "Orders with personal shopper chat will have lower total cost (labor + refunds + credits) compared to standard orders.",
     children: [],
     blocks: [
@@ -334,7 +334,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "tst-5": {
-    id: "tst-5", level: "test", title: "A/B test: visual slot picker vs. current (500 new signups)", icon: "FlaskConical", status: "now", parentId: "asm-5",
+    id: "tst-5", level: "test", title: "A/B test: visual slot picker vs. current (500 new signups)", icon: "FlaskConical", status: "commit", parentId: "asm-5",
     description: "The visual slot picker will reduce first-order drop-off from 31% to <=20%.",
     children: [],
     blocks: [
@@ -345,7 +345,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "tst-6": {
-    id: "tst-6", level: "test", title: "Preference survey after first 3 orders", icon: "FlaskConical", status: "now", parentId: "asm-6",
+    id: "tst-6", level: "test", title: "Preference survey after first 3 orders", icon: "FlaskConical", status: "commit", parentId: "asm-6",
     description: "After 3 orders, >=40% of users will have manually selected a time slot at least once.",
     children: [],
     blocks: [
@@ -356,7 +356,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "tst-7": {
-    id: "tst-7", level: "test", title: "Diary study: 20 users log meal planning behavior", icon: "FlaskConical", status: "now", parentId: "asm-7",
+    id: "tst-7", level: "test", title: "Diary study: 20 users log meal planning behavior", icon: "FlaskConical", status: "commit", parentId: "asm-7",
     description: "At least 60% of users plan meals (however loosely) before or during grocery shopping.",
     children: [],
     blocks: [
@@ -367,7 +367,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "tst-8": {
-    id: "tst-8", level: "test", title: "Pilot: recipe feature for 1000 users, measure AOV", icon: "FlaskConical", status: "now", parentId: "asm-8",
+    id: "tst-8", level: "test", title: "Pilot: recipe feature for 1000 users, measure AOV", icon: "FlaskConical", status: "commit", parentId: "asm-8",
     description: "Users who engage with recipe suggestions will add >=3 incremental items per order, increasing AOV by >=8%.",
     children: [],
     blocks: [
@@ -378,7 +378,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "tst-9": {
-    id: "tst-9", level: "test", title: "Wizard-of-Oz test: 10 store owners try onboarding prototype", icon: "FlaskConical", status: "now", parentId: "asm-9",
+    id: "tst-9", level: "test", title: "Wizard-of-Oz test: 10 store owners try onboarding prototype", icon: "FlaskConical", status: "commit", parentId: "asm-9",
     description: "At least 7/10 store owners can complete the self-serve onboarding flow within 1 hour without assistance.",
     children: [],
     blocks: [
@@ -389,7 +389,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "tst-10": {
-    id: "tst-10", level: "test", title: "Parse 5 real POS exports, measure catalog accuracy", icon: "FlaskConical", status: "now", parentId: "asm-10",
+    id: "tst-10", level: "test", title: "Parse 5 real POS exports, measure catalog accuracy", icon: "FlaskConical", status: "commit", parentId: "asm-10",
     description: "Our POS parser can generate a catalog with >=85% accuracy from real store POS exports.",
     children: [],
     blocks: [
@@ -417,7 +417,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     level: "business_outcome",
     title: "Reach $3M ARR by end of 2026",
     icon: "Target",
-    status: "now",
+    status: "commit",
     description: "InsightPulse currently generates $1.2M ARR across 85 paying accounts. The board has set $3M ARR as the Series A milestone, requiring us to 2.5x revenue in 12 months through a mix of new logos and expansion revenue.",
     children: ["ip-po-1a", "ip-po-1b"],
     blocks: [
@@ -432,7 +432,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     level: "business_outcome",
     title: "Reduce monthly churn to below 3%",
     icon: "Target",
-    status: "now",
+    status: "commit",
     description: "Current monthly logo churn is 5.2% — well above the B2B SaaS benchmark of 3%. At this rate we're losing ~4 accounts/month, requiring 9+ new sales per month just to maintain flat revenue. Fixing churn is the highest-leverage thing we can do.",
     children: ["ip-po-2a"],
     blocks: [
@@ -445,7 +445,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
 
   // Product Outcomes
   "ip-po-1a": {
-    id: "ip-po-1a", level: "product_outcome", title: "Increase trial-to-paid conversion from 8% to 15%", icon: "TrendingUp", status: "now", parentId: "ip-bo-1",
+    id: "ip-po-1a", level: "product_outcome", title: "Increase trial-to-paid conversion from 8% to 15%", icon: "TrendingUp", status: "commit", parentId: "ip-bo-1",
     description: "Only 8% of free trial signups convert to a paid plan within 14 days. Industry benchmark for B2B SaaS with self-serve is 12-18%. Doubling our conversion rate is the fastest path to new ARR without increasing top-of-funnel spend.",
     children: ["ip-opp-1", "ip-opp-2"],
     blocks: [
@@ -457,7 +457,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-po-1b": {
-    id: "ip-po-1b", level: "product_outcome", title: "Grow average contract value from $1,200 to $2,000/year", icon: "TrendingUp", status: "now", parentId: "ip-bo-1",
+    id: "ip-po-1b", level: "product_outcome", title: "Grow average contract value from $1,200 to $2,000/year", icon: "TrendingUp", status: "commit", parentId: "ip-bo-1",
     description: "Most accounts are on the $99/month Starter plan. Target: move 30% of accounts to the $199/month Growth plan through feature-driven expansion — team seats, custom reports, API access.",
     children: ["ip-opp-3"],
     blocks: [
@@ -469,7 +469,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-po-2a": {
-    id: "ip-po-2a", level: "product_outcome", title: "Increase 90-day retention from 72% to 88%", icon: "TrendingUp", status: "now", parentId: "ip-bo-2",
+    id: "ip-po-2a", level: "product_outcome", title: "Increase 90-day retention from 72% to 88%", icon: "TrendingUp", status: "commit", parentId: "ip-bo-2",
     description: "28% of new paying accounts cancel within 90 days. Exit interviews reveal a consistent pattern: they set up InsightPulse, get initial value, but then stop logging in because the dashboards go stale and nothing pulls them back.",
     children: ["ip-opp-4", "ip-opp-5"],
     blocks: [
@@ -483,7 +483,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
 
   // Opportunities
   "ip-opp-1": {
-    id: "ip-opp-1", level: "opportunity", title: "Trial users hit a blank canvas and don't know where to start", icon: "Lightbulb", status: "now", parentId: "ip-po-1a",
+    id: "ip-opp-1", level: "opportunity", title: "Trial users hit a blank canvas and don't know where to start", icon: "Lightbulb", status: "commit", parentId: "ip-po-1a",
     description: "After connecting their data source, trial users land on an empty dashboard builder. 62% of trial signups who connect data never create a single dashboard. The blank canvas is paralyzing — they don't know what questions to ask or how to build a useful view.",
     children: ["ip-sol-1"],
     blocks: [
@@ -494,7 +494,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-opp-2": {
-    id: "ip-opp-2", level: "opportunity", title: "Data connection setup fails or stalls for 35% of trial users", icon: "Lightbulb", status: "now", parentId: "ip-po-1a",
+    id: "ip-opp-2", level: "opportunity", title: "Data connection setup fails or stalls for 35% of trial users", icon: "Lightbulb", status: "commit", parentId: "ip-po-1a",
     description: "The first step of any analytics trial is connecting a data source. 35% of trial signups either fail to connect their store (authentication errors, permissions issues) or give up during the process. Without data, there's zero chance of conversion.",
     children: ["ip-sol-2"],
     blocks: [
@@ -505,7 +505,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-opp-3": {
-    id: "ip-opp-3", level: "opportunity", title: "Teams share insights via screenshots instead of the product", icon: "Lightbulb", status: "now", parentId: "ip-po-1b",
+    id: "ip-opp-3", level: "opportunity", title: "Teams share insights via screenshots instead of the product", icon: "Lightbulb", status: "commit", parentId: "ip-po-1b",
     description: "Starter plan allows 2 seats. Teams of 3-10 people work around this by having 1 person build dashboards and share screenshots via Slack/email. This means InsightPulse stays a single-user tool and never becomes organizational infrastructure.",
     children: ["ip-sol-3"],
     blocks: [
@@ -516,7 +516,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-opp-4": {
-    id: "ip-opp-4", level: "opportunity", title: "Dashboards go stale and users forget to check them", icon: "Lightbulb", status: "now", parentId: "ip-po-2a",
+    id: "ip-opp-4", level: "opportunity", title: "Dashboards go stale and users forget to check them", icon: "Lightbulb", status: "commit", parentId: "ip-po-2a",
     description: "Dashboards are pull-based — users have to remember to log in and check them. After the initial setup excitement fades, login frequency drops by 70% between week 1 and week 4. The product becomes invisible.",
     children: ["ip-sol-4"],
     blocks: [
@@ -527,7 +527,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-opp-5": {
-    id: "ip-opp-5", level: "opportunity", title: "Onboarding is one-size-fits-all regardless of store size or vertical", icon: "Lightbulb", status: "now", parentId: "ip-po-2a",
+    id: "ip-opp-5", level: "opportunity", title: "Onboarding is one-size-fits-all regardless of store size or vertical", icon: "Lightbulb", status: "commit", parentId: "ip-po-2a",
     description: "A $2M/year fashion DTC brand and a $50K/year Etsy seller get the same onboarding flow. The fashion brand needs cohort analysis and attribution; the Etsy seller needs basic revenue tracking. The mismatch means both feel the product wasn't built for them.",
     children: ["ip-sol-5"],
     blocks: [
@@ -540,7 +540,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
 
   // Solutions
   "ip-sol-1": {
-    id: "ip-sol-1", level: "solution", title: "Pre-built industry dashboard templates with guided setup", icon: "Puzzle", status: "now", parentId: "ip-opp-1",
+    id: "ip-sol-1", level: "solution", title: "Pre-built industry dashboard templates with guided setup", icon: "Puzzle", status: "commit", parentId: "ip-opp-1",
     description: "Instead of a blank canvas, new users choose from 5-8 pre-built dashboard templates tailored to e-commerce verticals (fashion DTC, food & bev, electronics, general). Each template comes with the right metrics pre-configured and a 3-step guided setup that asks simple business questions to customize the dashboard.",
     children: ["ip-asm-1", "ip-asm-2"],
     blocks: [
@@ -551,7 +551,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-sol-2": {
-    id: "ip-sol-2", level: "solution", title: "One-click OAuth connector for Shopify, WooCommerce, BigCommerce", icon: "Puzzle", status: "now", parentId: "ip-opp-2",
+    id: "ip-sol-2", level: "solution", title: "One-click OAuth connector for Shopify, WooCommerce, BigCommerce", icon: "Puzzle", status: "commit", parentId: "ip-opp-2",
     description: "Replace the current API-key-based connection flow with OAuth for the top 3 platforms. User clicks \"Connect Shopify\" → redirected to Shopify login → approves permissions → data starts syncing. No API keys, no scopes, no technical setup.",
     children: ["ip-asm-3"],
     blocks: [
@@ -562,7 +562,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-sol-3": {
-    id: "ip-sol-3", level: "solution", title: "Shareable dashboard links with viewer-only access (no login required)", icon: "Puzzle", status: "now", parentId: "ip-opp-3",
+    id: "ip-sol-3", level: "solution", title: "Shareable dashboard links with viewer-only access (no login required)", icon: "Puzzle", status: "commit", parentId: "ip-opp-3",
     description: "Allow any user to generate a secret link to a dashboard that anyone can view without an InsightPulse account. Links are read-only, expire after 30 days, and can be revoked. Viewers see a \"Get your own InsightPulse\" banner — creating a viral acquisition loop.",
     children: ["ip-asm-4", "ip-asm-5"],
     blocks: [
@@ -573,7 +573,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-sol-4": {
-    id: "ip-sol-4", level: "solution", title: "Weekly AI-generated insight digest via email and Slack", icon: "Puzzle", status: "now", parentId: "ip-opp-4",
+    id: "ip-sol-4", level: "solution", title: "Weekly AI-generated insight digest via email and Slack", icon: "Puzzle", status: "commit", parentId: "ip-opp-4",
     description: "Every Monday morning, InsightPulse sends each user an automated digest: top 3 anomalies from last week, key metric trends, and one actionable recommendation. Delivered via email and (optionally) Slack. The digest is generated by an LLM analyzing their actual data.",
     children: ["ip-asm-6", "ip-asm-7"],
     blocks: [
@@ -584,7 +584,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-sol-5": {
-    id: "ip-sol-5", level: "solution", title: "Segmented onboarding flow based on store size and vertical", icon: "Puzzle", status: "now", parentId: "ip-opp-5",
+    id: "ip-sol-5", level: "solution", title: "Segmented onboarding flow based on store size and vertical", icon: "Puzzle", status: "commit", parentId: "ip-opp-5",
     description: "At signup, ask 2 questions: \"What's your approximate annual revenue?\" and \"What do you sell?\" Based on answers, customize the entire onboarding: which templates to show, which features to highlight, what KPIs to track, and what the getting-started checklist looks like.",
     children: ["ip-asm-8"],
     blocks: [
@@ -597,7 +597,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
 
   // Assumptions
   "ip-asm-1": {
-    id: "ip-asm-1", level: "assumption", title: "Pre-built templates eliminate the blank-canvas problem", icon: "HelpCircle", status: "now", parentId: "ip-sol-1",
+    id: "ip-asm-1", level: "assumption", title: "Pre-built templates eliminate the blank-canvas problem", icon: "HelpCircle", status: "commit", parentId: "ip-sol-1",
     description: "We believe that offering 5-8 pre-built dashboard templates will cause trial users to create their first dashboard within 5 minutes, eliminating the 62% zero-dashboard drop-off.",
     children: ["ip-tst-1"],
     blocks: [
@@ -606,7 +606,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-asm-2": {
-    id: "ip-asm-2", level: "assumption", title: "Users who see real data in <10 minutes convert 3x better", icon: "HelpCircle", status: "now", parentId: "ip-sol-1",
+    id: "ip-asm-2", level: "assumption", title: "Users who see real data in <10 minutes convert 3x better", icon: "HelpCircle", status: "commit", parentId: "ip-sol-1",
     description: "We believe there's a direct correlation between time-to-first-real-insight and trial conversion. Specifically, users who see their own data in a meaningful dashboard within 10 minutes will convert at 3x the rate of users who take longer.",
     children: ["ip-tst-2"],
     blocks: [
@@ -615,7 +615,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-asm-3": {
-    id: "ip-asm-3", level: "assumption", title: "OAuth flow achieves 90%+ connection success rate", icon: "HelpCircle", status: "now", parentId: "ip-sol-2",
+    id: "ip-asm-3", level: "assumption", title: "OAuth flow achieves 90%+ connection success rate", icon: "HelpCircle", status: "commit", parentId: "ip-sol-2",
     description: "We believe that switching from API-key-based setup to OAuth will increase data source connection success rate from 65% to 90%+ for the top 3 platforms.",
     children: ["ip-tst-3"],
     blocks: [
@@ -624,7 +624,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-asm-4": {
-    id: "ip-asm-4", level: "assumption", title: "Shared links create a viral acquisition loop", icon: "HelpCircle", status: "now", parentId: "ip-sol-3",
+    id: "ip-asm-4", level: "assumption", title: "Shared links create a viral acquisition loop", icon: "HelpCircle", status: "commit", parentId: "ip-sol-3",
     description: "We believe that dashboard viewers who receive a shared link will sign up for InsightPulse at a meaningful rate (>=5%), creating a Figma-like viral loop that reduces customer acquisition cost.",
     children: ["ip-tst-4"],
     blocks: [
@@ -633,7 +633,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-asm-5": {
-    id: "ip-asm-5", level: "assumption", title: "Sharing drives plan upgrades when teams hit the seat limit", icon: "HelpCircle", status: "now", parentId: "ip-sol-3",
+    id: "ip-asm-5", level: "assumption", title: "Sharing drives plan upgrades when teams hit the seat limit", icon: "HelpCircle", status: "commit", parentId: "ip-sol-3",
     description: "We believe that once 3+ people in an org are viewing dashboards via shared links, the account owner will upgrade to the Growth plan (more seats + collaboration features) rather than continuing to share via links.",
     children: ["ip-tst-5"],
     blocks: [
@@ -642,7 +642,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-asm-6": {
-    id: "ip-asm-6", level: "assumption", title: "AI-generated insights are accurate enough to be trusted", icon: "HelpCircle", status: "now", parentId: "ip-sol-4",
+    id: "ip-asm-6", level: "assumption", title: "AI-generated insights are accurate enough to be trusted", icon: "HelpCircle", status: "commit", parentId: "ip-sol-4",
     description: "We believe that an LLM analyzing store data can generate weekly insights that are accurate, relevant, and actionable at least 80% of the time. Inaccurate or generic insights would erode trust and cause users to unsubscribe from the digest.",
     children: ["ip-tst-6"],
     blocks: [
@@ -651,7 +651,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-asm-7": {
-    id: "ip-asm-7", level: "assumption", title: "Weekly digests increase login frequency by 2x", icon: "HelpCircle", status: "now", parentId: "ip-sol-4",
+    id: "ip-asm-7", level: "assumption", title: "Weekly digests increase login frequency by 2x", icon: "HelpCircle", status: "commit", parentId: "ip-sol-4",
     description: "We believe that a well-crafted weekly email digest will double the average login frequency from 1.2/week to 2.4/week by giving users a reason to come back and investigate the insights further.",
     children: ["ip-tst-7"],
     blocks: [
@@ -660,7 +660,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-asm-8": {
-    id: "ip-asm-8", level: "assumption", title: "2 signup questions accurately segment users without adding friction", icon: "HelpCircle", status: "now", parentId: "ip-sol-5",
+    id: "ip-asm-8", level: "assumption", title: "2 signup questions accurately segment users without adding friction", icon: "HelpCircle", status: "commit", parentId: "ip-sol-5",
     description: "We believe we can segment users into meaningful cohorts (small/medium/large x vertical) with just 2 questions at signup, without the extra step causing drop-off in the signup flow.",
     children: ["ip-tst-8"],
     blocks: [
@@ -671,7 +671,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
 
   // Tests
   "ip-tst-1": {
-    id: "ip-tst-1", level: "test", title: "A/B test: templates vs. blank canvas for 200 trial signups", icon: "FlaskConical", status: "now", parentId: "ip-asm-1",
+    id: "ip-tst-1", level: "test", title: "A/B test: templates vs. blank canvas for 200 trial signups", icon: "FlaskConical", status: "commit", parentId: "ip-asm-1",
     description: "Trial users who see pre-built templates will create their first dashboard within 5 minutes (vs. 45+ minutes for blank canvas) and have >=2x higher 14-day conversion.",
     children: [],
     blocks: [
@@ -682,7 +682,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-tst-2": {
-    id: "ip-tst-2", level: "test", title: "Correlation analysis: time-to-first-insight vs. conversion", icon: "FlaskConical", status: "now", parentId: "ip-asm-2",
+    id: "ip-tst-2", level: "test", title: "Correlation analysis: time-to-first-insight vs. conversion", icon: "FlaskConical", status: "commit", parentId: "ip-asm-2",
     description: "Users who see their first meaningful insight (real data, not sample) within 10 minutes convert at >=20% vs. 8% overall.",
     children: [],
     blocks: [
@@ -693,7 +693,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-tst-3": {
-    id: "ip-tst-3", level: "test", title: "OAuth integration pilot with 50 Shopify trial signups", icon: "FlaskConical", status: "now", parentId: "ip-asm-3",
+    id: "ip-tst-3", level: "test", title: "OAuth integration pilot with 50 Shopify trial signups", icon: "FlaskConical", status: "commit", parentId: "ip-asm-3",
     description: "OAuth-based Shopify connection will achieve >=90% success rate (vs. 65% with current API key flow).",
     children: [],
     blocks: [
@@ -704,7 +704,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-tst-4": {
-    id: "ip-tst-4", level: "test", title: "Track shared link viewer -> signup conversion for 100 shared links", icon: "FlaskConical", status: "now", parentId: "ip-asm-4",
+    id: "ip-tst-4", level: "test", title: "Track shared link viewer -> signup conversion for 100 shared links", icon: "FlaskConical", status: "commit", parentId: "ip-asm-4",
     description: ">=5% of unique shared link viewers will create an InsightPulse account within 30 days.",
     children: [],
     blocks: [
@@ -715,7 +715,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-tst-5": {
-    id: "ip-tst-5", level: "test", title: "Monitor upgrade rate for accounts with 3+ shared link viewers", icon: "FlaskConical", status: "now", parentId: "ip-asm-5",
+    id: "ip-tst-5", level: "test", title: "Monitor upgrade rate for accounts with 3+ shared link viewers", icon: "FlaskConical", status: "commit", parentId: "ip-asm-5",
     description: "Accounts where 3+ unique people view shared dashboards will upgrade to Growth plan at >=2x the rate of accounts with 0-2 viewers.",
     children: [],
     blocks: [
@@ -726,7 +726,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-tst-6": {
-    id: "ip-tst-6", level: "test", title: "Blind quality review of 50 AI-generated weekly digests", icon: "FlaskConical", status: "now", parentId: "ip-asm-6",
+    id: "ip-tst-6", level: "test", title: "Blind quality review of 50 AI-generated weekly digests", icon: "FlaskConical", status: "commit", parentId: "ip-asm-6",
     description: ">=80% of AI-generated insights will be rated as \"accurate and actionable\" by the account owner.",
     children: [],
     blocks: [
@@ -737,7 +737,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-tst-7": {
-    id: "ip-tst-7", level: "test", title: "A/B test: weekly digest vs. no digest for 100 accounts", icon: "FlaskConical", status: "now", parentId: "ip-asm-7",
+    id: "ip-tst-7", level: "test", title: "A/B test: weekly digest vs. no digest for 100 accounts", icon: "FlaskConical", status: "commit", parentId: "ip-asm-7",
     description: "Accounts receiving weekly digests will have >=2x login frequency and >=15% better 90-day retention.",
     children: [],
     blocks: [
@@ -748,7 +748,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-tst-8": {
-    id: "ip-tst-8", level: "test", title: "Measure signup drop-off with vs. without segmentation questions", icon: "FlaskConical", status: "now", parentId: "ip-asm-8",
+    id: "ip-tst-8", level: "test", title: "Measure signup drop-off with vs. without segmentation questions", icon: "FlaskConical", status: "commit", parentId: "ip-asm-8",
     description: "Adding 2 segmentation questions to signup will cause <3% drop-off increase while enabling >=30% higher dashboard completion.",
     children: [],
     blocks: [
