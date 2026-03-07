@@ -1,0 +1,11 @@
+# Ignore everything
+/*
+
+# Except .gitignore and Solution3
+!.gitignore
+!/Solution3/
+
+# Inside Solution3, ignore these
+Solution3/node_modules/
+Solution3/.next/
+Solution3/data/
