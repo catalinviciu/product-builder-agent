@@ -3,11 +3,11 @@
 
 # Except these
 !README.md
-!/Solution3/
+!/Product-Agent-app/
 
-# Inside Solution3, ignore these
-Solution3/node_modules/
-Solution3/.next/
-Solution3/data/
+# Inside Product-Agent-app, ignore these
+Product-Agent-app/node_modules/
+Product-Agent-app/.next/
+Product-Agent-app/data/
 
 
