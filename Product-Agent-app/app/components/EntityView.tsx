@@ -941,37 +941,44 @@ export function EntityView() {
     <div className="px-8 py-6 pb-28 flex flex-col gap-5">
       <EntityBreadcrumb />
 
-      {/* Level badge + status + header */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <span className={cn("text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-md", levelMeta.accentColor, levelMeta.bgTint)}>
+      {/* File-shaped entity detail */}
+      <div>
+        {/* Tab */}
+        <div className={cn(
+          "inline-flex items-center gap-2 px-3 py-1.5 border border-b-0 rounded-t-lg",
+          levelMeta.bgTint, levelMeta.borderTint
+        )}>
+          <span className={cn("text-[10px] font-semibold uppercase tracking-widest", levelMeta.accentColor)}>
             {levelMeta.label}
           </span>
           <StatusPicker status={entity.status} onChange={(s) => updateEntity(entity.id, { status: s })} />
           <CopyAnchorButton text={buildEntityAnchor(entities, productLine.name, entity.id)} />
         </div>
 
-        <div className="flex items-center gap-3">
-          {IconComponent && (
-            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", levelMeta.iconBg)}>
-              <IconComponent size={16} className={levelMeta.accentColor} />
-            </div>
-          )}
-          <h1 className="text-xl font-semibold text-foreground">
-            <EditableText
-              value={entity.title}
-              onSave={(v) => updateEntity(entity.id, { title: v })}
-            />
-          </h1>
+        {/* Body */}
+        <div className="rounded-xl rounded-tl-none border border-white/8 bg-white/[0.03] p-5 flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            {IconComponent && (
+              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", levelMeta.iconBg)}>
+                <IconComponent size={16} className={levelMeta.accentColor} />
+              </div>
+            )}
+            <h1 className="text-xl font-semibold text-foreground">
+              <EditableText
+                value={entity.title}
+                onSave={(v) => updateEntity(entity.id, { title: v })}
+              />
+            </h1>
+          </div>
+
+          <p className="text-xs text-muted-foreground/60 italic">
+            {levelMeta.description}
+          </p>
+
+          {/* Block-based content */}
+          <BlockList entity={entity} />
         </div>
-
-        <p className="text-xs text-muted-foreground/60 italic">
-          {levelMeta.description}
-        </p>
       </div>
-
-      {/* Block-based content */}
-      <BlockList entity={entity} />
 
       {/* Children grid */}
       <ChildrenGrid entity={entity} />
