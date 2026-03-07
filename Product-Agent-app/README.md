@@ -44,7 +44,7 @@ cd product-builder-agent
 ### Step 2: Navigate to the app folder
 
 ```bash
-cd Solution3
+cd Product-Agent-app
 ```
 
 ### Step 3: Install dependencies
@@ -76,7 +76,7 @@ You'll see the discovery tree dashboard with sample data (FreshCart Grocery) pre
 
 ## Available Commands
 
-Run these from the `Solution3/` folder:
+Run these from the `Product-Agent-app/` folder:
 
 | Command | What it does |
 |---------|-------------|
@@ -87,7 +87,7 @@ Run these from the `Solution3/` folder:
 
 ## How It Works
 
-- **All data is stored locally** in `Solution3/data/store.json` (auto-generated on first use)
+- **All data is stored locally** in `Product-Agent-app/data/store.json` (auto-generated on first use)
 - The app runs entirely on your machine — no external database or cloud services needed
 - Changes you make in the UI are automatically saved to the local JSON file
 
@@ -100,7 +100,7 @@ Each entity in the tree has a small copy button in its header. Clicking it copie
 Product Line: FreshCart Grocery
 Path: Business Outcome > Product Outcome > Opportunity
 Entity: "Cart abandonment from poor substitution suggestions" (opp-1)
-Data: Solution3/data/store.json
+Data: Product-Agent-app/data/store.json
 ```
 
 Paste this into any code-aware AI agent (Claude Code, Cursor, Copilot, etc.) that has access to the project files. The agent can read `store.json`, locate the entity by ID, and help you think through your product decisions with full tree context.

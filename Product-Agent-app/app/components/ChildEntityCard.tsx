@@ -33,7 +33,7 @@ export function ChildEntityCard({ id, title, level, preview, status, badge }: Ch
       onClick={() => navigateToChild(id)}
       className={cn(
         "cursor-pointer text-left w-full p-4 rounded-xl border-l-2 border border-white/8",
-        "hover:border-white/15 transition-all duration-150",
+        "hover:border-white/20 hover:bg-white/[0.03] hover:shadow-md hover:shadow-white/[0.03] transition-all duration-150",
         "flex flex-col gap-2.5 group relative",
         levelMeta.bgTint,
         levelMeta.borderTint,
@@ -44,14 +44,14 @@ export function ChildEntityCard({ id, title, level, preview, status, badge }: Ch
           {ENTITY_STATUS_META[status].label}
         </span>
       )}
-      <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex items-start gap-2.5 min-w-0">
         {IconComponent && (
-          <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", levelMeta.iconBg)}>
+          <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5", levelMeta.iconBg)}>
             <IconComponent size={13} className={levelMeta.accentColor} />
           </div>
         )}
         <div className="flex flex-col flex-1 min-w-0">
-          <span className="text-sm font-semibold text-foreground truncate pr-14">{title}</span>
+          <span className="text-sm font-semibold text-foreground line-clamp-3 pr-14">{title}</span>
           <span className={cn("text-[10px] uppercase tracking-wider font-medium", levelMeta.accentColor)}>
             {levelMeta.label}
           </span>

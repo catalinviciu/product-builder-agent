@@ -225,7 +225,7 @@ function EditableText({ value, onSave, as = "input", placeholder }: {
       {as === "textarea" ? (
         <textarea ref={ref as React.RefObject<HTMLTextAreaElement>} rows={4} {...common} />
       ) : (
-        <input ref={ref as React.RefObject<HTMLInputElement>} {...common} />
+        <input ref={ref as React.RefObject<HTMLInputElement>} maxLength={80} {...common} />
       )}
       <div className="flex gap-2">
         <button onClick={save} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/15 text-foreground transition-colors flex items-center gap-1">
@@ -513,6 +513,7 @@ function AddChildForm({ parentId, childLevel, onClose }: { parentId: string; chi
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder={`${childMeta.label} title (required)`}
+        maxLength={80}
         className="bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30"
         autoFocus
         onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
@@ -558,7 +559,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
         </span>
       )}
       {children.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {children.map((child) => {
             let preview = getEntityPreview(child);
             let badge = "";
@@ -635,6 +636,7 @@ function AddRootEntityForm({ onClose }: { onClose: () => void }) {
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Business Outcome title (required)"
+        maxLength={80}
         className="bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30"
         autoFocus
         onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
@@ -686,7 +688,7 @@ function RootView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {roots.map((entity) => {
           const childCount = entity.children?.length ?? 0;
           const metricBlock = entity.blocks.find((b) => b.type === "metric");
