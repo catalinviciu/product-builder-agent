@@ -8,6 +8,7 @@ import type { EntityLevel, EntityStatus } from "@/app/lib/schemas";
 import { LEVEL_META, ENTITY_STATUS_META } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
 import { cn } from "@/app/lib/utils";
+import { useDraggable } from "@dnd-kit/core";
 
 const LEVEL_ICON_MAP: Record<string, LucideIcon> = {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
@@ -21,15 +22,24 @@ interface ChildEntityCardProps {
   preview: string;
   status?: EntityStatus;
   badge?: string;
+  hideStatus?: boolean;
+  draggable?: boolean;
 }
 
-export function ChildEntityCard({ id, title, level, preview, status, badge }: ChildEntityCardProps) {
+export function ChildEntityCard({ id, title, level, preview, status, badge, hideStatus, draggable }: ChildEntityCardProps) {
   const { navigateToChild } = useAppStore();
   const levelMeta = LEVEL_META[level];
   const IconComponent = LEVEL_ICON_MAP[levelMeta.icon];
 
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id,
+    disabled: !draggable,
+  });
+
   return (
     <button
+      ref={setNodeRef}
+      {...(draggable ? { ...listeners, ...attributes } : {})}
       onClick={() => navigateToChild(id)}
       className={cn(
         "cursor-pointer text-left w-full p-4 rounded-xl border-l-2 border border-white/8",
@@ -37,9 +47,10 @@ export function ChildEntityCard({ id, title, level, preview, status, badge }: Ch
         "flex flex-col gap-2.5 group relative",
         levelMeta.bgTint,
         levelMeta.borderTint,
+        isDragging && "opacity-0 pointer-events-none",
       )}
     >
-      {status && (
+      {status && !hideStatus && (
         <span className={cn("absolute top-3 right-3 text-[9px] px-1.5 py-0.5 rounded border font-medium", ENTITY_STATUS_META[status].color)}>
           {ENTITY_STATUS_META[status].label}
         </span>
@@ -51,7 +62,7 @@ export function ChildEntityCard({ id, title, level, preview, status, badge }: Ch
           </div>
         )}
         <div className="flex flex-col flex-1 min-w-0">
-          <span className="text-sm font-semibold text-foreground line-clamp-3 pr-14">{title}</span>
+          <span className={cn("text-sm font-semibold text-foreground line-clamp-3", !hideStatus && "pr-14")}>{title}</span>
           <span className={cn("text-[10px] uppercase tracking-wider font-medium", levelMeta.accentColor)}>
             {levelMeta.label}
           </span>

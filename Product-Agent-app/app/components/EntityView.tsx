@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
-  ChevronDown, Pencil, Trash2, Plus, X, Check, Copy,
+  ChevronDown, Pencil, Trash2, Plus, X, Check, Copy, LayoutGrid, Columns3,
   type LucideIcon,
 } from "lucide-react";
 import type {
@@ -15,6 +15,7 @@ import { LEVEL_META, CHILD_LEVEL, ENTITY_STATUS_META, ENTITY_STATUSES } from "@/
 import { useAppStore } from "@/app/lib/store";
 import { getEntity, getRootEntities, getEntityPreview, generateId, cn, buildEntityAnchor, buildRootAnchor } from "@/app/lib/utils";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
+import { DndContext, DragEndEvent, useDroppable, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
 import { EntityBreadcrumb } from "./EntityBreadcrumb";
 import { ChildEntityCard } from "./ChildEntityCard";
 
@@ -494,7 +495,7 @@ function AddChildForm({ parentId, childLevel, onClose }: { parentId: string; chi
       title: title.trim(),
       icon: childMeta.icon,
       description: description.trim(),
-      status: "now",
+      status: "later",
       parentId,
       children: [],
       blocks: [],
@@ -537,9 +538,49 @@ function AddChildForm({ parentId, childLevel, onClose }: { parentId: string; chi
   );
 }
 
+// ── Kanban column config ──────────────────────────────────────────────────
+
+const KANBAN_COLUMNS = [
+  { key: "later", label: "Later", statuses: ["later"] as EntityStatus[],            accentBorder: "border-zinc-400/30",    dotColor: "bg-zinc-400" },
+  { key: "next",  label: "Next",  statuses: ["next"] as EntityStatus[],             accentBorder: "border-blue-400/30",    dotColor: "bg-blue-400" },
+  { key: "now",   label: "Now",   statuses: ["now"] as EntityStatus[],              accentBorder: "border-emerald-400/30", dotColor: "bg-emerald-400" },
+  { key: "done",  label: "Done",  statuses: ["done", "archived"] as EntityStatus[], accentBorder: "border-violet-400/30",  dotColor: "bg-violet-400" },
+];
+
+function KanbanColumn({ columnKey, label, dotColor, accentBorder, children, count }: {
+  columnKey: string; label: string; dotColor: string; accentBorder: string; children: React.ReactNode; count: number;
+}) {
+  const { isOver, setNodeRef } = useDroppable({ id: columnKey });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "rounded-lg bg-white/[0.02] border border-white/5 p-2 flex flex-col gap-2 min-w-[75vw] md:min-w-0 snap-center",
+        "border-t-2",
+        accentBorder,
+        isOver && "border-white/20 bg-white/[0.04]",
+      )}
+    >
+      <div className="flex items-center gap-2 px-1 py-1">
+        <span className={cn("w-2 h-2 rounded-full shrink-0", dotColor)} />
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">{label}</span>
+        <span className="text-[10px] text-muted-foreground/40 ml-auto">{count}</span>
+      </div>
+      <div className="flex flex-col gap-2 flex-1">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function ChildrenGrid({ entity }: { entity: Entity }) {
   const { entities } = useProductLine();
+  const { updateEntity } = useAppStore();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const childLevel = CHILD_LEVEL[entity.level];
 
   const children = entity.children
@@ -549,28 +590,79 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
   const levelMeta = LEVEL_META[entity.level];
   const hasContent = children.length > 0 || childLevel !== null;
 
+  // Default to kanban when 4+ children, grid otherwise
+  const [viewMode, setViewMode] = useState<"grid" | "kanban">(children.length >= 4 ? "kanban" : "grid");
+
   if (!hasContent) return null;
+
+  function getChildCardProps(child: Entity) {
+    let preview = getEntityPreview(child);
+    let badge = "";
+    if (child.level === "product_outcome") {
+      const metricBlock = child.blocks.find((b) => b.type === "metric");
+      const childCount = child.children?.length ?? 0;
+      if (metricBlock && metricBlock.type === "metric") {
+        preview = `${metricBlock.currentValue} → ${metricBlock.targetValue}${metricBlock.timeframe ? ` · ${metricBlock.timeframe}` : ""}`;
+      }
+      badge = `${childCount} opportunit${childCount !== 1 ? "ies" : "y"}`;
+    }
+    return { preview, badge };
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setActiveId(null);
+    const { active, over } = event;
+    if (!over) return;
+    const columnKey = over.id as string;
+    const statusMap: Record<string, EntityStatus> = { later: "later", next: "next", now: "now", done: "done" };
+    const newStatus = statusMap[columnKey];
+    if (newStatus) {
+      updateEntity(active.id as string, { status: newStatus });
+    }
+  }
+
+  const activeChild = activeId ? children.find(c => c.id === activeId) : null;
 
   return (
     <div className="flex flex-col gap-3 mt-2">
+      {/* Header with view toggle */}
       {(children.length > 0 || childLevel) && (
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-          {levelMeta.childrenLabel}
-        </span>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+            {levelMeta.childrenLabel}
+          </span>
+          {children.length > 0 && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={cn(
+                  "cursor-pointer p-1.5 rounded-md transition-colors",
+                  viewMode === "grid" ? "bg-white/10 text-foreground" : "text-muted-foreground/40 hover:text-foreground hover:bg-white/5"
+                )}
+                title="Grid view"
+              >
+                <LayoutGrid size={14} />
+              </button>
+              <button
+                onClick={() => setViewMode("kanban")}
+                className={cn(
+                  "cursor-pointer p-1.5 rounded-md transition-colors",
+                  viewMode === "kanban" ? "bg-white/10 text-foreground" : "text-muted-foreground/40 hover:text-foreground hover:bg-white/5"
+                )}
+                title="Kanban view"
+              >
+                <Columns3 size={14} />
+              </button>
+            </div>
+          )}
+        </div>
       )}
-      {children.length > 0 && (
+
+      {/* Grid view */}
+      {viewMode === "grid" && children.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {children.map((child) => {
-            let preview = getEntityPreview(child);
-            let badge = "";
-            if (child.level === "product_outcome") {
-              const metricBlock = child.blocks.find((b) => b.type === "metric");
-              const childCount = child.children?.length ?? 0;
-              if (metricBlock && metricBlock.type === "metric") {
-                preview = `${metricBlock.currentValue} → ${metricBlock.targetValue}${metricBlock.timeframe ? ` · ${metricBlock.timeframe}` : ""}`;
-              }
-              badge = `${childCount} opportunit${childCount !== 1 ? "ies" : "y"}`;
-            }
+            const { preview, badge } = getChildCardProps(child);
             return (
               <ChildEntityCard
                 key={child.id}
@@ -586,6 +678,101 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
           })}
         </div>
       )}
+
+      {/* Kanban view */}
+      {viewMode === "kanban" && children.length > 0 && (
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd} onDragStart={(e) => setActiveId(e.active.id as string)} collisionDetection={pointerWithin}>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none flex md:grid">
+            {KANBAN_COLUMNS.map((col) => {
+              const doneItems = children.filter((c) => c.status === "done");
+              const archivedItems = children.filter((c) => c.status === "archived");
+              const colChildren = col.key === "done"
+                ? doneItems
+                : children.filter((c) => col.statuses.includes(c.status));
+
+              const totalCount = col.key === "done" ? doneItems.length + archivedItems.length : colChildren.length;
+
+              return (
+                <KanbanColumn
+                  key={col.key}
+                  columnKey={col.key}
+                  label={col.label}
+                  dotColor={col.dotColor}
+                  accentBorder={col.accentBorder}
+                  count={totalCount}
+                >
+                  {colChildren.length === 0 && (col.key !== "done" || archivedItems.length === 0) && (
+                    <p className="text-xs text-muted-foreground/30 italic px-1 py-3 text-center">No items</p>
+                  )}
+                  {colChildren.map((child) => {
+                    const { preview, badge } = getChildCardProps(child);
+                    return (
+                      <ChildEntityCard
+                        key={child.id}
+                        id={child.id}
+                        title={child.title}
+                        icon={child.icon}
+                        level={child.level}
+                        preview={preview}
+                        status={child.status}
+                        badge={badge}
+                        hideStatus
+                        draggable
+                      />
+                    );
+                  })}
+                  {/* Archived toggle in Done column */}
+                  {col.key === "done" && archivedItems.length > 0 && (
+                    <>
+                      <button
+                        onClick={() => setShowArchived(!showArchived)}
+                        className="cursor-pointer text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors flex items-center gap-1.5 px-1 py-1"
+                      >
+                        <ChevronDown size={12} className={cn("transition-transform", showArchived && "rotate-180")} />
+                        {showArchived ? "Hide" : "Show"} {archivedItems.length} archived
+                      </button>
+                      {showArchived && archivedItems.map((child) => {
+                        const { preview, badge } = getChildCardProps(child);
+                        return (
+                          <ChildEntityCard
+                            key={child.id}
+                            id={child.id}
+                            title={child.title}
+                            icon={child.icon}
+                            level={child.level}
+                            preview={preview}
+                            status={child.status}
+                            badge={badge}
+                            hideStatus
+                            draggable
+                          />
+                        );
+                      })}
+                    </>
+                  )}
+                </KanbanColumn>
+              );
+            })}
+          </div>
+          <DragOverlay>
+            {activeChild ? (
+              <div className="bg-zinc-900 rounded-xl shadow-2xl shadow-black/50">
+                <ChildEntityCard
+                  id={activeChild.id}
+                  title={activeChild.title}
+                  icon={activeChild.icon}
+                  level={activeChild.level}
+                  preview={getChildCardProps(activeChild).preview}
+                  status={activeChild.status}
+                  badge={getChildCardProps(activeChild).badge}
+                  hideStatus
+                />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      )}
+
       {childLevel && !showAddForm && (
         <button
           onClick={() => setShowAddForm(true)}
@@ -618,7 +805,7 @@ function AddRootEntityForm({ onClose }: { onClose: () => void }) {
       title: title.trim(),
       icon: boMeta.icon,
       description: description.trim(),
-      status: "now",
+      status: "later",
       children: [],
       blocks: [],
     };
