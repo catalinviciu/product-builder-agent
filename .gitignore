@@ -2,7 +2,6 @@
 /*
 
 # Except these
-!.gitignore
 !README.md
 !/Solution3/
 
@@ -11,4 +10,4 @@ Solution3/node_modules/
 Solution3/.next/
 Solution3/data/
 
-.gitignore
+
