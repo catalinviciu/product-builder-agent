@@ -1,8 +1,9 @@
 # Ignore everything
 /*
 
-# Except .gitignore and Solution3
+# Except these
 !.gitignore
+!README.md
 !/Solution3/
 
 # Inside Solution3, ignore these
