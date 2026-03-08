@@ -41,7 +41,7 @@ export function DashboardLayout() {
         {!sidebarOpen && (
           <button
             onClick={toggleSidebar}
-            className="md:hidden fixed top-3 left-3 z-50 p-2 rounded-lg bg-popover border border-border-default text-muted-foreground hover:text-foreground transition-colors"
+            className="cursor-pointer md:hidden fixed top-3 left-3 z-50 p-2 rounded-lg bg-popover border border-border-default text-muted-foreground hover:text-foreground transition-colors"
           >
             <Menu size={18} />
           </button>
@@ -87,7 +87,7 @@ export function DashboardLayout() {
           <button
             onClick={toggleSidebar}
             className={cn(
-              "hidden md:flex items-center justify-center",
+              "cursor-pointer hidden md:flex items-center justify-center",
               "absolute top-3 z-20 p-1.5 rounded-lg",
               "bg-popover border border-border-default text-muted-foreground hover:text-foreground transition-all duration-300",
               sidebarOpen ? "left-[282px]" : "left-3"

@@ -24,8 +24,7 @@ Top to bottom within the left panel.
 
 - **Product Line Selector** — Dropdown at top to switch, create, edit, or delete product lines
 - **Overview Button** — Navigation item to go to the root/overview page
-- **Entity Tree** — Hierarchical tree of all entities, click any to navigate
-- **Reset Button** — At the very bottom, reloads sample data (destructive)
+- **Entity Tree** — Hierarchical tree of active entities (done/archived/dropped are hidden), sorted by status priority (commit → explore → draft). Hovering the status dot shows a level tooltip.
 
 ---
 

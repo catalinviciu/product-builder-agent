@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical, LayoutGrid,
-  ChevronDown, Check, Plus, Pencil, X, Trash2, RotateCcw,
+  ChevronDown, Check, Plus, Pencil, X, Trash2,
   type LucideIcon,
 } from "lucide-react";
 import type { Entity, ProductLineStatus } from "@/app/lib/schemas";
@@ -272,9 +272,11 @@ function ProductLineSelector() {
   );
 }
 
+const HIDDEN_STATUSES = new Set(["done", "archived", "dropped"]);
+const STATUS_SORT_ORDER: Record<string, number> = { commit: 0, explore: 1, draft: 2 };
+
 export function SectionNav() {
-  const { currentEntityId, navigateTo, resetData } = useAppStore();
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const { currentEntityId, navigateTo } = useAppStore();
   const { tree, entities, name } = useProductLine();
 
   const expandedIds = React.useMemo(() => {
@@ -324,15 +326,15 @@ export function SectionNav() {
             )}
           >
             {entity.title}
-            <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", ENTITY_STATUS_META[entity.status].dotColor)} />
+            <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", ENTITY_STATUS_META[entity.status].dotColor)} title={levelMeta.label} />
           </span>
         </button>
 
-        {hasChildren && isExpanded && entity.children.map((childId) => {
-          const child = entities[childId];
-          if (!child) return null;
-          return renderEntity(child, depth + 1);
-        })}
+        {hasChildren && isExpanded && entity.children
+          .map((childId) => entities[childId])
+          .filter((child): child is Entity => !!child && !HIDDEN_STATUSES.has(child.status))
+          .sort((a, b) => (STATUS_SORT_ORDER[a.status] ?? 99) - (STATUS_SORT_ORDER[b.status] ?? 99))
+          .map((child) => renderEntity(child, depth + 1))}
       </div>
     );
   }
@@ -356,38 +358,12 @@ export function SectionNav() {
         </span>
       </button>
 
-      {tree.rootChildren.map((id) => {
-        const entity = entities[id];
-        if (!entity) return null;
-        return renderEntity(entity, 0);
-      })}
+      {tree.rootChildren
+        .map((id) => entities[id])
+        .filter((entity): entity is Entity => !!entity && !HIDDEN_STATUSES.has(entity.status))
+        .sort((a, b) => (STATUS_SORT_ORDER[a.status] ?? 99) - (STATUS_SORT_ORDER[b.status] ?? 99))
+        .map((entity) => renderEntity(entity, 0))}
 
-      <div className="mt-auto pt-4 border-t border-border-subtle px-2">
-        {showResetConfirm ? (
-          <div className="flex items-center gap-2 text-[10px]">
-            <span className="text-muted-foreground/60">Reset all data?</span>
-            <button
-              onClick={() => { resetData(); setShowResetConfirm(false); }}
-              className="cursor-pointer px-1.5 py-0.5 rounded bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/30"
-            >
-              Yes
-            </button>
-            <button
-              onClick={() => setShowResetConfirm(false)}
-              className="cursor-pointer px-1.5 py-0.5 rounded bg-surface-hover text-muted-foreground"
-            >
-              No
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setShowResetConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 text-[10px] text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-          >
-            <RotateCcw size={10} /> Reset to defaults
-          </button>
-        )}
-      </div>
     </nav>
   );
 }
