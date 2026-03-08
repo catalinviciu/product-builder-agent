@@ -1173,17 +1173,25 @@ function RootView() {
 // ── Main component ───────────────────────────────────────────────────────
 
 export function EntityView() {
-  const { currentEntityId, updateEntity } = useAppStore();
+  const { currentEntityId, updateEntity, deleteEntity, dropEntityCascade } = useAppStore();
   const productLine = useProductLine();
   const { entities } = productLine;
   const [expanded, setExpanded] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
+  const [confirmDeleteEntity, setConfirmDeleteEntity] = useState(false);
+  const [confirmDrop, setConfirmDrop] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editingTitle && titleInputRef.current) titleInputRef.current.focus();
   }, [editingTitle]);
+
+  // Reset confirmations when entity changes
+  useEffect(() => {
+    setConfirmDeleteEntity(false);
+    setConfirmDrop(false);
+  }, [currentEntityId]);
 
   if (!currentEntityId) return <RootView />;
 
@@ -1208,9 +1216,62 @@ export function EntityView() {
           <span className={cn("text-[10px] font-semibold uppercase tracking-widest", levelMeta.accentColor)}>
             {levelMeta.label}
           </span>
-          <StatusPicker status={entity.status} onChange={(s) => updateEntity(entity.id, { status: s })} />
+          <StatusPicker status={entity.status} onChange={(s) => {
+            if (s === 'dropped' && entity.children.length > 0) {
+              setConfirmDrop(true);
+            } else {
+              updateEntity(entity.id, { status: s });
+            }
+          }} />
           <CopyAnchorButton text={buildEntityAnchor(entities, productLine.name, entity.id)} />
+          {entity.children.length === 0 && (
+            confirmDeleteEntity ? (
+              <div className="flex items-center gap-1 ml-1">
+                <button
+                  onClick={() => { deleteEntity(entity.id); setConfirmDeleteEntity(false); }}
+                  className="cursor-pointer text-[10px] font-medium px-2 py-1 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 transition-colors"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteEntity(false)}
+                  className="cursor-pointer text-[10px] font-medium px-2 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors"
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDeleteEntity(true)}
+                title="Delete entity"
+                className="cursor-pointer p-1 rounded text-muted-foreground/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+              >
+                <Trash2 size={14} />
+              </button>
+            )
+          )}
         </div>
+
+        {/* Cascade drop warning */}
+        {confirmDrop && (
+          <div className="inline-flex items-center gap-3 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-b-lg rounded-tr-lg text-sm">
+            <span className="text-red-600 dark:text-red-400 text-xs">
+              This will also drop all {entity.children.length} {entity.children.length === 1 ? 'child' : 'children'}. Continue?
+            </span>
+            <button
+              onClick={() => { dropEntityCascade(entity.id); setConfirmDrop(false); }}
+              className="cursor-pointer text-[10px] font-medium px-2.5 py-1 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 transition-colors"
+            >
+              Drop all
+            </button>
+            <button
+              onClick={() => setConfirmDrop(false)}
+              className="cursor-pointer text-[10px] font-medium px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
 
         {/* Body */}
         <div className="rounded-xl rounded-tl-none border border-border-default bg-background flex flex-col">

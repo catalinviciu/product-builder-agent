@@ -40,6 +40,7 @@ interface AppStore {
   updateEntity: (id: string, updates: Partial<Entity>) => void;
   addChildEntity: (parentId: string, entity: Entity) => void;
   deleteEntity: (id: string) => void;
+  dropEntityCascade: (id: string) => void;
 
   // Block CRUD
   addBlock: (entityId: string, block: Block) => void;
@@ -261,6 +262,26 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
         productLines: {
           ...state.productLines,
           [state.currentProductLineId]: { ...pl, tree: newTree, entities: newEntities },
+        },
+      };
+    }),
+
+  dropEntityCascade: (id) =>
+    set((state) => {
+      const pl = state.productLines[state.currentProductLineId];
+      if (!pl || !pl.entities[id]) return state;
+      const newEntities = { ...pl.entities };
+      const cascade = (eid: string) => {
+        const e = newEntities[eid];
+        if (!e) return;
+        newEntities[eid] = { ...e, status: 'dropped' };
+        e.children.forEach(cascade);
+      };
+      cascade(id);
+      return {
+        productLines: {
+          ...state.productLines,
+          [state.currentProductLineId]: { ...pl, entities: newEntities },
         },
       };
     }),

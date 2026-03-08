@@ -91,7 +91,9 @@
             { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
             { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
             { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] }
+            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] },
+            { "action": "Delete the entity (only when it has no children)", "components": ["Entity Tab"] },
+            { "action": "Drop entity and all children via status change confirmation", "components": ["Entity Tab", "Status Picker"] }
           ]
         },
         {
@@ -129,7 +131,9 @@
             { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
             { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
             { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] }
+            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] },
+            { "action": "Delete the entity (only when it has no children)", "components": ["Entity Tab"] },
+            { "action": "Drop entity and all children via status change confirmation", "components": ["Entity Tab", "Status Picker"] }
           ]
         },
         {
@@ -174,7 +178,9 @@
             { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
             { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
             { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] }
+            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] },
+            { "action": "Delete the entity (only when it has no children)", "components": ["Entity Tab"] },
+            { "action": "Drop entity and all children via status change confirmation", "components": ["Entity Tab", "Status Picker"] }
           ]
         },
         {
@@ -212,7 +218,9 @@
             { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
             { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
             { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] }
+            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] },
+            { "action": "Delete the entity (only when it has no children)", "components": ["Entity Tab"] },
+            { "action": "Drop entity and all children via status change confirmation", "components": ["Entity Tab", "Status Picker"] }
           ]
         },
         {
@@ -250,7 +258,9 @@
             { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
             { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
             { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] }
+            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] },
+            { "action": "Delete the entity (only when it has no children)", "components": ["Entity Tab"] },
+            { "action": "Drop entity and all children via status change confirmation", "components": ["Entity Tab", "Status Picker"] }
           ]
         },
         {
@@ -268,7 +278,9 @@
             { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
             { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
             { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] }
+            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] },
+            { "action": "Delete the entity (only when it has no children)", "components": ["Entity Tab"] },
+            { "action": "Drop entity and all children via status change confirmation", "components": ["Entity Tab", "Status Picker"] }
           ]
         }
       ]

@@ -62,6 +62,8 @@
 |  | Delete a block | `EntityView` · `Block Toolbar` |
 |  | Change status via the Status Picker | `Entity Tab` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
+|  | Delete the entity (only when it has no children) | `Entity Tab` |
+|  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
 | **Add Product Outcome children** | Click "Add Product Outcome" in the children section | `Add Child Button` |
 
 
@@ -83,6 +85,8 @@
 |  | Delete a block | `EntityView` · `Block Toolbar` |
 |  | Change status via the Status Picker | `Entity Tab` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
+|  | Delete the entity (only when it has no children) | `Entity Tab` |
+|  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
 | **Add Opportunity children** | Click "Add Opportunity" in the children section | `Add Child Button` |
 
 
@@ -103,6 +107,8 @@
 |  | Delete a block | `EntityView` · `Block Toolbar` |
 |  | Change status via the Status Picker | `Entity Tab` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
+|  | Delete the entity (only when it has no children) | `Entity Tab` |
+|  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
 | **Add Solution children** | Click "Add Solution" in the children section | `Add Child Button` |
 
 
@@ -121,6 +127,8 @@
 |  | Delete a block | `EntityView` · `Block Toolbar` |
 |  | Change status via the Status Picker | `Entity Tab` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
+|  | Delete the entity (only when it has no children) | `Entity Tab` |
+|  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
 | **Add Assumption children** | Click "Add Assumption" in the children section | `Add Child Button` |
 
 
@@ -139,6 +147,8 @@
 |  | Delete a block | `EntityView` · `Block Toolbar` |
 |  | Change status via the Status Picker | `Entity Tab` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
+|  | Delete the entity (only when it has no children) | `Entity Tab` |
+|  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
 | **Add Test children** | Click "Add Test" in the children section | `Add Child Button` |
 | **Refine the Test** | Edit title inline (click pencil on hover) | `EntityView` · `Inline Edit` |
 |  | Add or edit description inline | `EntityView` · `Inline Edit` |
@@ -147,6 +157,8 @@
 |  | Delete a block | `EntityView` · `Block Toolbar` |
 |  | Change status via the Status Picker | `Entity Tab` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
+|  | Delete the entity (only when it has no children) | `Entity Tab` |
+|  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
 
 
 ### Activity 8: Organize & Prioritize
