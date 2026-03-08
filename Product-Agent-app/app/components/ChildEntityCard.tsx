@@ -44,7 +44,7 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
       onClick={() => navigateToChild(id)}
       className={cn(
         "cursor-pointer text-left w-full p-4 rounded-xl border-l-2 border border-border-default",
-        "hover:border-border-strong hover:bg-surface-2 hover:shadow-md hover:shadow-shadow-color transition-all duration-150",
+        "hover:border-border-strong hover:bg-surface-hover hover:shadow-md hover:shadow-shadow-color hover:brightness-110 dark:hover:brightness-125 transition-all duration-150",
         "flex flex-col gap-2.5 group relative",
         levelMeta.bgTint,
         levelMeta.borderTint,

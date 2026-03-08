@@ -147,11 +147,11 @@
   --sidebar-ring: oklch(0.556 0 0);
 
   /* ── Surface tokens (dark mode: white with opacity) ── */
-  --surface-1: oklch(1 0 0 / 2%);
-  --surface-2: oklch(1 0 0 / 4%);
-  --surface-3: oklch(1 0 0 / 7%);
-  --surface-hover: oklch(1 0 0 / 5%);
-  --surface-active: oklch(1 0 0 / 8%);
+  --surface-1: oklch(1 0 0 / 3%);
+  --surface-2: oklch(1 0 0 / 6%);
+  --surface-3: oklch(1 0 0 / 10%);
+  --surface-hover: oklch(1 0 0 / 8%);
+  --surface-active: oklch(1 0 0 / 12%);
 
   /* ── Border tokens (dark mode) ── */
   --border-subtle: oklch(1 0 0 / 6%);
