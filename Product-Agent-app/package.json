@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate:story-map": "npx tsx scripts/generate-story-map.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

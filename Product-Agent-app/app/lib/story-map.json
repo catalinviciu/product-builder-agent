@@ -1,0 +1,351 @@
+{
+  "persona": "Product Builder",
+  "description": "A product manager or product-minded builder who needs to extract, articulate, and maintain product context using the Discovery Tree framework.",
+  "activities": [
+    {
+      "id": "setup-product-line",
+      "title": "Set Up a Product Line",
+      "goal": "Create the top-level container that holds all discovery work for one product.",
+      "steps": [
+        {
+          "title": "Create product line",
+          "stories": [
+            { "action": "Open the Product Line Selector dropdown", "components": ["Product Line Selector"] },
+            { "action": "Click \"New Product Line\"", "components": ["Product Line Selector"] },
+            { "action": "Enter name and confirm", "components": ["Product Line Selector"] }
+          ]
+        },
+        {
+          "title": "Edit product line details",
+          "stories": [
+            { "action": "Click product line title to edit inline", "components": ["Overview Title"] },
+            { "action": "Click product line description to edit inline", "components": ["Overview Description"] }
+          ]
+        },
+        {
+          "title": "Delete product line",
+          "stories": [
+            { "action": "Open Product Line Selector and click delete", "components": ["Product Line Selector"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "define-personas",
+      "title": "Define Personas",
+      "goal": "Create and manage user/buyer personas for the current product line.",
+      "steps": [
+        {
+          "title": "Open Persona Manager",
+          "stories": [
+            { "action": "Expand the Persona Manager section in the sidebar", "components": ["Persona Manager"] }
+          ]
+        },
+        {
+          "title": "Add a persona",
+          "stories": [
+            { "action": "Click \"Add Persona\" to open the slide-over form", "components": ["Persona Manager", "PersonaSlideOver"] },
+            { "action": "Enter name and description", "components": ["PersonaSlideOver"] },
+            { "action": "Save the persona", "components": ["PersonaSlideOver"] }
+          ]
+        },
+        {
+          "title": "Edit a persona",
+          "stories": [
+            { "action": "Click pencil icon on a Persona Item to open slide-over", "components": ["Persona Item", "PersonaSlideOver"] },
+            { "action": "Modify fields and save", "components": ["PersonaSlideOver"] }
+          ]
+        },
+        {
+          "title": "Delete a persona",
+          "stories": [
+            { "action": "Click trash icon on a Persona Item", "components": ["Persona Item"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "define-business-outcome",
+      "title": "Define a Business Outcome",
+      "goal": "Create the top-level strategic goal for the product line.",
+      "steps": [
+        {
+          "title": "Open Overview",
+          "stories": [
+            { "action": "Click \"Overview\" in the sidebar", "components": ["Overview Button", "SectionNav"] }
+          ]
+        },
+        {
+          "title": "Add Business Outcome",
+          "stories": [
+            { "action": "Click the dashed \"Add Business Outcome\" button", "components": ["Add Root Form"] },
+            { "action": "Enter title and description, then confirm", "components": ["Add Root Form"] }
+          ]
+        },
+        {
+          "title": "Refine the entity",
+          "stories": [
+            { "action": "Edit title inline (click pencil on hover)", "components": ["EntityView", "Inline Edit"] },
+            { "action": "Add or edit description inline", "components": ["EntityView", "Inline Edit"] },
+            { "action": "Add a content block (accordion, pills, quote, metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
+            { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
+            { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] }
+          ]
+        },
+        {
+          "title": "Add Product Outcome children",
+          "stories": [
+            { "action": "Click \"Add Product Outcome\" in the children section", "components": ["Add Child Button"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "define-product-outcome",
+      "title": "Define a Product Outcome",
+      "goal": "Break a business outcome into measurable product-level results.",
+      "steps": [
+        {
+          "title": "Open parent Business Outcome",
+          "stories": [
+            { "action": "Click the Business Outcome in the Entity Tree or Breadcrumb", "components": ["Entity Tree", "Breadcrumb"] }
+          ]
+        },
+        {
+          "title": "Add Product Outcome",
+          "stories": [
+            { "action": "Click \"Add Product Outcome\" in the children section", "components": ["Add Child Button"] },
+            { "action": "Enter title and description, then confirm", "components": ["Add Child Button"] }
+          ]
+        },
+        {
+          "title": "Refine the entity",
+          "stories": [
+            { "action": "Edit title inline (click pencil on hover)", "components": ["EntityView", "Inline Edit"] },
+            { "action": "Add or edit description inline", "components": ["EntityView", "Inline Edit"] },
+            { "action": "Add a content block (accordion, pills, quote, metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
+            { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
+            { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] }
+          ]
+        },
+        {
+          "title": "Add Opportunity children",
+          "stories": [
+            { "action": "Click \"Add Opportunity\" in the children section", "components": ["Add Child Button"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "map-opportunities",
+      "title": "Map Opportunities",
+      "goal": "Identify user needs and pain points that a product outcome could address.",
+      "steps": [
+        {
+          "title": "Open parent Product Outcome",
+          "stories": [
+            { "action": "Click the Product Outcome in the Entity Tree or Breadcrumb", "components": ["Entity Tree", "Breadcrumb"] }
+          ]
+        },
+        {
+          "title": "Add Opportunity",
+          "stories": [
+            { "action": "Click \"Add Opportunity\" in the children section", "components": ["Add Child Button"] },
+            { "action": "Enter title and description, then confirm", "components": ["Add Child Button"] }
+          ]
+        },
+        {
+          "title": "Assign a Persona",
+          "stories": [
+            { "action": "Click the Persona Picker pill on the entity tab", "components": ["Entity Tab", "Persona Picker"] },
+            { "action": "Select a persona from the dropdown", "components": ["Persona Picker"] }
+          ]
+        },
+        {
+          "title": "Refine the entity",
+          "stories": [
+            { "action": "Edit title inline (click pencil on hover)", "components": ["EntityView", "Inline Edit"] },
+            { "action": "Add or edit description inline", "components": ["EntityView", "Inline Edit"] },
+            { "action": "Add a content block (accordion, pills, quote, metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
+            { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
+            { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] }
+          ]
+        },
+        {
+          "title": "Add Solution children",
+          "stories": [
+            { "action": "Click \"Add Solution\" in the children section", "components": ["Add Child Button"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design-solutions",
+      "title": "Design Solutions",
+      "goal": "Propose concrete solutions that address an identified opportunity.",
+      "steps": [
+        {
+          "title": "Open parent Opportunity",
+          "stories": [
+            { "action": "Click the Opportunity in the Entity Tree or Breadcrumb", "components": ["Entity Tree", "Breadcrumb"] }
+          ]
+        },
+        {
+          "title": "Add Solution",
+          "stories": [
+            { "action": "Click \"Add Solution\" in the children section", "components": ["Add Child Button"] },
+            { "action": "Enter title and description, then confirm", "components": ["Add Child Button"] }
+          ]
+        },
+        {
+          "title": "Refine the entity",
+          "stories": [
+            { "action": "Edit title inline (click pencil on hover)", "components": ["EntityView", "Inline Edit"] },
+            { "action": "Add or edit description inline", "components": ["EntityView", "Inline Edit"] },
+            { "action": "Add a content block (accordion, pills, quote, metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
+            { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
+            { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] }
+          ]
+        },
+        {
+          "title": "Add Assumption children",
+          "stories": [
+            { "action": "Click \"Add Assumption\" in the children section", "components": ["Add Child Button"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "validate-assumptions",
+      "title": "Validate Assumptions",
+      "goal": "Surface and test the riskiest assumptions behind a solution.",
+      "steps": [
+        {
+          "title": "Open parent Solution",
+          "stories": [
+            { "action": "Click the Solution in the Entity Tree or Breadcrumb", "components": ["Entity Tree", "Breadcrumb"] }
+          ]
+        },
+        {
+          "title": "Add Assumption",
+          "stories": [
+            { "action": "Click \"Add Assumption\" in the children section", "components": ["Add Child Button"] },
+            { "action": "Enter title and description, then confirm", "components": ["Add Child Button"] }
+          ]
+        },
+        {
+          "title": "Refine the Assumption",
+          "stories": [
+            { "action": "Edit title inline (click pencil on hover)", "components": ["EntityView", "Inline Edit"] },
+            { "action": "Add or edit description inline", "components": ["EntityView", "Inline Edit"] },
+            { "action": "Add a content block (accordion, pills, quote, metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
+            { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
+            { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] }
+          ]
+        },
+        {
+          "title": "Add Test children",
+          "stories": [
+            { "action": "Click \"Add Test\" in the children section", "components": ["Add Child Button"] }
+          ]
+        },
+        {
+          "title": "Refine the Test",
+          "stories": [
+            { "action": "Edit title inline (click pencil on hover)", "components": ["EntityView", "Inline Edit"] },
+            { "action": "Add or edit description inline", "components": ["EntityView", "Inline Edit"] },
+            { "action": "Add a content block (accordion, pills, quote, metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
+            { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
+            { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "organize-prioritize",
+      "title": "Organize & Prioritize",
+      "goal": "Manage entity statuses and views to focus on what matters most.",
+      "steps": [
+        {
+          "title": "Change status",
+          "stories": [
+            { "action": "Open an entity and use the Status Picker", "components": ["Entity Tab", "Status Picker"] }
+          ]
+        },
+        {
+          "title": "Switch to Kanban view",
+          "stories": [
+            { "action": "Click the Kanban icon in the View Toggle", "components": ["View Toggle"] }
+          ]
+        },
+        {
+          "title": "Drag between columns",
+          "stories": [
+            { "action": "Drag a Child Card from one Kanban Column to another", "components": ["Kanban View", "Kanban Column", "Child Card", "Drag Overlay"] }
+          ]
+        },
+        {
+          "title": "Show/hide archived",
+          "stories": [
+            { "action": "Click the Archived Toggle in the Done column", "components": ["Kanban View", "Archived Toggle"] }
+          ]
+        },
+        {
+          "title": "Switch to Grid view",
+          "stories": [
+            { "action": "Click the Grid icon in the View Toggle", "components": ["View Toggle"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "navigate-review",
+      "title": "Navigate & Review",
+      "goal": "Move through the discovery tree to review and connect ideas.",
+      "steps": [
+        {
+          "title": "Open Overview",
+          "stories": [
+            { "action": "Click \"Overview\" in the sidebar", "components": ["Overview Button", "SectionNav"] }
+          ]
+        },
+        {
+          "title": "Browse the entity tree",
+          "stories": [
+            { "action": "Click any entity in the Entity Tree sidebar", "components": ["Entity Tree", "SectionNav"] }
+          ]
+        },
+        {
+          "title": "Use breadcrumbs",
+          "stories": [
+            { "action": "Click any segment in the Breadcrumb to jump up", "components": ["Breadcrumb"] }
+          ]
+        },
+        {
+          "title": "Switch product line",
+          "stories": [
+            { "action": "Open the Product Line Selector and choose another line", "components": ["Product Line Selector"] }
+          ]
+        },
+        {
+          "title": "Toggle sidebar",
+          "stories": [
+            { "action": "Click the Sidebar Toggle to collapse/expand", "components": ["Sidebar Toggle"] }
+          ]
+        }
+      ]
+    }
+  ]
+}
