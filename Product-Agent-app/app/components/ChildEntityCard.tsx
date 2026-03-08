@@ -9,6 +9,7 @@ import { LEVEL_META, ENTITY_STATUS_META } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
 import { cn } from "@/app/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 const LEVEL_ICON_MAP: Record<string, LucideIcon> = {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
@@ -25,10 +26,11 @@ interface ChildEntityCardProps {
   hideStatus?: boolean;
   draggable?: boolean;
   personaName?: string;
+  personaDescription?: string;
   secondaryPersonaCount?: number;
 }
 
-export function ChildEntityCard({ id, title, level, preview, status, badge, hideStatus, draggable, personaName, secondaryPersonaCount }: ChildEntityCardProps) {
+export function ChildEntityCard({ id, title, level, preview, status, badge, hideStatus, draggable, personaName, personaDescription, secondaryPersonaCount }: ChildEntityCardProps) {
   const { navigateToChild } = useAppStore();
   const levelMeta = LEVEL_META[level];
   const IconComponent = LEVEL_ICON_MAP[levelMeta.icon];
@@ -39,6 +41,7 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
   });
 
   return (
+    <TooltipProvider delayDuration={300}>
     <button
       ref={setNodeRef}
       {...(draggable ? { ...listeners, ...attributes } : {})}
@@ -78,16 +81,32 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
             </span>
           )}
           {personaName && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border-subtle text-muted-foreground/70 flex items-center gap-1">
-              <User size={9} className="shrink-0" />
-              {personaName}
-              {secondaryPersonaCount != null && secondaryPersonaCount > 0 && (
-                <span className="text-muted-foreground/40 ml-0.5">+{secondaryPersonaCount}</span>
-              )}
-            </span>
+            personaDescription ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border-subtle text-muted-foreground/70 flex items-center gap-1">
+                    <User size={9} className="shrink-0" />
+                    {personaName}
+                    {secondaryPersonaCount != null && secondaryPersonaCount > 0 && (
+                      <span className="text-muted-foreground/40 ml-0.5">+{secondaryPersonaCount}</span>
+                    )}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{personaDescription}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border-subtle text-muted-foreground/70 flex items-center gap-1">
+                <User size={9} className="shrink-0" />
+                {personaName}
+                {secondaryPersonaCount != null && secondaryPersonaCount > 0 && (
+                  <span className="text-muted-foreground/40 ml-0.5">+{secondaryPersonaCount}</span>
+                )}
+              </span>
+            )
           )}
         </div>
       )}
     </button>
+    </TooltipProvider>
   );
 }

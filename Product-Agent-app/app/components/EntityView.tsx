@@ -19,6 +19,7 @@ import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { DndContext, DragEndEvent, useDroppable, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
 import { EntityBreadcrumb } from "./EntityBreadcrumb";
 import { ChildEntityCard } from "./ChildEntityCard";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 const LEVEL_ICON_MAP: Record<string, LucideIcon> = {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
@@ -205,16 +206,36 @@ function PersonaPicker({ entityId, personaId }: { entityId: string; personaId?: 
 
   return (
     <div ref={ref} className="relative">
-      <button
-        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-        className={cn(
-          "cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1",
-          currentPersona ? "text-foreground/70" : "text-muted-foreground/50"
+      <TooltipProvider delayDuration={300}>
+        {currentPersona?.description ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+                className={cn(
+                  "cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1",
+                  "text-foreground/70"
+                )}
+              >
+                <User size={10} />
+                {currentPersona.name}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{currentPersona.description}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+            className={cn(
+              "cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1",
+              currentPersona ? "text-foreground/70" : "text-muted-foreground/50"
+            )}
+          >
+            <User size={10} />
+            {currentPersona ? currentPersona.name : "Unassigned"}
+          </button>
         )}
-      >
-        <User size={10} />
-        {currentPersona ? currentPersona.name : "Unassigned"}
-      </button>
+      </TooltipProvider>
       {open && (
         <div className="absolute left-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[160px]">
           <button
@@ -271,19 +292,40 @@ function SecondaryPersonaPicker({ entityId, secondaryPersonaIds, excludePersonaI
   };
 
   const count = secondaryPersonaIds.length;
+  const selectedPersonaNames = personas
+    .filter((p) => secondaryPersonaIds.includes(p.id))
+    .map((p) => p.name);
 
   return (
     <div ref={ref} className="relative">
-      <button
-        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-        className={cn(
-          "cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1",
-          count > 0 ? "text-foreground/70" : "text-muted-foreground/50"
+      <TooltipProvider delayDuration={300}>
+        {count > 0 ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+                className="cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1 text-foreground/70"
+              >
+                <Users size={10} />
+                {`${count} more`}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {selectedPersonaNames.map((name, i) => (
+                <div key={i}>{name}</div>
+              ))}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+            className="cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1 text-muted-foreground/50"
+          >
+            <Users size={10} />
+            Add personas
+          </button>
         )}
-      >
-        <Users size={10} />
-        {count > 0 ? `${count} more` : "Add personas"}
-      </button>
+      </TooltipProvider>
       {open && (
         <div className="absolute left-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[180px]">
           {personas.length === 0 && (
@@ -716,6 +758,10 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
     if (!PERSONA_LEVELS.has(child.level) || !child.personaId) return undefined;
     return personas.find((p) => p.id === child.personaId)?.name;
   };
+  const getPersonaDescription = (child: Entity) => {
+    if (!PERSONA_LEVELS.has(child.level) || !child.personaId) return undefined;
+    return personas.find((p) => p.id === child.personaId)?.description;
+  };
   const getSecondaryPersonaCount = (child: Entity) => {
     if (!MULTI_PERSONA_LEVELS.has(child.level)) return 0;
     return (child.secondaryPersonaIds ?? []).length;
@@ -834,6 +880,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                 status={child.status}
                 badge={badge}
                 personaName={getPersonaName(child)}
+                personaDescription={getPersonaDescription(child)}
                 secondaryPersonaCount={getSecondaryPersonaCount(child)}
               />
             );
@@ -881,6 +928,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                         hideStatus
                         draggable
                         personaName={getPersonaName(child)}
+                        personaDescription={getPersonaDescription(child)}
                         secondaryPersonaCount={getSecondaryPersonaCount(child)}
                       />
                     );
@@ -910,6 +958,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                             hideStatus
                             draggable
                             personaName={getPersonaName(child)}
+                            personaDescription={getPersonaDescription(child)}
                             secondaryPersonaCount={getSecondaryPersonaCount(child)}
                           />
                         );
@@ -933,6 +982,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                   badge={getChildCardProps(activeChild).badge}
                   hideStatus
                   personaName={getPersonaName(activeChild)}
+                  personaDescription={getPersonaDescription(activeChild)}
                   secondaryPersonaCount={getSecondaryPersonaCount(activeChild)}
                 />
               </div>
