@@ -30,7 +30,7 @@ export function EntityBreadcrumb() {
     <nav className="sticky top-0 z-10 flex items-center gap-2 text-sm text-muted-foreground py-3 mb-1 flex-wrap bg-background border-b border-border -mx-8 px-8">
       <button
         onClick={() => navigateTo(null)}
-        className="cursor-pointer flex items-center gap-1.5 hover:text-foreground transition-colors px-1.5 py-0.5 rounded-md hover:bg-white/5"
+        className="cursor-pointer flex items-center gap-1.5 hover:text-foreground transition-colors px-1.5 py-0.5 rounded-md hover:bg-surface-hover"
       >
         <LayoutGrid size={13} className="shrink-0 text-muted-foreground/50" />
         <span>Overview</span>
@@ -52,7 +52,7 @@ export function EntityBreadcrumb() {
             ) : (
               <button
                 onClick={() => navigateTo(seg.id)}
-                className="cursor-pointer flex items-center gap-1.5 hover:text-foreground transition-colors px-1.5 py-0.5 rounded-md hover:bg-white/5"
+                className="cursor-pointer flex items-center gap-1.5 hover:text-foreground transition-colors px-1.5 py-0.5 rounded-md hover:bg-surface-hover"
               >
                 {IconComponent && <IconComponent size={13} className="shrink-0 text-muted-foreground/50" />}
                 <span className="truncate max-w-[180px]">{seg.title}</span>

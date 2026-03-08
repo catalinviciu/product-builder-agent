@@ -37,7 +37,7 @@ function NewProductLineForm({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="px-2 mb-3">
-      <div className="rounded-lg border border-white/15 p-3 flex flex-col gap-2 bg-white/[0.02]">
+      <div className="rounded-lg border border-border-strong p-3 flex flex-col gap-2 bg-surface-1">
         <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
           New Product Line
         </span>
@@ -45,7 +45,7 @@ function NewProductLineForm({ onClose }: { onClose: () => void }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name (required)"
-          className="bg-white/5 border border-white/15 rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-white/30"
+          className="bg-surface-hover border border-border-strong rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-border-focus"
           autoFocus
           onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
         />
@@ -53,14 +53,14 @@ function NewProductLineForm({ onClose }: { onClose: () => void }) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Description (optional)"
-          className="bg-white/5 border border-white/15 rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-white/30"
+          className="bg-surface-hover border border-border-strong rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-border-focus"
           onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
         />
         <div className="flex gap-2">
-          <button onClick={handleSubmit} disabled={!name.trim()} className="cursor-pointer text-[10px] px-2 py-1 rounded-md bg-white/10 hover:bg-white/15 text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
+          <button onClick={handleSubmit} disabled={!name.trim()} className="cursor-pointer text-[10px] px-2 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
             <Check size={10} /> Create
           </button>
-          <button onClick={onClose} className="cursor-pointer text-[10px] px-2 py-1 rounded-md hover:bg-white/5 text-muted-foreground transition-colors flex items-center gap-1">
+          <button onClick={onClose} className="cursor-pointer text-[10px] px-2 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1">
             <X size={10} /> Cancel
           </button>
         </div>
@@ -88,7 +88,7 @@ function EditProductLineForm({ plId, onClose }: { plId: string; onClose: () => v
 
   return (
     <div className="px-2 mb-3">
-      <div className="rounded-lg border border-white/15 p-3 flex flex-col gap-2 bg-white/[0.02]">
+      <div className="rounded-lg border border-border-strong p-3 flex flex-col gap-2 bg-surface-1">
         <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
           Edit Product Line
         </span>
@@ -96,7 +96,7 @@ function EditProductLineForm({ plId, onClose }: { plId: string; onClose: () => v
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name"
-          className="bg-white/5 border border-white/15 rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-white/30"
+          className="bg-surface-hover border border-border-strong rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-border-focus"
           autoFocus
           onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
         />
@@ -104,7 +104,7 @@ function EditProductLineForm({ plId, onClose }: { plId: string; onClose: () => v
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Description"
-          className="bg-white/5 border border-white/15 rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-white/30"
+          className="bg-surface-hover border border-border-strong rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-border-focus"
           onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
         />
         <div className="flex gap-1.5">
@@ -116,7 +116,7 @@ function EditProductLineForm({ plId, onClose }: { plId: string; onClose: () => v
                 onClick={() => setStatus(s)}
                 className={cn(
                   "cursor-pointer text-[10px] px-2 py-1 rounded-md border transition-colors",
-                  status === s ? meta.color : "text-muted-foreground/40 bg-transparent border-white/8 hover:border-white/15"
+                  status === s ? meta.color : "text-muted-foreground/40 bg-transparent border-border-default hover:border-border-strong"
                 )}
               >
                 {meta.label}
@@ -125,10 +125,10 @@ function EditProductLineForm({ plId, onClose }: { plId: string; onClose: () => v
           })}
         </div>
         <div className="flex gap-2">
-          <button onClick={handleSubmit} disabled={!name.trim()} className="cursor-pointer text-[10px] px-2 py-1 rounded-md bg-white/10 hover:bg-white/15 text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
+          <button onClick={handleSubmit} disabled={!name.trim()} className="cursor-pointer text-[10px] px-2 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
             <Check size={10} /> Save
           </button>
-          <button onClick={onClose} className="cursor-pointer text-[10px] px-2 py-1 rounded-md hover:bg-white/5 text-muted-foreground transition-colors flex items-center gap-1">
+          <button onClick={onClose} className="cursor-pointer text-[10px] px-2 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1">
             <X size={10} /> Cancel
           </button>
         </div>
@@ -174,8 +174,8 @@ function ProductLineSelector() {
         onClick={() => setOpen(!open)}
         className={cn(
           "cursor-pointer flex items-center justify-between w-full px-2.5 py-2 rounded-lg text-left transition-colors",
-          "hover:bg-white/5 border border-white/8",
-          open && "bg-white/5 border-white/15"
+          "hover:bg-surface-hover border border-border-default",
+          open && "bg-surface-hover border-border-strong"
         )}
       >
         <div className="flex flex-col gap-0.5 min-w-0">
@@ -199,7 +199,7 @@ function ProductLineSelector() {
       </button>
 
       {open && (
-        <div className="absolute left-2 right-2 top-full mt-1 z-20 rounded-lg border border-white/10 bg-zinc-900 shadow-xl overflow-hidden">
+        <div className="absolute left-2 right-2 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden">
           {allLines.map((pl) => {
             const isActive = pl.id === currentProductLineId;
             return (
@@ -207,8 +207,8 @@ function ProductLineSelector() {
                 key={pl.id}
                 className={cn(
                   "flex items-center gap-2 w-full px-3 py-2.5 transition-colors group/pl",
-                  "hover:bg-white/5",
-                  isActive && "bg-white/[0.06]"
+                  "hover:bg-surface-hover",
+                  isActive && "bg-surface-3"
                 )}
               >
                 <button
@@ -224,7 +224,7 @@ function ProductLineSelector() {
                   <span className="text-[11px] text-muted-foreground/50">{pl.description}</span>
                 </button>
                 <div className="flex items-center gap-1 shrink-0">
-                  {isActive && <Check size={14} className="text-emerald-400" />}
+                  {isActive && <Check size={14} className="text-emerald-600 dark:text-emerald-400" />}
                   <button
                     onClick={(e) => { e.stopPropagation(); setEditingId(pl.id); setOpen(false); }}
                     className="cursor-pointer p-1 rounded text-muted-foreground/30 hover:text-foreground opacity-0 group-hover/pl:opacity-100 transition-opacity"
@@ -235,13 +235,13 @@ function ProductLineSelector() {
                     <div className="flex gap-1">
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteProductLine(pl.id); setOpen(false); setConfirmDeleteId(null); }}
-                        className="cursor-pointer text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                        className="cursor-pointer text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/30"
                       >
                         Yes
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }}
-                        className="cursor-pointer text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground"
+                        className="cursor-pointer text-[10px] px-1.5 py-0.5 rounded bg-surface-hover text-muted-foreground"
                       >
                         No
                       </button>
@@ -250,7 +250,7 @@ function ProductLineSelector() {
                     allLines.length > 1 && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(pl.id); }}
-                        className="cursor-pointer p-1 rounded text-muted-foreground/30 hover:text-red-400 opacity-0 group-hover/pl:opacity-100 transition-opacity"
+                        className="cursor-pointer p-1 rounded text-muted-foreground/30 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover/pl:opacity-100 transition-opacity"
                       >
                         <Trash2 size={11} />
                       </button>
@@ -262,7 +262,7 @@ function ProductLineSelector() {
           })}
           <button
             onClick={() => { setShowNewForm(true); setOpen(false); }}
-            className="cursor-pointer flex items-center gap-2 w-full px-3 py-2.5 text-left text-xs text-muted-foreground/50 hover:text-foreground hover:bg-white/5 transition-colors border-t border-white/5"
+            className="cursor-pointer flex items-center gap-2 w-full px-3 py-2.5 text-left text-xs text-muted-foreground/50 hover:text-foreground hover:bg-surface-hover transition-colors border-t border-border-subtle"
           >
             <Plus size={13} /> New product line
           </button>
@@ -302,8 +302,8 @@ export function SectionNav() {
           onClick={() => navigateTo(entity.id)}
           className={cn(
             "cursor-pointer flex items-start gap-2 w-full px-2 py-1.5 rounded-lg text-left transition-colors duration-150",
-            "hover:bg-white/5",
-            isActive && "bg-white/8 text-foreground",
+            "hover:bg-surface-hover",
+            isActive && "bg-surface-active text-foreground",
             !isActive && "text-muted-foreground"
           )}
           style={{ paddingLeft: `${8 + depth * 14}px` }}
@@ -345,8 +345,8 @@ export function SectionNav() {
         onClick={() => navigateTo(null)}
         className={cn(
           "cursor-pointer flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-left transition-colors duration-150",
-          "hover:bg-white/5",
-          currentEntityId === null && "bg-white/8 text-foreground",
+          "hover:bg-surface-hover",
+          currentEntityId === null && "bg-surface-active text-foreground",
           currentEntityId !== null && "text-muted-foreground"
         )}
       >
@@ -362,19 +362,19 @@ export function SectionNav() {
         return renderEntity(entity, 0);
       })}
 
-      <div className="mt-auto pt-4 border-t border-white/5 px-2">
+      <div className="mt-auto pt-4 border-t border-border-subtle px-2">
         {showResetConfirm ? (
           <div className="flex items-center gap-2 text-[10px]">
             <span className="text-muted-foreground/60">Reset all data?</span>
             <button
               onClick={() => { resetData(); setShowResetConfirm(false); }}
-              className="cursor-pointer px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"
+              className="cursor-pointer px-1.5 py-0.5 rounded bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/30"
             >
               Yes
             </button>
             <button
               onClick={() => setShowResetConfirm(false)}
-              className="cursor-pointer px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground"
+              className="cursor-pointer px-1.5 py-0.5 rounded bg-surface-hover text-muted-foreground"
             >
               No
             </button>

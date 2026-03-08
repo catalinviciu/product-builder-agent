@@ -3,9 +3,10 @@
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
-  ChevronDown, Pencil, Trash2, Plus, X, Check, Copy, LayoutGrid, Columns3,
+  ChevronDown, ChevronRight, Pencil, Trash2, Plus, X, Check, Copy, LayoutGrid, Columns3,
   type LucideIcon,
 } from "lucide-react";
 import type {
@@ -36,7 +37,7 @@ function CopyAnchorButton({ text }: { text: string }) {
       title="Copy context anchor for AI agent"
       className="cursor-pointer p-1 rounded text-muted-foreground/50 hover:text-foreground transition-colors"
     >
-      {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+      {copied ? <Check size={14} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={14} />}
     </button>
   );
 }
@@ -56,8 +57,8 @@ function MarkdownBlock({ content }: { content: string }) {
       [&_ul]:my-1.5 [&_ol]:my-1.5
       [&_li]:my-0.5
       [&_strong]:text-foreground/90 [&_strong]:font-medium
-      [&_code]:text-blue-300 [&_code]:text-xs [&_code]:bg-white/5 [&_code]:px-1 [&_code]:rounded
-      [&_blockquote]:text-muted-foreground/70 [&_blockquote]:border-l-2 [&_blockquote]:border-white/15
+      [&_code]:text-blue-600 dark:[&_code]:text-blue-300 [&_code]:text-xs [&_code]:bg-surface-hover [&_code]:px-1 [&_code]:rounded
+      [&_blockquote]:text-muted-foreground/70 [&_blockquote]:border-l-2 [&_blockquote]:border-border-strong
       [&_blockquote]:pl-4 [&_blockquote]:text-[13px] [&_blockquote]:italic [&_blockquote]:my-2"
     >
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
@@ -69,7 +70,7 @@ function MetricCard({ metric, currentValue, targetValue, timeframe }: {
   metric: string; currentValue: string; targetValue: string; timeframe?: string;
 }) {
   return (
-    <div className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.03] border border-white/8">
+    <div className="flex items-center gap-4 p-4 rounded-xl bg-surface-2 border border-border-default">
       <div className="flex flex-col gap-0.5">
         <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">{metric}</span>
         <div className="flex items-center gap-2">
@@ -89,7 +90,7 @@ function Pills({ items }: { items: { label: string; value: string; color?: strin
       {items.map((item) => (
         <span key={item.label} className={cn(
           "text-[11px] px-2.5 py-1 rounded-lg border",
-          item.color || "text-foreground/70 bg-white/[0.03] border-white/10"
+          item.color || "text-foreground/70 bg-surface-2 border-border-default"
         )}>
           <span className="text-muted-foreground/50 mr-1">{item.label}:</span>
           {item.value}
@@ -105,10 +106,10 @@ function AccordionSection({ label, children, defaultOpen = false }: {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="rounded-xl border border-white/8 overflow-hidden">
+    <div className="rounded-xl border border-border-default overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="cursor-pointer flex items-center justify-between w-full px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+        className="cursor-pointer flex items-center justify-between w-full px-4 py-3 bg-surface-1 hover:bg-surface-2 transition-colors"
       >
         <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
           {label}
@@ -122,7 +123,7 @@ function AccordionSection({ label, children, defaultOpen = false }: {
         />
       </button>
       {open && (
-        <div className="px-4 py-3 border-t border-white/5">
+        <div className="px-4 py-3 border-t border-border-subtle">
           {children}
         </div>
       )}
@@ -160,7 +161,7 @@ function StatusPicker({ status, onChange }: { status: EntityStatus; onChange: (s
         <ChevronDown size={10} />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-20 rounded-lg border border-white/10 bg-zinc-900 shadow-xl overflow-hidden min-w-[120px]">
+        <div className="absolute left-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[120px]">
           {ENTITY_STATUSES.map((s) => {
             const m = ENTITY_STATUS_META[s];
             return (
@@ -168,8 +169,8 @@ function StatusPicker({ status, onChange }: { status: EntityStatus; onChange: (s
                 key={s}
                 onClick={() => { onChange(s); setOpen(false); }}
                 className={cn(
-                  "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-white/5",
-                  status === s && "bg-white/[0.06]"
+                  "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
+                  status === s && "bg-surface-3"
                 )}
               >
                 <span className={cn("w-2 h-2 rounded-full", m.dotColor)} />
@@ -200,7 +201,7 @@ function EditableText({ value, onSave, as = "input", placeholder }: {
     return (
       <button
         onClick={() => { setDraft(value); setEditing(true); }}
-        className="cursor-pointer text-left group inline-flex items-center gap-1.5 hover:bg-white/5 rounded-md px-1 -mx-1 transition-colors"
+        className="cursor-pointer text-left group inline-flex items-center gap-1.5 hover:bg-surface-hover rounded-md px-1 -mx-1 transition-colors"
       >
         <span>{value || <span className="text-muted-foreground/40 italic">{placeholder || "Click to edit"}</span>}</span>
         <Pencil size={12} className="text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
@@ -218,7 +219,7 @@ function EditableText({ value, onSave, as = "input", placeholder }: {
       if (e.key === "Enter" && as === "input") save();
       if (e.key === "Escape") cancel();
     },
-    className: "w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30",
+    className: "w-full bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus",
   };
 
   return (
@@ -229,10 +230,10 @@ function EditableText({ value, onSave, as = "input", placeholder }: {
         <input ref={ref as React.RefObject<HTMLInputElement>} maxLength={80} {...common} />
       )}
       <div className="flex gap-2">
-        <button onClick={save} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/15 text-foreground transition-colors flex items-center gap-1">
+        <button onClick={save} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1">
           <Check size={12} /> Save
         </button>
-        <button onClick={cancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-white/5 text-muted-foreground transition-colors flex items-center gap-1">
+        <button onClick={cancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1">
           <X size={12} /> Cancel
         </button>
       </div>
@@ -247,20 +248,20 @@ function BlockToolbar({ onEdit, onDelete }: { onEdit: () => void; onDelete: () =
 
   return (
     <div className="absolute top-2 right-2 opacity-0 group-hover/block:opacity-100 transition-opacity flex gap-1">
-      <button onClick={onEdit} className="cursor-pointer p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-muted-foreground/60 hover:text-foreground transition-colors">
+      <button onClick={onEdit} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 hover:text-foreground transition-colors">
         <Pencil size={12} />
       </button>
       {confirmDelete ? (
         <div className="flex gap-1">
-          <button onClick={onDelete} className="cursor-pointer p-1.5 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors text-[10px] font-medium px-2">
+          <button onClick={onDelete} className="cursor-pointer p-1.5 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 transition-colors text-[10px] font-medium px-2">
             Delete
           </button>
-          <button onClick={() => setConfirmDelete(false)} className="cursor-pointer p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-muted-foreground/60 transition-colors text-[10px] px-2">
+          <button onClick={() => setConfirmDelete(false)} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 transition-colors text-[10px] px-2">
             Cancel
           </button>
         </div>
       ) : (
-        <button onClick={() => setConfirmDelete(true)} className="cursor-pointer p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-muted-foreground/60 hover:text-red-400 transition-colors">
+        <button onClick={() => setConfirmDelete(true)} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 hover:text-red-600 dark:hover:text-red-400 transition-colors">
           <Trash2 size={12} />
         </button>
       )}
@@ -272,14 +273,14 @@ function AccordionBlockEditor({ block, onSave, onCancel }: { block: AccordionBlo
   const [label, setLabel] = useState(block.label);
   const [content, setContent] = useState(block.content);
   return (
-    <div className="rounded-xl border border-white/15 p-4 flex flex-col gap-3 bg-white/[0.02]">
+    <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
       <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Section title"
-        className="bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30 font-semibold" />
+        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus font-semibold" />
       <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={6} placeholder="Content (markdown)"
-        className="bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30 font-mono" />
+        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus font-mono" />
       <div className="flex gap-2">
-        <button onClick={() => onSave({ label, content })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/15 text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
-        <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-white/5 text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
+        <button onClick={() => onSave({ label, content })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
+        <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
       </div>
     </div>
   );
@@ -293,20 +294,20 @@ function PillsBlockEditor({ block, onSave, onCancel }: { block: PillsBlock; onSa
     setItems(next);
   };
   return (
-    <div className="rounded-xl border border-white/15 p-4 flex flex-col gap-3 bg-white/[0.02]">
+    <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
       {items.map((item, i) => (
         <div key={i} className="flex gap-2 items-center">
           <input value={item.label} onChange={(e) => updateItem(i, "label", e.target.value)} placeholder="Label"
-            className="bg-white/5 border border-white/15 rounded-lg px-2 py-1.5 text-xs text-foreground focus:outline-none w-28" />
+            className="bg-surface-hover border border-border-strong rounded-lg px-2 py-1.5 text-xs text-foreground focus:outline-none w-28" />
           <input value={item.value} onChange={(e) => updateItem(i, "value", e.target.value)} placeholder="Value"
-            className="bg-white/5 border border-white/15 rounded-lg px-2 py-1.5 text-xs text-foreground focus:outline-none flex-1" />
-          <button onClick={() => setItems(items.filter((_, j) => j !== i))} className="cursor-pointer p-1 text-muted-foreground/40 hover:text-red-400"><X size={14} /></button>
+            className="bg-surface-hover border border-border-strong rounded-lg px-2 py-1.5 text-xs text-foreground focus:outline-none flex-1" />
+          <button onClick={() => setItems(items.filter((_, j) => j !== i))} className="cursor-pointer p-1 text-muted-foreground/40 hover:text-red-600 dark:hover:text-red-400"><X size={14} /></button>
         </div>
       ))}
       <button onClick={() => setItems([...items, { label: "", value: "" }])} className="cursor-pointer text-xs text-muted-foreground/50 hover:text-foreground flex items-center gap-1"><Plus size={12} /> Add item</button>
       <div className="flex gap-2">
-        <button onClick={() => onSave({ items })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/15 text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
-        <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-white/5 text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
+        <button onClick={() => onSave({ items })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
+        <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
       </div>
     </div>
   );
@@ -316,14 +317,14 @@ function QuoteBlockEditor({ block, onSave, onCancel }: { block: QuoteBlock; onSa
   const [content, setContent] = useState(block.content);
   const [attribution, setAttribution] = useState(block.attribution || "");
   return (
-    <div className="rounded-xl border border-white/15 p-4 flex flex-col gap-3 bg-white/[0.02]">
+    <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
       <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} placeholder="Quote text"
-        className="bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30 italic" />
+        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus italic" />
       <input value={attribution} onChange={(e) => setAttribution(e.target.value)} placeholder="Attribution (optional)"
-        className="bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-white/30" />
+        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-border-focus" />
       <div className="flex gap-2">
-        <button onClick={() => onSave({ content, attribution: attribution || undefined })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/15 text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
-        <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-white/5 text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
+        <button onClick={() => onSave({ content, attribution: attribution || undefined })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
+        <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
       </div>
     </div>
   );
@@ -335,20 +336,20 @@ function MetricBlockEditor({ block, onSave, onCancel }: { block: MetricBlock; on
   const [targetValue, setTargetValue] = useState(block.targetValue);
   const [timeframe, setTimeframe] = useState(block.timeframe || "");
   return (
-    <div className="rounded-xl border border-white/15 p-4 flex flex-col gap-3 bg-white/[0.02]">
+    <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
       <input value={metric} onChange={(e) => setMetric(e.target.value)} placeholder="Metric name"
-        className="bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none" />
+        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none" />
       <div className="flex gap-2">
         <input value={currentValue} onChange={(e) => setCurrentValue(e.target.value)} placeholder="Current"
-          className="bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none flex-1" />
+          className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none flex-1" />
         <input value={targetValue} onChange={(e) => setTargetValue(e.target.value)} placeholder="Target"
-          className="bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none flex-1" />
+          className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none flex-1" />
       </div>
       <input value={timeframe} onChange={(e) => setTimeframe(e.target.value)} placeholder="Timeframe (optional)"
-        className="bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none" />
+        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none" />
       <div className="flex gap-2">
-        <button onClick={() => onSave({ metric, currentValue, targetValue, timeframe: timeframe || undefined })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/15 text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
-        <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-white/5 text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
+        <button onClick={() => onSave({ metric, currentValue, targetValue, timeframe: timeframe || undefined })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
+        <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
       </div>
     </div>
   );
@@ -434,17 +435,17 @@ function AddBlockButton({ entityId }: { entityId: string }) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-white/10 hover:border-white/20 transition-colors w-full justify-center"
+        className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-border-default hover:border-border-strong transition-colors w-full justify-center"
       >
         <Plus size={14} /> Add block
       </button>
       {open && (
-        <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg border border-white/10 bg-zinc-900 shadow-xl overflow-hidden">
+        <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden">
           {blockTypes.map((bt) => (
             <button
               key={bt.type}
               onClick={() => handleAdd(bt.type)}
-              className="cursor-pointer flex items-center gap-2 w-full px-3 py-2.5 text-left text-xs text-foreground hover:bg-white/5 transition-colors"
+              className="cursor-pointer flex items-center gap-2 w-full px-3 py-2.5 text-left text-xs text-foreground hover:bg-surface-hover transition-colors"
             >
               {bt.label}
             </button>
@@ -506,7 +507,7 @@ function AddChildForm({ parentId, childLevel, onClose }: { parentId: string; chi
   };
 
   return (
-    <div className="rounded-xl border border-white/15 p-4 flex flex-col gap-3 bg-white/[0.02]">
+    <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
       <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
         New {childMeta.label}
       </span>
@@ -515,7 +516,7 @@ function AddChildForm({ parentId, childLevel, onClose }: { parentId: string; chi
         onChange={(e) => setTitle(e.target.value)}
         placeholder={`${childMeta.label} title (required)`}
         maxLength={80}
-        className="bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30"
+        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus"
         autoFocus
         onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
       />
@@ -524,13 +525,13 @@ function AddChildForm({ parentId, childLevel, onClose }: { parentId: string; chi
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Description (optional)"
         rows={2}
-        className="bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30"
+        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus"
       />
       <div className="flex gap-2">
-        <button onClick={handleSubmit} disabled={!title.trim()} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/15 text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
+        <button onClick={handleSubmit} disabled={!title.trim()} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
           <Check size={12} /> Create
         </button>
-        <button onClick={onClose} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-white/5 text-muted-foreground transition-colors flex items-center gap-1">
+        <button onClick={onClose} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1">
           <X size={12} /> Cancel
         </button>
       </div>
@@ -541,10 +542,10 @@ function AddChildForm({ parentId, childLevel, onClose }: { parentId: string; chi
 // ── Kanban column config ──────────────────────────────────────────────────
 
 const KANBAN_COLUMNS = [
-  { key: "draft",   label: "Draft",    statuses: ["draft"] as EntityStatus[],                        accentBorder: "border-zinc-400/30",    dotColor: "bg-zinc-400" },
-  { key: "explore", label: "Explore",  statuses: ["explore"] as EntityStatus[],                      accentBorder: "border-blue-400/30",    dotColor: "bg-blue-400" },
-  { key: "commit",  label: "Commit",   statuses: ["commit"] as EntityStatus[],                       accentBorder: "border-emerald-400/30", dotColor: "bg-emerald-400" },
-  { key: "done",    label: "Done",     statuses: ["done", "archived", "dropped"] as EntityStatus[],  accentBorder: "border-violet-400/30",  dotColor: "bg-violet-400" },
+  { key: "draft",   label: "Draft",    statuses: ["draft"] as EntityStatus[],                        accentBorder: "border-zinc-400/30",    dotColor: "bg-zinc-500 dark:bg-zinc-400" },
+  { key: "explore", label: "Explore",  statuses: ["explore"] as EntityStatus[],                      accentBorder: "border-blue-400/30",    dotColor: "bg-blue-500 dark:bg-blue-400" },
+  { key: "commit",  label: "Commit",   statuses: ["commit"] as EntityStatus[],                       accentBorder: "border-emerald-400/30", dotColor: "bg-emerald-500 dark:bg-emerald-400" },
+  { key: "done",    label: "Done",     statuses: ["done", "archived", "dropped"] as EntityStatus[],  accentBorder: "border-violet-400/30",  dotColor: "bg-violet-500 dark:bg-violet-400" },
 ];
 
 function KanbanColumn({ columnKey, label, dotColor, accentBorder, children, count }: {
@@ -556,10 +557,10 @@ function KanbanColumn({ columnKey, label, dotColor, accentBorder, children, coun
     <div
       ref={setNodeRef}
       className={cn(
-        "rounded-lg bg-white/[0.02] border border-white/5 p-2 flex flex-col gap-2 min-w-[75vw] md:min-w-0 snap-center",
+        "rounded-lg bg-surface-1 border border-border-subtle p-2 flex flex-col gap-2 min-w-[75vw] md:min-w-0 snap-center",
         "border-t-2",
         accentBorder,
-        isOver && "border-white/20 bg-white/[0.04]",
+        isOver && "border-border-strong bg-surface-2",
       )}
     >
       <div className="flex items-center gap-2 px-1 py-1">
@@ -590,8 +591,19 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
   const levelMeta = LEVEL_META[entity.level];
   const hasContent = children.length > 0 || childLevel !== null;
 
-  // Default to kanban when 4+ children, grid otherwise
-  const [viewMode, setViewMode] = useState<"grid" | "kanban">(children.length >= 4 ? "kanban" : "grid");
+  // Persist view mode in localStorage
+  const [viewMode, setViewMode] = useState<"grid" | "kanban">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("pa-view-mode");
+      if (saved === "grid" || saved === "kanban") return saved;
+    }
+    return children.length >= 4 ? "kanban" : "grid";
+  });
+
+  const handleSetViewMode = (mode: "grid" | "kanban") => {
+    setViewMode(mode);
+    localStorage.setItem("pa-view-mode", mode);
+  };
 
   if (!hasContent) return null;
 
@@ -629,7 +641,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
       {(children.length > 0 || childLevel) && (
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-baseline gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 shrink-0">
+            <span className="text-sm font-semibold text-foreground shrink-0">
               {levelMeta.childrenLabel}
             </span>
             {childLevel && (
@@ -641,20 +653,20 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
           {children.length > 0 && (
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setViewMode("grid")}
+                onClick={() => handleSetViewMode("grid")}
                 className={cn(
                   "cursor-pointer p-1.5 rounded-md transition-colors",
-                  viewMode === "grid" ? "bg-white/10 text-foreground" : "text-muted-foreground/40 hover:text-foreground hover:bg-white/5"
+                  viewMode === "grid" ? "bg-surface-3 text-foreground" : "text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover"
                 )}
                 title="Grid view"
               >
                 <LayoutGrid size={14} />
               </button>
               <button
-                onClick={() => setViewMode("kanban")}
+                onClick={() => handleSetViewMode("kanban")}
                 className={cn(
                   "cursor-pointer p-1.5 rounded-md transition-colors",
-                  viewMode === "kanban" ? "bg-white/10 text-foreground" : "text-muted-foreground/40 hover:text-foreground hover:bg-white/5"
+                  viewMode === "kanban" ? "bg-surface-3 text-foreground" : "text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover"
                 )}
                 title="Kanban view"
               >
@@ -763,7 +775,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
           </div>
           <DragOverlay>
             {activeChild ? (
-              <div className="bg-zinc-900 rounded-xl shadow-2xl shadow-black/50">
+              <div className="bg-popover rounded-xl shadow-2xl shadow-black/50">
                 <ChildEntityCard
                   id={activeChild.id}
                   title={activeChild.title}
@@ -783,7 +795,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
       {childLevel && !showAddForm && (
         <button
           onClick={() => setShowAddForm(true)}
-          className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-white/10 hover:border-white/20 transition-colors justify-center"
+          className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-border-default hover:border-border-strong transition-colors justify-center"
         >
           <Plus size={14} /> Add {LEVEL_META[childLevel].label}
         </button>
@@ -822,7 +834,7 @@ function AddRootEntityForm({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="rounded-xl border border-white/15 p-4 flex flex-col gap-3 bg-white/[0.02]">
+    <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
       <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
         New Business Outcome
       </span>
@@ -831,7 +843,7 @@ function AddRootEntityForm({ onClose }: { onClose: () => void }) {
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Business Outcome title (required)"
         maxLength={80}
-        className="bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30"
+        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus"
         autoFocus
         onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
       />
@@ -840,13 +852,13 @@ function AddRootEntityForm({ onClose }: { onClose: () => void }) {
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Description (optional)"
         rows={2}
-        className="bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30"
+        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus"
       />
       <div className="flex gap-2">
-        <button onClick={handleSubmit} disabled={!title.trim()} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/15 text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
+        <button onClick={handleSubmit} disabled={!title.trim()} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
           <Check size={12} /> Create
         </button>
-        <button onClick={onClose} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-white/5 text-muted-foreground transition-colors flex items-center gap-1">
+        <button onClick={onClose} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1">
           <X size={12} /> Cancel
         </button>
       </div>
@@ -857,9 +869,52 @@ function AddRootEntityForm({ onClose }: { onClose: () => void }) {
 function RootView() {
   const productLine = useProductLine();
   const { tree, entities, id: plId } = productLine;
-  const { updateTree } = useAppStore();
+  const { updateTree, updateEntity } = useAppStore();
   const roots = getRootEntities(entities, tree);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  const [viewMode, setViewMode] = useState<"grid" | "kanban">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("pa-view-mode");
+      if (saved === "grid" || saved === "kanban") return saved;
+    }
+    return roots.length >= 4 ? "kanban" : "grid";
+  });
+
+  const handleSetViewMode = (mode: "grid" | "kanban") => {
+    setViewMode(mode);
+    localStorage.setItem("pa-view-mode", mode);
+  };
+
+  function getRootCardProps(entity: Entity) {
+    const childCount = entity.children?.length ?? 0;
+    const metricBlock = entity.blocks.find((b) => b.type === "metric");
+    let preview = "";
+    let badge = "";
+    if (entity.level === "business_outcome" && metricBlock && metricBlock.type === "metric") {
+      preview = `${metricBlock.currentValue} → ${metricBlock.targetValue}${metricBlock.timeframe ? ` · ${metricBlock.timeframe}` : ""}`;
+      badge = `${childCount} product outcome${childCount !== 1 ? "s" : ""}`;
+    }
+    return { preview: preview || getEntityPreview(entity), badge };
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setActiveId(null);
+    const { active, over } = event;
+    if (!over) return;
+    const columnKey = over.id as string;
+    const statusMap: Record<string, EntityStatus> = { draft: "draft", explore: "explore", commit: "commit", done: "done" };
+    const newStatus = statusMap[columnKey];
+    if (newStatus) {
+      updateEntity(active.id as string, { status: newStatus });
+    }
+  }
+
+  const activeChild = activeId ? roots.find(c => c.id === activeId) : null;
+  const boMeta = LEVEL_META.business_outcome;
 
   return (
     <div className="px-8 py-8 pb-28 flex flex-col gap-6">
@@ -882,36 +937,160 @@ function RootView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        {roots.map((entity) => {
-          const childCount = entity.children?.length ?? 0;
-          const metricBlock = entity.blocks.find((b) => b.type === "metric");
-          let subtitle = "";
-          let badge = "";
-          if (entity.level === "business_outcome" && metricBlock && metricBlock.type === "metric") {
-            subtitle = `${metricBlock.currentValue} → ${metricBlock.targetValue}${metricBlock.timeframe ? ` · ${metricBlock.timeframe}` : ""}`;
-            badge = `${childCount} product outcome${childCount !== 1 ? "s" : ""}`;
-          }
-
-          return (
-            <ChildEntityCard
-              key={entity.id}
-              id={entity.id}
-              title={entity.title}
-              icon={entity.icon}
-              level={entity.level}
-              preview={subtitle || getEntityPreview(entity)}
-              status={entity.status}
-              badge={badge}
-            />
-          );
-        })}
+      {/* Section header with view toggle */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-baseline gap-2">
+          <span className="text-sm font-semibold text-foreground shrink-0">
+            Business Outcomes
+          </span>
+          <span className="text-[11px] text-muted-foreground/30 italic hidden sm:inline">
+            {boMeta.description}
+          </span>
+        </div>
+        {roots.length > 0 && (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => handleSetViewMode("grid")}
+              className={cn(
+                "cursor-pointer p-1.5 rounded-md transition-colors",
+                viewMode === "grid" ? "bg-surface-3 text-foreground" : "text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover"
+              )}
+              title="Grid view"
+            >
+              <LayoutGrid size={14} />
+            </button>
+            <button
+              onClick={() => handleSetViewMode("kanban")}
+              className={cn(
+                "cursor-pointer p-1.5 rounded-md transition-colors",
+                viewMode === "kanban" ? "bg-surface-3 text-foreground" : "text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover"
+              )}
+              title="Kanban view"
+            >
+              <Columns3 size={14} />
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Grid view */}
+      {viewMode === "grid" && roots.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          {roots.map((entity) => {
+            const { preview, badge } = getRootCardProps(entity);
+            return (
+              <ChildEntityCard
+                key={entity.id}
+                id={entity.id}
+                title={entity.title}
+                icon={entity.icon}
+                level={entity.level}
+                preview={preview}
+                status={entity.status}
+                badge={badge}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {/* Kanban view */}
+      {viewMode === "kanban" && roots.length > 0 && (
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd} onDragStart={(e) => setActiveId(e.active.id as string)} collisionDetection={pointerWithin}>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none flex md:grid">
+            {KANBAN_COLUMNS.map((col) => {
+              const doneItems = roots.filter((c) => c.status === "done");
+              const archivedOrDroppedItems = roots.filter((c) => c.status === "archived" || c.status === "dropped");
+              const colChildren = col.key === "done"
+                ? doneItems
+                : roots.filter((c) => col.statuses.includes(c.status));
+
+              const totalCount = col.key === "done" ? doneItems.length + archivedOrDroppedItems.length : colChildren.length;
+
+              return (
+                <KanbanColumn
+                  key={col.key}
+                  columnKey={col.key}
+                  label={col.label}
+                  dotColor={col.dotColor}
+                  accentBorder={col.accentBorder}
+                  count={totalCount}
+                >
+                  {colChildren.length === 0 && (col.key !== "done" || archivedOrDroppedItems.length === 0) && (
+                    <p className="text-xs text-muted-foreground/30 italic px-1 py-3 text-center">No items</p>
+                  )}
+                  {colChildren.map((child) => {
+                    const { preview, badge } = getRootCardProps(child);
+                    return (
+                      <ChildEntityCard
+                        key={child.id}
+                        id={child.id}
+                        title={child.title}
+                        icon={child.icon}
+                        level={child.level}
+                        preview={preview}
+                        status={child.status}
+                        badge={badge}
+                        hideStatus
+                        draggable
+                      />
+                    );
+                  })}
+                  {col.key === "done" && archivedOrDroppedItems.length > 0 && (
+                    <>
+                      <button
+                        onClick={() => setShowArchived(!showArchived)}
+                        className="cursor-pointer text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors flex items-center gap-1.5 px-1 py-1"
+                      >
+                        <ChevronDown size={12} className={cn("transition-transform", showArchived && "rotate-180")} />
+                        {showArchived ? "Hide" : "Show"} {archivedOrDroppedItems.length} archived/dropped
+                      </button>
+                      {showArchived && archivedOrDroppedItems.map((child) => {
+                        const { preview, badge } = getRootCardProps(child);
+                        return (
+                          <ChildEntityCard
+                            key={child.id}
+                            id={child.id}
+                            title={child.title}
+                            icon={child.icon}
+                            level={child.level}
+                            preview={preview}
+                            status={child.status}
+                            badge={badge}
+                            hideStatus
+                            draggable
+                          />
+                        );
+                      })}
+                    </>
+                  )}
+                </KanbanColumn>
+              );
+            })}
+          </div>
+          <DragOverlay>
+            {activeChild ? (
+              <div className="bg-popover rounded-xl shadow-2xl shadow-black/50">
+                <ChildEntityCard
+                  id={activeChild.id}
+                  title={activeChild.title}
+                  icon={activeChild.icon}
+                  level={activeChild.level}
+                  preview={getRootCardProps(activeChild).preview}
+                  status={activeChild.status}
+                  badge={getRootCardProps(activeChild).badge}
+                  hideStatus
+                />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      )}
 
       {!showAddForm ? (
         <button
           onClick={() => setShowAddForm(true)}
-          className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-white/10 hover:border-white/20 transition-colors justify-center"
+          className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-border-default hover:border-border-strong transition-colors justify-center"
         >
           <Plus size={14} /> Add Business Outcome
         </button>
@@ -928,6 +1107,7 @@ export function EntityView() {
   const { currentEntityId, updateEntity } = useAppStore();
   const productLine = useProductLine();
   const { entities } = productLine;
+  const [expanded, setExpanded] = useState(false);
 
   if (!currentEntityId) return <RootView />;
 
@@ -936,12 +1116,13 @@ export function EntityView() {
 
   const levelMeta = LEVEL_META[entity.level];
   const IconComponent = LEVEL_ICON_MAP[levelMeta.icon];
+  const hasBlocks = entity.blocks.length > 0;
 
   return (
     <div className="px-8 py-6 pb-28 flex flex-col gap-5">
       <EntityBreadcrumb />
 
-      {/* File-shaped entity detail */}
+      {/* File-shaped entity detail — collapsible */}
       <div>
         {/* Tab */}
         <div className={cn(
@@ -956,27 +1137,66 @@ export function EntityView() {
         </div>
 
         {/* Body */}
-        <div className="rounded-xl rounded-tl-none border border-white/8 bg-white/[0.03] p-5 flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            {IconComponent && (
-              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", levelMeta.iconBg)}>
-                <IconComponent size={16} className={levelMeta.accentColor} />
+        <div className="rounded-xl rounded-tl-none border border-border-default bg-background flex flex-col">
+          {/* Always-visible: toggle header + title + description preview */}
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="cursor-pointer text-left w-full p-5 flex flex-col gap-3 group/collapse"
+          >
+            <div className="flex items-center gap-3">
+              {IconComponent && (
+                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", levelMeta.iconBg)}>
+                  <IconComponent size={16} className={levelMeta.accentColor} />
+                </div>
+              )}
+              <h1 className="text-xl font-semibold text-foreground flex-1">{entity.title}</h1>
+              <motion.div
+                animate={{ rotate: expanded ? 90 : 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="shrink-0"
+              >
+                <ChevronRight size={16} className="text-muted-foreground/40 group-hover/collapse:text-muted-foreground/70 transition-colors" />
+              </motion.div>
+            </div>
+
+            <p className="text-xs text-muted-foreground/60 italic">
+              {levelMeta.description}
+            </p>
+
+            {/* Collapsed description preview */}
+            {!expanded && entity.description && (
+              <div className="relative">
+                <p className="text-sm text-foreground/80 leading-relaxed line-clamp-3">
+                  {entity.description}
+                </p>
+                <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-background to-transparent pointer-events-none" />
               </div>
             )}
-            <h1 className="text-xl font-semibold text-foreground">
-              <EditableText
-                value={entity.title}
-                onSave={(v) => updateEntity(entity.id, { title: v })}
-              />
-            </h1>
-          </div>
 
-          <p className="text-xs text-muted-foreground/60 italic">
-            {levelMeta.description}
-          </p>
+            {/* Collapsed hint: block count */}
+            {!expanded && hasBlocks && (
+              <span className="text-[11px] text-muted-foreground/40">
+                {entity.blocks.length} content block{entity.blocks.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </button>
 
-          {/* Block-based content */}
-          <BlockList entity={entity} />
+          {/* Expandable content */}
+          <AnimatePresence initial={false}>
+            {expanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+                className="overflow-hidden"
+              >
+                <div className="px-5 pb-5 flex flex-col gap-4 border-t border-border-subtle pt-4">
+                  <BlockList entity={entity} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 

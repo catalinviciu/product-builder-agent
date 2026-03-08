@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Source_Serif_4 } from "next/font/google";
+import { ThemeProvider } from "next-themes";
+import { TimeBasedTheme } from "./components/TimeBasedTheme";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -26,9 +28,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className={`${dmSans.variable} ${sourceSerif.variable} font-sans antialiased`}>
-        {children}
+        <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
+          <TimeBasedTheme />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

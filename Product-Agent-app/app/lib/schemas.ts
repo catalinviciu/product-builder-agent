@@ -24,9 +24,9 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
     description: "The measurable business result this product must drive",
     childrenLabel: "Product Outcomes",
     icon: "Target",
-    accentColor: "text-blue-400",
-    bgTint: "bg-blue-500/[0.04]",
-    borderTint: "border-blue-500/20",
+    accentColor: "text-blue-600 dark:text-blue-400",
+    bgTint: "bg-blue-500/[0.06] dark:bg-blue-500/[0.04]",
+    borderTint: "border-blue-500/25 dark:border-blue-500/20",
     iconBg: "bg-blue-500/15",
   },
   product_outcome: {
@@ -34,9 +34,9 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
     description: "The user behavior change that creates business value",
     childrenLabel: "Opportunities",
     icon: "TrendingUp",
-    accentColor: "text-violet-400",
-    bgTint: "bg-violet-500/[0.04]",
-    borderTint: "border-violet-500/20",
+    accentColor: "text-violet-600 dark:text-violet-400",
+    bgTint: "bg-violet-500/[0.06] dark:bg-violet-500/[0.04]",
+    borderTint: "border-violet-500/25 dark:border-violet-500/20",
     iconBg: "bg-violet-500/15",
   },
   opportunity: {
@@ -44,9 +44,9 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
     description: "An unmet need, pain point, or desire worth solving",
     childrenLabel: "Solutions",
     icon: "Lightbulb",
-    accentColor: "text-amber-400",
-    bgTint: "bg-amber-500/[0.04]",
-    borderTint: "border-amber-500/20",
+    accentColor: "text-amber-600 dark:text-amber-400",
+    bgTint: "bg-amber-500/[0.06] dark:bg-amber-500/[0.04]",
+    borderTint: "border-amber-500/25 dark:border-amber-500/20",
     iconBg: "bg-amber-500/15",
   },
   solution: {
@@ -54,9 +54,9 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
     description: "A specific way to address an opportunity",
     childrenLabel: "Assumptions",
     icon: "Puzzle",
-    accentColor: "text-emerald-400",
-    bgTint: "bg-emerald-500/[0.04]",
-    borderTint: "border-emerald-500/20",
+    accentColor: "text-emerald-600 dark:text-emerald-400",
+    bgTint: "bg-emerald-500/[0.06] dark:bg-emerald-500/[0.04]",
+    borderTint: "border-emerald-500/25 dark:border-emerald-500/20",
     iconBg: "bg-emerald-500/15",
   },
   assumption: {
@@ -64,9 +64,9 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
     description: "A belief that must be true for a solution to work",
     childrenLabel: "Tests",
     icon: "HelpCircle",
-    accentColor: "text-orange-400",
-    bgTint: "bg-orange-500/[0.04]",
-    borderTint: "border-orange-500/20",
+    accentColor: "text-orange-600 dark:text-orange-400",
+    bgTint: "bg-orange-500/[0.06] dark:bg-orange-500/[0.04]",
+    borderTint: "border-orange-500/25 dark:border-orange-500/20",
     iconBg: "bg-orange-500/15",
   },
   test: {
@@ -74,9 +74,9 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
     description: "An experiment to validate or invalidate an assumption",
     childrenLabel: "",
     icon: "FlaskConical",
-    accentColor: "text-cyan-400",
-    bgTint: "bg-cyan-500/[0.04]",
-    borderTint: "border-cyan-500/20",
+    accentColor: "text-cyan-600 dark:text-cyan-400",
+    bgTint: "bg-cyan-500/[0.06] dark:bg-cyan-500/[0.04]",
+    borderTint: "border-cyan-500/25 dark:border-cyan-500/20",
     iconBg: "bg-cyan-500/15",
   },
 };
@@ -87,17 +87,17 @@ export type EntityStatus = "commit" | "explore" | "draft" | "done" | "archived" 
 export type ProductLineStatus = "active" | "closed" | "archived";
 
 export const ENTITY_STATUS_META: Record<EntityStatus, { label: string; color: string; dotColor: string }> = {
-  draft:    { label: "Draft",    color: "text-zinc-400 bg-zinc-400/10 border-zinc-400/25",         dotColor: "bg-zinc-400" },
-  explore:  { label: "Explore",  color: "text-blue-400 bg-blue-400/10 border-blue-400/25",         dotColor: "bg-blue-400" },
-  commit:   { label: "Commit",   color: "text-emerald-400 bg-emerald-400/10 border-emerald-400/25", dotColor: "bg-emerald-400" },
-  done:     { label: "Done",     color: "text-violet-400 bg-violet-400/10 border-violet-400/25",   dotColor: "bg-violet-400" },
+  draft:    { label: "Draft",    color: "text-zinc-600 dark:text-zinc-400 bg-zinc-400/10 border-zinc-400/25",         dotColor: "bg-zinc-500 dark:bg-zinc-400" },
+  explore:  { label: "Explore",  color: "text-blue-600 dark:text-blue-400 bg-blue-400/10 border-blue-400/25",         dotColor: "bg-blue-500 dark:bg-blue-400" },
+  commit:   { label: "Commit",   color: "text-emerald-600 dark:text-emerald-400 bg-emerald-400/10 border-emerald-400/25", dotColor: "bg-emerald-500 dark:bg-emerald-400" },
+  done:     { label: "Done",     color: "text-violet-600 dark:text-violet-400 bg-violet-400/10 border-violet-400/25",   dotColor: "bg-violet-500 dark:bg-violet-400" },
   archived: { label: "Archived", color: "text-zinc-500 bg-zinc-500/10 border-zinc-500/25",         dotColor: "bg-zinc-600" },
-  dropped:  { label: "Dropped",  color: "text-rose-400 bg-rose-400/10 border-rose-400/25",         dotColor: "bg-rose-400" },
+  dropped:  { label: "Dropped",  color: "text-rose-600 dark:text-rose-400 bg-rose-400/10 border-rose-400/25",         dotColor: "bg-rose-500 dark:bg-rose-400" },
 };
 
 export const PRODUCT_LINE_STATUS_META: Record<ProductLineStatus, { label: string; color: string; dotColor: string }> = {
-  active:   { label: "Active",   color: "text-emerald-400 bg-emerald-400/10 border-emerald-400/25", dotColor: "bg-emerald-400" },
-  closed:   { label: "Closed",   color: "text-amber-400 bg-amber-400/10 border-amber-400/25",      dotColor: "bg-amber-400" },
+  active:   { label: "Active",   color: "text-emerald-600 dark:text-emerald-400 bg-emerald-400/10 border-emerald-400/25", dotColor: "bg-emerald-500 dark:bg-emerald-400" },
+  closed:   { label: "Closed",   color: "text-amber-600 dark:text-amber-400 bg-amber-400/10 border-amber-400/25",      dotColor: "bg-amber-500 dark:bg-amber-400" },
   archived: { label: "Archived", color: "text-zinc-500 bg-zinc-500/10 border-zinc-500/25",          dotColor: "bg-zinc-600" },
 };
 

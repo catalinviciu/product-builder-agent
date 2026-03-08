@@ -42,8 +42,8 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
       {...(draggable ? { ...listeners, ...attributes } : {})}
       onClick={() => navigateToChild(id)}
       className={cn(
-        "cursor-pointer text-left w-full p-4 rounded-xl border-l-2 border border-white/8",
-        "hover:border-white/20 hover:bg-white/[0.03] hover:shadow-md hover:shadow-white/[0.03] transition-all duration-150",
+        "cursor-pointer text-left w-full p-4 rounded-xl border-l-2 border border-border-default",
+        "hover:border-border-strong hover:bg-surface-2 hover:shadow-md hover:shadow-shadow-color transition-all duration-150",
         "flex flex-col gap-2.5 group relative",
         levelMeta.bgTint,
         levelMeta.borderTint,
@@ -63,9 +63,6 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
         )}
         <div className="flex flex-col flex-1 min-w-0">
           <span className={cn("text-sm font-semibold text-foreground line-clamp-3", !hideStatus && "pr-14")}>{title}</span>
-          <span className={cn("text-[10px] uppercase tracking-wider font-medium", levelMeta.accentColor)}>
-            {levelMeta.label}
-          </span>
         </div>
       </div>
 

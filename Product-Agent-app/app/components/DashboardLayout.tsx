@@ -41,7 +41,7 @@ export function DashboardLayout() {
         {!sidebarOpen && (
           <button
             onClick={toggleSidebar}
-            className="md:hidden fixed top-3 left-3 z-50 p-2 rounded-lg bg-zinc-900 border border-white/10 text-muted-foreground hover:text-foreground transition-colors"
+            className="md:hidden fixed top-3 left-3 z-50 p-2 rounded-lg bg-popover border border-border-default text-muted-foreground hover:text-foreground transition-colors"
           >
             <Menu size={18} />
           </button>
@@ -51,7 +51,7 @@ export function DashboardLayout() {
         {sidebarOpen && (
           <div
             onClick={() => setSidebarOpen(false)}
-            className="md:hidden fixed inset-0 bg-black/60 z-30"
+            className="md:hidden fixed inset-0 bg-overlay z-30"
           />
         )}
 
@@ -73,7 +73,7 @@ export function DashboardLayout() {
           <div className="md:hidden flex justify-end p-2">
             <button
               onClick={() => setSidebarOpen(false)}
-              className="cursor-pointer p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+              className="cursor-pointer p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-hover transition-colors"
             >
               <X size={16} />
             </button>
@@ -89,7 +89,7 @@ export function DashboardLayout() {
             className={cn(
               "hidden md:flex items-center justify-center",
               "absolute top-3 z-20 p-1.5 rounded-lg",
-              "bg-zinc-900 border border-white/10 text-muted-foreground hover:text-foreground transition-all duration-300",
+              "bg-popover border border-border-default text-muted-foreground hover:text-foreground transition-all duration-300",
               sidebarOpen ? "left-[282px]" : "left-3"
             )}
           >
