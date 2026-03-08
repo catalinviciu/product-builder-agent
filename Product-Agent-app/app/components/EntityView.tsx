@@ -6,13 +6,13 @@ import remarkGfm from "remark-gfm";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
-  ChevronDown, ChevronRight, Pencil, Trash2, Plus, X, Check, Copy, LayoutGrid, Columns3, User,
+  ChevronDown, ChevronRight, Pencil, Trash2, Plus, X, Check, Copy, LayoutGrid, Columns3, User, Users,
   type LucideIcon,
 } from "lucide-react";
 import type {
   Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock, EntityLevel, EntityStatus,
 } from "@/app/lib/schemas";
-import { LEVEL_META, CHILD_LEVEL, ENTITY_STATUS_META, ENTITY_STATUSES, PERSONA_LEVELS } from "@/app/lib/schemas";
+import { LEVEL_META, CHILD_LEVEL, ENTITY_STATUS_META, ENTITY_STATUSES, PERSONA_LEVELS, MULTI_PERSONA_LEVELS } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
 import { getEntity, getRootEntities, getEntityPreview, generateId, cn, buildEntityAnchor, buildRootAnchor } from "@/app/lib/utils";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
@@ -238,6 +238,78 @@ function PersonaPicker({ entityId, personaId }: { entityId: string; personaId?: 
               <span className={personaId === p.id ? "text-foreground font-medium" : "text-muted-foreground"}>{p.name}</span>
             </button>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Secondary persona picker (multi-select) ──────────────────────────────
+
+function SecondaryPersonaPicker({ entityId, secondaryPersonaIds, excludePersonaId }: {
+  entityId: string; secondaryPersonaIds: string[]; excludePersonaId?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const { assignSecondaryPersonas } = useAppStore();
+  const productLine = useProductLine();
+  const personas = (productLine.personas ?? []).filter((p) => p.id !== excludePersonaId);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const toggle = (personaId: string) => {
+    const next = secondaryPersonaIds.includes(personaId)
+      ? secondaryPersonaIds.filter((id) => id !== personaId)
+      : [...secondaryPersonaIds, personaId];
+    assignSecondaryPersonas(entityId, next);
+  };
+
+  const count = secondaryPersonaIds.length;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        className={cn(
+          "cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1",
+          count > 0 ? "text-foreground/70" : "text-muted-foreground/50"
+        )}
+      >
+        <Users size={10} />
+        {count > 0 ? `${count} more` : "Add personas"}
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[180px]">
+          {personas.length === 0 && (
+            <div className="px-3 py-2 text-xs text-muted-foreground">No other personas</div>
+          )}
+          {personas.map((p) => {
+            const selected = secondaryPersonaIds.includes(p.id);
+            return (
+              <button
+                key={p.id}
+                onClick={(e) => { e.stopPropagation(); toggle(p.id); }}
+                className={cn(
+                  "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
+                  selected && "bg-surface-3"
+                )}
+              >
+                <span className={cn(
+                  "w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0",
+                  selected ? "bg-foreground/80 border-foreground/80" : "border-border-default"
+                )}>
+                  {selected && <Check size={9} className="text-background" />}
+                </span>
+                <span className={selected ? "text-foreground font-medium" : "text-muted-foreground"}>{p.name}</span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -644,6 +716,10 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
     if (!PERSONA_LEVELS.has(child.level) || !child.personaId) return undefined;
     return personas.find((p) => p.id === child.personaId)?.name;
   };
+  const getSecondaryPersonaCount = (child: Entity) => {
+    if (!MULTI_PERSONA_LEVELS.has(child.level)) return 0;
+    return (child.secondaryPersonaIds ?? []).length;
+  };
   const [showAddForm, setShowAddForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -758,6 +834,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                 status={child.status}
                 badge={badge}
                 personaName={getPersonaName(child)}
+                secondaryPersonaCount={getSecondaryPersonaCount(child)}
               />
             );
           })}
@@ -804,6 +881,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                         hideStatus
                         draggable
                         personaName={getPersonaName(child)}
+                        secondaryPersonaCount={getSecondaryPersonaCount(child)}
                       />
                     );
                   })}
@@ -832,6 +910,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                             hideStatus
                             draggable
                             personaName={getPersonaName(child)}
+                            secondaryPersonaCount={getSecondaryPersonaCount(child)}
                           />
                         );
                       })}
@@ -854,6 +933,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                   badge={getChildCardProps(activeChild).badge}
                   hideStatus
                   personaName={getPersonaName(activeChild)}
+                  secondaryPersonaCount={getSecondaryPersonaCount(activeChild)}
                 />
               </div>
             ) : null}
@@ -1323,7 +1403,16 @@ export function EntityView() {
                 </h1>
               )}
               {PERSONA_LEVELS.has(entity.level) && (
-                <PersonaPicker entityId={entity.id} personaId={entity.personaId} />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <PersonaPicker entityId={entity.id} personaId={entity.personaId} />
+                  {MULTI_PERSONA_LEVELS.has(entity.level) && (
+                    <SecondaryPersonaPicker
+                      entityId={entity.id}
+                      secondaryPersonaIds={entity.secondaryPersonaIds ?? []}
+                      excludePersonaId={entity.personaId}
+                    />
+                  )}
+                </div>
               )}
             </div>
 

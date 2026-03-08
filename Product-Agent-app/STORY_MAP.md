@@ -87,6 +87,9 @@
 |  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
 |  | Delete the entity (only when it has no children) | `Entity Tab` |
 |  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
+| **Assign Personas** | Assign a primary persona via the Persona Picker pill | `EntityView` · `PersonaPicker` |
+|  | Add secondary personas via the multi-select picker | `EntityView` · `SecondaryPersonaPicker` |
+|  | Remove a secondary persona by unchecking in the picker | `EntityView` · `SecondaryPersonaPicker` |
 | **Add Opportunity children** | Click "Add Opportunity" in the children section | `Add Child Button` |
 
 

@@ -52,6 +52,7 @@ interface AppStore {
   updatePersona: (id: string, updates: Partial<Pick<Persona, "name" | "description">>) => void;
   deletePersona: (id: string) => void;
   assignPersona: (entityId: string, personaId: string | undefined) => void;
+  assignSecondaryPersonas: (entityId: string, personaIds: string[]) => void;
 }
 
 function deepCloneProductLines(pls: Record<string, ProductLine>): Record<string, ProductLine> {
@@ -392,6 +393,12 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
         if (newEntities[eid].personaId === id) {
           newEntities[eid] = { ...newEntities[eid], personaId: undefined };
         }
+        if (newEntities[eid].secondaryPersonaIds?.includes(id)) {
+          newEntities[eid] = {
+            ...newEntities[eid],
+            secondaryPersonaIds: newEntities[eid].secondaryPersonaIds!.filter(pid => pid !== id),
+          };
+        }
       }
       return {
         productLines: {
@@ -417,6 +424,24 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
             entities: {
               ...pl.entities,
               [entityId]: { ...pl.entities[entityId], personaId },
+            },
+          },
+        },
+      };
+    }),
+
+  assignSecondaryPersonas: (entityId, personaIds) =>
+    set((state) => {
+      const pl = state.productLines[state.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return state;
+      return {
+        productLines: {
+          ...state.productLines,
+          [state.currentProductLineId]: {
+            ...pl,
+            entities: {
+              ...pl.entities,
+              [entityId]: { ...pl.entities[entityId], secondaryPersonaIds: personaIds },
             },
           },
         },

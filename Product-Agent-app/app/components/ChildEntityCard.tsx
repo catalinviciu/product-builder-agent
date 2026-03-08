@@ -25,9 +25,10 @@ interface ChildEntityCardProps {
   hideStatus?: boolean;
   draggable?: boolean;
   personaName?: string;
+  secondaryPersonaCount?: number;
 }
 
-export function ChildEntityCard({ id, title, level, preview, status, badge, hideStatus, draggable, personaName }: ChildEntityCardProps) {
+export function ChildEntityCard({ id, title, level, preview, status, badge, hideStatus, draggable, personaName, secondaryPersonaCount }: ChildEntityCardProps) {
   const { navigateToChild } = useAppStore();
   const levelMeta = LEVEL_META[level];
   const IconComponent = LEVEL_ICON_MAP[levelMeta.icon];
@@ -71,15 +72,18 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
 
       {(personaName || badge) && (
         <div className="flex items-center justify-end gap-1.5">
+          {badge && (
+            <span className="text-[10px] text-muted-foreground/50 font-medium whitespace-nowrap">
+              {badge}
+            </span>
+          )}
           {personaName && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border-subtle text-muted-foreground/70 flex items-center gap-1">
               <User size={9} className="shrink-0" />
               {personaName}
-            </span>
-          )}
-          {badge && (
-            <span className="text-[10px] text-muted-foreground/50 font-medium whitespace-nowrap">
-              {badge}
+              {secondaryPersonaCount != null && secondaryPersonaCount > 0 && (
+                <span className="text-muted-foreground/40 ml-0.5">+{secondaryPersonaCount}</span>
+              )}
             </span>
           )}
         </div>

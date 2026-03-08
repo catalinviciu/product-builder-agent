@@ -137,6 +137,14 @@
           ]
         },
         {
+          "title": "Assign Personas",
+          "stories": [
+            { "action": "Assign a primary persona via the Persona Picker pill", "components": ["EntityView", "PersonaPicker"] },
+            { "action": "Add secondary personas via the multi-select picker", "components": ["EntityView", "SecondaryPersonaPicker"] },
+            { "action": "Remove a secondary persona by unchecking in the picker", "components": ["EntityView", "SecondaryPersonaPicker"] }
+          ]
+        },
+        {
           "title": "Add Opportunity children",
           "stories": [
             { "action": "Click \"Add Opportunity\" in the children section", "components": ["Add Child Button"] }

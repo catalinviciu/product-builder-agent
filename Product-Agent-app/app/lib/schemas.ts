@@ -149,7 +149,8 @@ export interface Persona {
   description: string;
 }
 
-export const PERSONA_LEVELS: Set<EntityLevel> = new Set(["opportunity"]);
+export const PERSONA_LEVELS: Set<EntityLevel> = new Set(["opportunity", "product_outcome"]);
+export const MULTI_PERSONA_LEVELS: Set<EntityLevel> = new Set(["product_outcome"]);
 
 // ── Unified entity ────────────────────────────────────────────────────────
 
@@ -162,6 +163,7 @@ export interface Entity {
   status: EntityStatus;
   parentId?: string;
   personaId?: string;
+  secondaryPersonaIds?: string[];
   children: string[];
   blocks: Block[];
 }
