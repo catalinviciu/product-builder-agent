@@ -14,6 +14,10 @@ interface AppStore {
   sidebarOpen: boolean;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
+  personaPanelOpen: boolean;
+  personaPanelId: string | null;
+  openPersonaPanel: (id?: string) => void;
+  closePersonaPanel: () => void;
 
   // Persistence
   hydrate: () => Promise<void>;
@@ -74,6 +78,10 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
   sidebarOpen: true,
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  personaPanelOpen: false,
+  personaPanelId: null,
+  openPersonaPanel: (id) => set({ personaPanelOpen: true, personaPanelId: id ?? null }),
+  closePersonaPanel: () => set({ personaPanelOpen: false, personaPanelId: null }),
 
   hydrate: async () => {
     try {
@@ -105,7 +113,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
     });
   },
 
-  switchProductLine: (id) => set({ currentProductLineId: id, currentEntityId: null }),
+  switchProductLine: (id) => set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null }),
   navigateTo: (id) => set({ currentEntityId: id }),
   navigateUp: () =>
     set((state) => {

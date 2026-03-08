@@ -1215,11 +1215,22 @@ export function EntityView() {
         {/* Body */}
         <div className="rounded-xl rounded-tl-none border border-border-default bg-background flex flex-col">
           {/* Always-visible: toggle header + title + description preview */}
-          <button
+          <div
+            role="button"
+            tabIndex={0}
             onClick={() => setExpanded(!expanded)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(!expanded); } }}
             className="cursor-pointer text-left w-full p-5 flex flex-col gap-3 group/collapse"
           >
             <div className="flex items-center gap-3">
+              {/* Collapse/expand chevron — left side, before icon */}
+              <motion.div
+                animate={{ rotate: expanded ? 90 : 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="shrink-0 w-5 h-5 rounded flex items-center justify-center bg-surface-2 border border-border-subtle group-hover/collapse:bg-surface-3 group-hover/collapse:border-border-default transition-all"
+              >
+                <ChevronRight size={12} className="text-muted-foreground/50 group-hover/collapse:text-muted-foreground transition-colors" />
+              </motion.div>
               {IconComponent && (
                 <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", levelMeta.iconBg)}>
                   <IconComponent size={16} className={levelMeta.accentColor} />
@@ -1253,13 +1264,6 @@ export function EntityView() {
               {PERSONA_LEVELS.has(entity.level) && (
                 <PersonaPicker entityId={entity.id} personaId={entity.personaId} />
               )}
-              <motion.div
-                animate={{ rotate: expanded ? 90 : 0 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="shrink-0"
-              >
-                <ChevronRight size={16} className="text-muted-foreground/40 group-hover/collapse:text-muted-foreground/70 transition-colors" />
-              </motion.div>
             </div>
 
             <p className="text-xs text-muted-foreground/60 italic">
@@ -1282,7 +1286,7 @@ export function EntityView() {
                 {entity.blocks.length} content block{entity.blocks.length !== 1 ? "s" : ""}
               </span>
             )}
-          </button>
+          </div>
 
           {/* Expandable content */}
           <AnimatePresence initial={false}>

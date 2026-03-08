@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
+  Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical, User,
   type LucideIcon,
 } from "lucide-react";
 import type { EntityLevel, EntityStatus } from "@/app/lib/schemas";
@@ -72,7 +72,8 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
       {(personaName || badge) && (
         <div className="flex items-center justify-end gap-1.5">
           {personaName && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border-subtle text-muted-foreground/70">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border-subtle text-muted-foreground/70 flex items-center gap-1">
+              <User size={9} className="shrink-0" />
               {personaName}
             </span>
           )}

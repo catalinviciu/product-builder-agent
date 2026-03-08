@@ -3,6 +3,7 @@
 import { useEffect, useCallback } from "react";
 import { SectionNav } from "./SectionNav";
 import { EntityView } from "./EntityView";
+import { PersonaSlideOver } from "./PersonaSlideOver";
 import { useAppStore } from "@/app/lib/store";
 import { Menu, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/app/lib/utils";
@@ -82,7 +83,7 @@ export function DashboardLayout() {
         </div>
 
         {/* ── Main content ── */}
-        <main className="flex-1 overflow-y-auto">
+        <main className={cn("flex-1 overflow-y-auto transition-[padding] duration-300", !sidebarOpen && "pl-10")}>
           {/* Desktop: toggle button (visible >= md) */}
           <button
             onClick={toggleSidebar}
@@ -97,6 +98,8 @@ export function DashboardLayout() {
           </button>
           <EntityView />
         </main>
+
+        <PersonaSlideOver />
       </div>
     </div>
   );
