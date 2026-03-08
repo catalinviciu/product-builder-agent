@@ -41,7 +41,7 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
   },
   opportunity: {
     label: "Opportunity",
-    description: "An unmet need, pain point, or desire worth solving",
+    description: "Persona's unmet need, pain point, or desire that drives the product outcome",
     childrenLabel: "Solutions",
     icon: "Lightbulb",
     accentColor: "text-amber-600 dark:text-amber-400",
