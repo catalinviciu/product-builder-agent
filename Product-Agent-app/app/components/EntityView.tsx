@@ -6,13 +6,13 @@ import remarkGfm from "remark-gfm";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
-  ChevronDown, ChevronRight, Pencil, Trash2, Plus, X, Check, Copy, LayoutGrid, Columns3,
+  ChevronDown, ChevronRight, Pencil, Trash2, Plus, X, Check, Copy, LayoutGrid, Columns3, User,
   type LucideIcon,
 } from "lucide-react";
 import type {
   Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock, EntityLevel, EntityStatus,
 } from "@/app/lib/schemas";
-import { LEVEL_META, CHILD_LEVEL, ENTITY_STATUS_META, ENTITY_STATUSES } from "@/app/lib/schemas";
+import { LEVEL_META, CHILD_LEVEL, ENTITY_STATUS_META, ENTITY_STATUSES, PERSONA_LEVELS } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
 import { getEntity, getRootEntities, getEntityPreview, generateId, cn, buildEntityAnchor, buildRootAnchor } from "@/app/lib/utils";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
@@ -178,6 +178,66 @@ function StatusPicker({ status, onChange }: { status: EntityStatus; onChange: (s
               </button>
             );
           })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Persona picker ────────────────────────────────────────────────────────
+
+function PersonaPicker({ entityId, personaId }: { entityId: string; personaId?: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const { assignPersona } = useAppStore();
+  const productLine = useProductLine();
+  const personas = productLine.personas ?? [];
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const currentPersona = personas.find((p) => p.id === personaId);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        className={cn(
+          "cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1",
+          currentPersona ? "text-foreground/70" : "text-muted-foreground/50"
+        )}
+      >
+        <User size={10} />
+        {currentPersona ? currentPersona.name : "Unassigned"}
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[160px]">
+          <button
+            onClick={(e) => { e.stopPropagation(); assignPersona(entityId, undefined); setOpen(false); }}
+            className={cn(
+              "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
+              !personaId && "bg-surface-3"
+            )}
+          >
+            <span className={!personaId ? "text-foreground font-medium" : "text-muted-foreground"}>Unassigned</span>
+          </button>
+          {personas.map((p) => (
+            <button
+              key={p.id}
+              onClick={(e) => { e.stopPropagation(); assignPersona(entityId, p.id); setOpen(false); }}
+              className={cn(
+                "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
+                personaId === p.id && "bg-surface-3"
+              )}
+            >
+              <span className={personaId === p.id ? "text-foreground font-medium" : "text-muted-foreground"}>{p.name}</span>
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -576,8 +636,14 @@ function KanbanColumn({ columnKey, label, dotColor, accentBorder, children, coun
 }
 
 function ChildrenGrid({ entity }: { entity: Entity }) {
-  const { entities } = useProductLine();
+  const productLine = useProductLine();
+  const { entities } = productLine;
   const { updateEntity } = useAppStore();
+  const personas = productLine.personas ?? [];
+  const getPersonaName = (child: Entity) => {
+    if (!PERSONA_LEVELS.has(child.level) || !child.personaId) return undefined;
+    return personas.find((p) => p.id === child.personaId)?.name;
+  };
   const [showAddForm, setShowAddForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -591,14 +657,13 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
   const levelMeta = LEVEL_META[entity.level];
   const hasContent = children.length > 0 || childLevel !== null;
 
-  // Persist view mode in localStorage
-  const [viewMode, setViewMode] = useState<"grid" | "kanban">(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("pa-view-mode");
-      if (saved === "grid" || saved === "kanban") return saved;
-    }
-    return children.length >= 4 ? "kanban" : "grid";
-  });
+  // Persist view mode in localStorage — default deterministically to avoid hydration mismatch
+  const [viewMode, setViewMode] = useState<"grid" | "kanban">(children.length >= 4 ? "kanban" : "grid");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("pa-view-mode");
+    if (saved === "grid" || saved === "kanban") setViewMode(saved);
+  }, []);
 
   const handleSetViewMode = (mode: "grid" | "kanban") => {
     setViewMode(mode);
@@ -692,6 +757,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                 preview={preview}
                 status={child.status}
                 badge={badge}
+                personaName={getPersonaName(child)}
               />
             );
           })}
@@ -737,6 +803,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                         badge={badge}
                         hideStatus
                         draggable
+                        personaName={getPersonaName(child)}
                       />
                     );
                   })}
@@ -764,6 +831,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                             badge={badge}
                             hideStatus
                             draggable
+                            personaName={getPersonaName(child)}
                           />
                         );
                       })}
@@ -785,6 +853,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                   status={activeChild.status}
                   badge={getChildCardProps(activeChild).badge}
                   hideStatus
+                  personaName={getPersonaName(activeChild)}
                 />
               </div>
             ) : null}
@@ -876,13 +945,13 @@ function RootView() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
-  const [viewMode, setViewMode] = useState<"grid" | "kanban">(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("pa-view-mode");
-      if (saved === "grid" || saved === "kanban") return saved;
-    }
-    return roots.length >= 4 ? "kanban" : "grid";
-  });
+  // Persist view mode in localStorage — default deterministically to avoid hydration mismatch
+  const [viewMode, setViewMode] = useState<"grid" | "kanban">(roots.length >= 4 ? "kanban" : "grid");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("pa-view-mode");
+    if (saved === "grid" || saved === "kanban") setViewMode(saved);
+  }, []);
 
   const handleSetViewMode = (mode: "grid" | "kanban") => {
     setViewMode(mode);
@@ -1108,6 +1177,13 @@ export function EntityView() {
   const productLine = useProductLine();
   const { entities } = productLine;
   const [expanded, setExpanded] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingTitle && titleInputRef.current) titleInputRef.current.focus();
+  }, [editingTitle]);
 
   if (!currentEntityId) return <RootView />;
 
@@ -1149,7 +1225,34 @@ export function EntityView() {
                   <IconComponent size={16} className={levelMeta.accentColor} />
                 </div>
               )}
-              <h1 className="text-xl font-semibold text-foreground flex-1">{entity.title}</h1>
+              {editingTitle ? (
+                <input
+                  ref={titleInputRef}
+                  value={titleDraft}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { if (titleDraft.trim()) updateEntity(entity.id, { title: titleDraft.trim() }); setEditingTitle(false); }
+                    if (e.key === "Escape") setEditingTitle(false);
+                  }}
+                  onBlur={() => { if (titleDraft.trim()) updateEntity(entity.id, { title: titleDraft.trim() }); setEditingTitle(false); }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-xl font-semibold text-foreground flex-1 bg-surface-hover border border-border-strong rounded-lg px-2 py-1 focus:outline-none focus:border-border-focus"
+                />
+              ) : (
+                <h1 className="text-xl font-semibold text-foreground flex-1 flex items-center gap-2">
+                  {entity.title}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setTitleDraft(entity.title); setEditingTitle(true); }}
+                    className="cursor-pointer text-muted-foreground/30 opacity-0 group-hover/collapse:opacity-100 hover:text-muted-foreground transition-all shrink-0"
+                    title="Edit title"
+                  >
+                    <Pencil size={13} />
+                  </button>
+                </h1>
+              )}
+              {PERSONA_LEVELS.has(entity.level) && (
+                <PersonaPicker entityId={entity.id} personaId={entity.personaId} />
+              )}
               <motion.div
                 animate={{ rotate: expanded ? 90 : 0 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}

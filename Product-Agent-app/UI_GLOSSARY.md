@@ -23,6 +23,9 @@ The two-panel layout you always see: sidebar on the left, main content on the ri
 Top to bottom within the left panel.
 
 - **Product Line Selector** — Dropdown at top to switch, create, edit, or delete product lines
+- **Persona Manager** — Collapsible section showing personas for the current product line (count badge, add/edit/delete inline forms)
+  - **Persona Item** — Single persona row with name, hover-reveal edit (pencil) and delete (trash) icons
+  - **Add Persona Form** — Inline form with name + description fields to create a new persona
 - **Overview Button** — Navigation item to go to the root/overview page
 - **Entity Tree** — Hierarchical tree of active entities (done/archived/dropped are hidden), sorted by status priority (commit → explore → draft). Hovering the status dot shows a level tooltip.
 
@@ -62,6 +65,7 @@ The file-shaped collapsible section for the selected entity, styled like a file 
   - Level label (e.g. "Business Outcome", "Opportunity")
   - **Status Picker** — Dropdown to change status (Draft/Explore/Commit/Done/Archived/Dropped)
   - **Copy Anchor** — Button that copies a shareable AI-reference string
+  - **Persona Picker** — Small pill (opportunity-level only) to assign/change/unassign a persona via dropdown
 - **Collapsible Body** — Click to expand/collapse. Chevron rotates to show state.
   - *When collapsed:* Shows icon + title, level description, first 3 lines of description, block count hint
   - *When expanded:* Shows everything below
@@ -86,4 +90,5 @@ Below the entity detail — shows next-level entities belonging to this entity.
   - **Archived Toggle** — "Show/Hide archived/dropped" in the Done column
   - **Drag Overlay** — Ghost card following cursor while dragging
 - **Child Card** — Individual card (icon, title, preview, status badge, count badge)
+  - **Persona Pill** — Small rounded pill on opportunity child cards showing the assigned persona name
 - **Add Child Button** — Dashed button → expands to **Add Child Form** (title + description fields)

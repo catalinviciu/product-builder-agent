@@ -95,7 +95,7 @@ const FRESHCART_ENTITIES: EntityStore = {
 
   // ── Opportunities ────────────────────────────────────────────────────────
   "opp-1": {
-    id: "opp-1", level: "opportunity", title: "Cart abandonment from poor substitution suggestions", icon: "Lightbulb", status: "commit", parentId: "po-1a",
+    id: "opp-1", level: "opportunity", title: "Cart abandonment from poor substitution suggestions", icon: "Lightbulb", status: "commit", parentId: "po-1a", personaId: "persona-fc-busy-parent",
     description: "When items are out of stock, our current substitution logic picks alternatives based on category + price. Users frequently reject these substitutions, leading to incomplete orders and frustration. 23% of orders with substitutions result in the user removing items entirely rather than accepting the suggestion.",
     children: ["sol-1", "sol-2"],
     blocks: [
@@ -106,7 +106,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "opp-2": {
-    id: "opp-2", level: "opportunity", title: "First-time users don't understand delivery time slots", icon: "Lightbulb", status: "commit", parentId: "po-1a",
+    id: "opp-2", level: "opportunity", title: "First-time users don't understand delivery time slots", icon: "Lightbulb", status: "commit", parentId: "po-1a", personaId: "persona-fc-busy-parent",
     description: "Our onboarding flow asks new users to select a delivery time slot before their first order. The current slot picker is a text-based list of times. 31% of first-time users abandon during slot selection — the highest drop-off point in the checkout funnel.",
     children: ["sol-3"],
     blocks: [
@@ -117,7 +117,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "opp-3": {
-    id: "opp-3", level: "opportunity", title: "Users miss complementary items they'd want", icon: "Lightbulb", status: "commit", parentId: "po-1b",
+    id: "opp-3", level: "opportunity", title: "Users miss complementary items they'd want", icon: "Lightbulb", status: "commit", parentId: "po-1b", personaId: "persona-fc-impulse-adder",
     description: "Users shop for individual ingredients but think in terms of meals. They frequently forget items that would complete a recipe or complement their basket. Post-order surveys show 42% of users wish they'd \"remembered to add something\" — most commonly herbs, sauces, or side ingredients.",
     children: ["sol-4"],
     blocks: [
@@ -128,7 +128,7 @@ const FRESHCART_ENTITIES: EntityStore = {
     ],
   },
   "opp-4": {
-    id: "opp-4", level: "opportunity", title: "Local store partnerships take too long to close", icon: "Lightbulb", status: "commit", parentId: "po-2a",
+    id: "opp-4", level: "opportunity", title: "Local store partnerships take too long to close", icon: "Lightbulb", status: "commit", parentId: "po-2a", personaId: "persona-fc-health-single",
     description: "Onboarding a new store partner currently takes 3-6 weeks from first contact to live catalog. The process requires a sales rep visit, paper contract signing, manual catalog upload, and quality verification. This bottleneck means we can't launch a new city with sufficient store coverage.",
     children: ["sol-5"],
     blocks: [
@@ -483,7 +483,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
 
   // Opportunities
   "ip-opp-1": {
-    id: "ip-opp-1", level: "opportunity", title: "Trial users hit a blank canvas and don't know where to start", icon: "Lightbulb", status: "commit", parentId: "ip-po-1a",
+    id: "ip-opp-1", level: "opportunity", title: "Trial users hit a blank canvas and don't know where to start", icon: "Lightbulb", status: "commit", parentId: "ip-po-1a", personaId: "persona-ip-founder",
     description: "After connecting their data source, trial users land on an empty dashboard builder. 62% of trial signups who connect data never create a single dashboard. The blank canvas is paralyzing — they don't know what questions to ask or how to build a useful view.",
     children: ["ip-sol-1"],
     blocks: [
@@ -494,7 +494,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-opp-2": {
-    id: "ip-opp-2", level: "opportunity", title: "Data connection setup fails or stalls for 35% of trial users", icon: "Lightbulb", status: "commit", parentId: "ip-po-1a",
+    id: "ip-opp-2", level: "opportunity", title: "Data connection setup fails or stalls for 35% of trial users", icon: "Lightbulb", status: "commit", parentId: "ip-po-1a", personaId: "persona-ip-data-analyst",
     description: "The first step of any analytics trial is connecting a data source. 35% of trial signups either fail to connect their store (authentication errors, permissions issues) or give up during the process. Without data, there's zero chance of conversion.",
     children: ["ip-sol-2"],
     blocks: [
@@ -505,7 +505,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-opp-3": {
-    id: "ip-opp-3", level: "opportunity", title: "Teams share insights via screenshots instead of the product", icon: "Lightbulb", status: "commit", parentId: "ip-po-1b",
+    id: "ip-opp-3", level: "opportunity", title: "Teams share insights via screenshots instead of the product", icon: "Lightbulb", status: "commit", parentId: "ip-po-1b", personaId: "persona-ip-ecom-manager",
     description: "Starter plan allows 2 seats. Teams of 3-10 people work around this by having 1 person build dashboards and share screenshots via Slack/email. This means InsightPulse stays a single-user tool and never becomes organizational infrastructure.",
     children: ["ip-sol-3"],
     blocks: [
@@ -516,7 +516,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-opp-4": {
-    id: "ip-opp-4", level: "opportunity", title: "Dashboards go stale and users forget to check them", icon: "Lightbulb", status: "commit", parentId: "ip-po-2a",
+    id: "ip-opp-4", level: "opportunity", title: "Dashboards go stale and users forget to check them", icon: "Lightbulb", status: "commit", parentId: "ip-po-2a", personaId: "persona-ip-data-analyst",
     description: "Dashboards are pull-based — users have to remember to log in and check them. After the initial setup excitement fades, login frequency drops by 70% between week 1 and week 4. The product becomes invisible.",
     children: ["ip-sol-4"],
     blocks: [
@@ -527,7 +527,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
     ],
   },
   "ip-opp-5": {
-    id: "ip-opp-5", level: "opportunity", title: "Onboarding is one-size-fits-all regardless of store size or vertical", icon: "Lightbulb", status: "commit", parentId: "ip-po-2a",
+    id: "ip-opp-5", level: "opportunity", title: "Onboarding is one-size-fits-all regardless of store size or vertical", icon: "Lightbulb", status: "commit", parentId: "ip-po-2a", personaId: "persona-ip-founder",
     description: "A $2M/year fashion DTC brand and a $50K/year Etsy seller get the same onboarding flow. The fashion brand needs cohort analysis and attribution; the Etsy seller needs basic revenue tracking. The mismatch means both feel the product wasn't built for them.",
     children: ["ip-sol-5"],
     blocks: [
@@ -770,6 +770,11 @@ export const PRODUCT_LINES: Record<string, ProductLine> = {
     name: "FreshCart",
     description: "B2C grocery delivery",
     status: "active",
+    personas: [
+      { id: "persona-fc-busy-parent", name: "Busy Parent", description: "Age 30-42, dual-income household, 1-2 kids. Orders 2-3× per week, average basket €45. Pain: substitutions ruin meal plans; delivery slots are confusing." },
+      { id: "persona-fc-health-single", name: "Health-Conscious Single", description: "Age 25-35, urban professional. Orders 1-2× per week, average basket €28. Pain: hard to find specialty/organic items; wants nutritional info." },
+      { id: "persona-fc-impulse-adder", name: "Impulse Adder", description: "Age 20-40, spontaneous shopper who adds items during checkout. Responds to recommendations, deals, and visually appealing product pages." },
+    ],
     tree: FRESHCART_TREE,
     entities: FRESHCART_ENTITIES,
   },
@@ -778,6 +783,11 @@ export const PRODUCT_LINES: Record<string, ProductLine> = {
     name: "InsightPulse",
     description: "B2B e-commerce analytics",
     status: "active",
+    personas: [
+      { id: "persona-ip-data-analyst", name: "Data Analyst", description: "Mid-level analyst at a DTC brand. Builds dashboards and reports weekly. Pain: exporting data across tools is tedious and error-prone." },
+      { id: "persona-ip-ecom-manager", name: "E-commerce Manager", description: "Manages online storefront and marketing spend. Needs high-level KPIs and trend summaries, not raw data." },
+      { id: "persona-ip-founder", name: "DTC Founder", description: "Solo or small-team founder running a direct-to-consumer brand. Wants instant clarity on what's working and what's not, without learning complex BI tools." },
+    ],
     tree: INSIGHTPULSE_TREE,
     entities: INSIGHTPULSE_ENTITIES,
   },

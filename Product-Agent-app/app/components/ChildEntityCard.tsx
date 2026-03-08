@@ -24,9 +24,10 @@ interface ChildEntityCardProps {
   badge?: string;
   hideStatus?: boolean;
   draggable?: boolean;
+  personaName?: string;
 }
 
-export function ChildEntityCard({ id, title, level, preview, status, badge, hideStatus, draggable }: ChildEntityCardProps) {
+export function ChildEntityCard({ id, title, level, preview, status, badge, hideStatus, draggable, personaName }: ChildEntityCardProps) {
   const { navigateToChild } = useAppStore();
   const levelMeta = LEVEL_META[level];
   const IconComponent = LEVEL_ICON_MAP[levelMeta.icon];
@@ -66,14 +67,22 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
         </div>
       </div>
 
-      <div className="flex items-end justify-between gap-3">
-        <p className="text-xs text-muted-foreground/70 leading-relaxed line-clamp-2">{preview}</p>
-        {badge && (
-          <span className="shrink-0 text-[10px] text-muted-foreground/50 font-medium whitespace-nowrap">
-            {badge}
-          </span>
-        )}
-      </div>
+      <p className="text-xs text-muted-foreground/70 leading-relaxed line-clamp-2">{preview}</p>
+
+      {(personaName || badge) && (
+        <div className="flex items-center justify-end gap-1.5">
+          {personaName && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border-subtle text-muted-foreground/70">
+              {personaName}
+            </span>
+          )}
+          {badge && (
+            <span className="text-[10px] text-muted-foreground/50 font-medium whitespace-nowrap">
+              {badge}
+            </span>
+          )}
+        </div>
+      )}
     </button>
   );
 }

@@ -11,6 +11,7 @@ import { LEVEL_META, PRODUCT_LINE_STATUS_META, PRODUCT_LINE_STATUSES, ENTITY_STA
 import { cn } from "@/app/lib/utils";
 import { useAppStore } from "@/app/lib/store";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
+import { PersonaManager } from "./PersonaManager";
 
 const LEVEL_ICON_MAP: Record<string, LucideIcon> = {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical, LayoutGrid,
@@ -29,6 +30,7 @@ function NewProductLineForm({ onClose }: { onClose: () => void }) {
       name: name.trim(),
       description: description.trim(),
       status: "active",
+      personas: [],
       tree: { title: `Product Line: ${name.trim()}`, description: description.trim(), rootChildren: [] },
       entities: {},
     });
@@ -342,6 +344,7 @@ export function SectionNav() {
   return (
     <nav className="flex flex-col gap-0.5 py-4 px-3">
       <ProductLineSelector />
+      <PersonaManager />
 
       <button
         onClick={() => navigateTo(null)}

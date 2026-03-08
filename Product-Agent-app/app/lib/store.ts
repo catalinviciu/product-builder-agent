@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { PRODUCT_LINES, DEFAULT_PRODUCT_LINE_ID } from "./mock-data";
-import type { Entity, Block, ProductLine, DiscoveryTree } from "./schemas";
+import type { Entity, Block, ProductLine, DiscoveryTree, Persona } from "./schemas";
 
 interface AppStore {
   // Data
@@ -41,6 +41,12 @@ interface AppStore {
   addBlock: (entityId: string, block: Block) => void;
   updateBlock: (entityId: string, blockId: string, updates: Partial<Block>) => void;
   removeBlock: (entityId: string, blockId: string) => void;
+
+  // Persona CRUD
+  addPersona: (persona: Persona) => void;
+  updatePersona: (id: string, updates: Partial<Pick<Persona, "name" | "description">>) => void;
+  deletePersona: (id: string) => void;
+  assignPersona: (entityId: string, personaId: string | undefined) => void;
 }
 
 function deepCloneProductLines(pls: Record<string, ProductLine>): Record<string, ProductLine> {
@@ -74,7 +80,14 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
       const res = await fetch("/api/store");
       const json = await res.json();
       if (json.exists && json.data) {
-        set({ productLines: json.data, isHydrated: true });
+        // Migrate: backfill missing personas from mock data
+        const data = json.data as Record<string, ProductLine>;
+        for (const plId of Object.keys(data)) {
+          if (!data[plId].personas) {
+            data[plId].personas = PRODUCT_LINES[plId]?.personas ?? [];
+          }
+        }
+        set({ productLines: data, isHydrated: true });
         return;
       }
     } catch {}
@@ -303,6 +316,78 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
                 ...entity,
                 blocks: entity.blocks.filter((b) => b.id !== blockId),
               },
+            },
+          },
+        },
+      };
+    }),
+
+  addPersona: (persona) =>
+    set((state) => {
+      const pl = state.productLines[state.currentProductLineId];
+      if (!pl) return state;
+      return {
+        productLines: {
+          ...state.productLines,
+          [state.currentProductLineId]: {
+            ...pl,
+            personas: [...(pl.personas ?? []), persona],
+          },
+        },
+      };
+    }),
+
+  updatePersona: (id, updates) =>
+    set((state) => {
+      const pl = state.productLines[state.currentProductLineId];
+      if (!pl) return state;
+      return {
+        productLines: {
+          ...state.productLines,
+          [state.currentProductLineId]: {
+            ...pl,
+            personas: (pl.personas ?? []).map((p) =>
+              p.id === id ? { ...p, ...updates } : p
+            ),
+          },
+        },
+      };
+    }),
+
+  deletePersona: (id) =>
+    set((state) => {
+      const pl = state.productLines[state.currentProductLineId];
+      if (!pl) return state;
+      const newEntities = { ...pl.entities };
+      for (const eid of Object.keys(newEntities)) {
+        if (newEntities[eid].personaId === id) {
+          newEntities[eid] = { ...newEntities[eid], personaId: undefined };
+        }
+      }
+      return {
+        productLines: {
+          ...state.productLines,
+          [state.currentProductLineId]: {
+            ...pl,
+            personas: (pl.personas ?? []).filter((p) => p.id !== id),
+            entities: newEntities,
+          },
+        },
+      };
+    }),
+
+  assignPersona: (entityId, personaId) =>
+    set((state) => {
+      const pl = state.productLines[state.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return state;
+      return {
+        productLines: {
+          ...state.productLines,
+          [state.currentProductLineId]: {
+            ...pl,
+            entities: {
+              ...pl.entities,
+              [entityId]: { ...pl.entities[entityId], personaId },
             },
           },
         },

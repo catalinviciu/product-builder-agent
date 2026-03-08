@@ -141,6 +141,16 @@ export interface MetricBlock extends BlockBase {
 
 export type Block = AccordionBlock | PillsBlock | QuoteBlock | MetricBlock;
 
+// ── Personas ─────────────────────────────────────────────────────────────
+
+export interface Persona {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export const PERSONA_LEVELS: Set<EntityLevel> = new Set(["opportunity"]);
+
 // ── Unified entity ────────────────────────────────────────────────────────
 
 export interface Entity {
@@ -151,6 +161,7 @@ export interface Entity {
   description: string;
   status: EntityStatus;
   parentId?: string;
+  personaId?: string;
   children: string[];
   blocks: Block[];
 }
@@ -179,6 +190,7 @@ export interface ProductLine {
   name: string;
   description: string;
   status: ProductLineStatus;
+  personas?: Persona[];
   tree: DiscoveryTree;
   entities: EntityStore;
 }
