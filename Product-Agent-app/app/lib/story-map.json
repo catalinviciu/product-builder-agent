@@ -10,22 +10,26 @@
         {
           "title": "Create product line",
           "stories": [
-            { "action": "Open the Product Line Selector dropdown", "components": ["Product Line Selector"] },
-            { "action": "Click \"New Product Line\"", "components": ["Product Line Selector"] },
-            { "action": "Enter name and confirm", "components": ["Product Line Selector"] }
+            { "action": "Create a new product line with a name via the Product Line Selector", "components": ["Product Line Selector"] }
           ]
         },
         {
           "title": "Edit product line details",
           "stories": [
-            { "action": "Click product line title to edit inline", "components": ["Overview Title"] },
-            { "action": "Click product line description to edit inline", "components": ["Overview Description"] }
+            { "action": "Edit the product line title inline on the Overview page", "components": ["RootView", "EditableText"] },
+            { "action": "Edit the product line description with markdown formatting and preview", "components": ["RootView", "EditableText", "MarkdownToolbar"] }
+          ]
+        },
+        {
+          "title": "Change product line status",
+          "stories": [
+            { "action": "Change product line status (active, closed, archived) via the status indicator", "components": ["Product Line Selector"] }
           ]
         },
         {
           "title": "Delete product line",
           "stories": [
-            { "action": "Open Product Line Selector and click delete", "components": ["Product Line Selector"] }
+            { "action": "Delete a product line from the Product Line Selector", "components": ["Product Line Selector"] }
           ]
         }
       ]
@@ -39,19 +43,19 @@
           "title": "View existing personas",
           "stories": [
             { "action": "Expand the Persona Manager to see all personas for this product line", "components": ["PersonaManager"] },
-            { "action": "Hover a persona name to see its description in a tooltip", "components": ["PersonaManager", "Tooltip"] }
+            { "action": "Hover a persona name to see its markdown-rendered description in a tooltip", "components": ["PersonaManager", "Tooltip", "MarkdownBlock"] }
           ]
         },
         {
           "title": "Add a persona",
           "stories": [
-            { "action": "Create a new persona with name and description via the slide-over form", "components": ["PersonaManager", "PersonaSlideOver"] }
+            { "action": "Create a new persona with name and markdown description via the slide-over form", "components": ["PersonaManager", "PersonaSlideOver", "MarkdownToolbar"] }
           ]
         },
         {
           "title": "Edit a persona",
           "stories": [
-            { "action": "Open an existing persona in the slide-over to update its details", "components": ["PersonaManager", "PersonaSlideOver"] }
+            { "action": "Open an existing persona in the slide-over to update its details", "components": ["PersonaManager", "PersonaSlideOver", "MarkdownToolbar"] }
           ]
         },
         {
@@ -70,34 +74,32 @@
         {
           "title": "Open Overview",
           "stories": [
-            { "action": "Click \"Overview\" in the sidebar", "components": ["Overview Button", "SectionNav"] }
+            { "action": "Navigate to the Overview page from the sidebar", "components": ["SectionNav"] }
           ]
         },
         {
           "title": "Add Business Outcome",
           "stories": [
-            { "action": "Click the dashed \"Add Business Outcome\" button", "components": ["Add Root Form"] },
-            { "action": "Enter title and description, then confirm", "components": ["Add Root Form"] }
+            { "action": "Create a new Business Outcome with title and description", "components": ["RootView", "Add Root Form"] }
           ]
         },
         {
           "title": "Refine the entity",
           "stories": [
-            { "action": "Edit title inline (click pencil on hover)", "components": ["EntityView", "Inline Edit"] },
-            { "action": "Add or edit description inline", "components": ["EntityView", "Inline Edit"] },
-            { "action": "Add a content block (accordion, pills, quote, metric)", "components": ["EntityView", "Add Block Button"] },
-            { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
-            { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
-            { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] },
-            { "action": "Delete the entity (only when it has no children)", "components": ["Entity Tab"] },
-            { "action": "Drop entity and all children via status change confirmation", "components": ["Entity Tab", "Status Picker"] }
+            { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
+            { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
+            { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
+            { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["EntityView", "Copy Anchor"] },
+            { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
+            { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
           ]
         },
         {
           "title": "Add Product Outcome children",
           "stories": [
-            { "action": "Click \"Add Product Outcome\" in the children section", "components": ["Add Child Button"] }
+            { "action": "Add a child Product Outcome from the children section", "components": ["EntityView", "Add Child Button"] }
           ]
         }
       ]
@@ -108,44 +110,41 @@
       "goal": "Break a business outcome into measurable product-level results.",
       "steps": [
         {
-          "title": "Open parent Business Outcome",
+          "title": "Navigate to parent",
           "stories": [
-            { "action": "Click the Business Outcome in the Entity Tree or Breadcrumb", "components": ["Entity Tree", "Breadcrumb"] }
+            { "action": "Open the parent Business Outcome via the Entity Tree or Breadcrumb", "components": ["SectionNav", "EntityBreadcrumb"] }
           ]
         },
         {
           "title": "Add Product Outcome",
           "stories": [
-            { "action": "Click \"Add Product Outcome\" in the children section", "components": ["Add Child Button"] },
-            { "action": "Enter title and description, then confirm", "components": ["Add Child Button"] }
+            { "action": "Create a new Product Outcome with title and description", "components": ["EntityView", "Add Child Button"] }
           ]
         },
         {
           "title": "Refine the entity",
           "stories": [
-            { "action": "Edit title inline (click pencil on hover)", "components": ["EntityView", "Inline Edit"] },
-            { "action": "Add or edit description inline", "components": ["EntityView", "Inline Edit"] },
-            { "action": "Add a content block (accordion, pills, quote, metric)", "components": ["EntityView", "Add Block Button"] },
-            { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
-            { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
-            { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] },
-            { "action": "Delete the entity (only when it has no children)", "components": ["Entity Tab"] },
-            { "action": "Drop entity and all children via status change confirmation", "components": ["Entity Tab", "Status Picker"] }
+            { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
+            { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
+            { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
+            { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["EntityView", "Copy Anchor"] },
+            { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
+            { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
           ]
         },
         {
           "title": "Assign Personas",
           "stories": [
-            { "action": "Assign a primary persona via the Persona Picker pill", "components": ["EntityView", "PersonaPicker"] },
-            { "action": "Add secondary personas via the multi-select picker", "components": ["EntityView", "SecondaryPersonaPicker"] },
-            { "action": "Remove a secondary persona by unchecking in the picker", "components": ["EntityView", "SecondaryPersonaPicker"] }
+            { "action": "Assign a primary persona via the Persona Picker", "components": ["EntityView", "PersonaPicker"] },
+            { "action": "Add or remove secondary personas via the multi-select picker", "components": ["EntityView", "SecondaryPersonaPicker"] }
           ]
         },
         {
           "title": "Add Opportunity children",
           "stories": [
-            { "action": "Click \"Add Opportunity\" in the children section", "components": ["Add Child Button"] }
+            { "action": "Add a child Opportunity from the children section", "components": ["EntityView", "Add Child Button"] }
           ]
         }
       ]
@@ -156,53 +155,46 @@
       "goal": "Identify user needs and pain points that a product outcome could address.",
       "steps": [
         {
-          "title": "Open parent Product Outcome",
+          "title": "Navigate to parent",
           "stories": [
-            { "action": "Click the Product Outcome in the Entity Tree or Breadcrumb", "components": ["Entity Tree", "Breadcrumb"] }
+            { "action": "Open the parent Product Outcome via the Entity Tree or Breadcrumb", "components": ["SectionNav", "EntityBreadcrumb"] }
           ]
         },
         {
           "title": "Add Opportunity",
           "stories": [
-            { "action": "Click \"Add Opportunity\" in the children section", "components": ["Add Child Button"] },
-            { "action": "Enter title and description, then confirm", "components": ["Add Child Button"] }
+            { "action": "Create a new Opportunity with title and description", "components": ["EntityView", "Add Child Button"] }
           ]
         },
         {
           "title": "Assign a Persona",
           "stories": [
-            { "action": "Click the Persona Picker pill on the entity tab", "components": ["Entity Tab", "Persona Picker"] },
-            { "action": "Select a persona from the dropdown", "components": ["Persona Picker"] }
+            { "action": "Assign a primary persona to the opportunity (primary only — secondary personas are available only on Product Outcomes)", "components": ["EntityView", "PersonaPicker"] }
           ]
         },
         {
           "title": "Score opportunity with ICE",
           "stories": [
-            { "action": "Open the ICE Score panel on an opportunity entity", "components": ["EntityView", "IceScorePanel"] },
-            { "action": "Adjust the Impact slider (1–10)", "components": ["IceScorePanel"] },
-            { "action": "Adjust the Confidence slider (1–10)", "components": ["IceScorePanel"] },
-            { "action": "Adjust the Ease slider (1–10)", "components": ["IceScorePanel"] },
-            { "action": "View the computed ICE score (Impact × Confidence × Ease)", "components": ["IceScorePanel"] }
+            { "action": "Rate the opportunity using Impact, Confidence, and Ease sliders (1–10 each) to compute an ICE score", "components": ["EntityView", "IceScorePanel"] }
           ]
         },
         {
           "title": "Refine the entity",
           "stories": [
-            { "action": "Edit title inline (click pencil on hover)", "components": ["EntityView", "Inline Edit"] },
-            { "action": "Add or edit description inline", "components": ["EntityView", "Inline Edit"] },
-            { "action": "Add a content block (accordion, pills, quote, metric)", "components": ["EntityView", "Add Block Button"] },
-            { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
-            { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
-            { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] },
-            { "action": "Delete the entity (only when it has no children)", "components": ["Entity Tab"] },
-            { "action": "Drop entity and all children via status change confirmation", "components": ["Entity Tab", "Status Picker"] }
+            { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
+            { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
+            { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
+            { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["EntityView", "Copy Anchor"] },
+            { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
+            { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
           ]
         },
         {
           "title": "Add Solution children",
           "stories": [
-            { "action": "Click \"Add Solution\" in the children section", "components": ["Add Child Button"] }
+            { "action": "Add a child Solution from the children section", "components": ["EntityView", "Add Child Button"] }
           ]
         }
       ]
@@ -213,36 +205,34 @@
       "goal": "Propose concrete solutions that address an identified opportunity.",
       "steps": [
         {
-          "title": "Open parent Opportunity",
+          "title": "Navigate to parent",
           "stories": [
-            { "action": "Click the Opportunity in the Entity Tree or Breadcrumb", "components": ["Entity Tree", "Breadcrumb"] }
+            { "action": "Open the parent Opportunity via the Entity Tree or Breadcrumb", "components": ["SectionNav", "EntityBreadcrumb"] }
           ]
         },
         {
           "title": "Add Solution",
           "stories": [
-            { "action": "Click \"Add Solution\" in the children section", "components": ["Add Child Button"] },
-            { "action": "Enter title and description, then confirm", "components": ["Add Child Button"] }
+            { "action": "Create a new Solution with title and description", "components": ["EntityView", "Add Child Button"] }
           ]
         },
         {
           "title": "Refine the entity",
           "stories": [
-            { "action": "Edit title inline (click pencil on hover)", "components": ["EntityView", "Inline Edit"] },
-            { "action": "Add or edit description inline", "components": ["EntityView", "Inline Edit"] },
-            { "action": "Add a content block (accordion, pills, quote, metric)", "components": ["EntityView", "Add Block Button"] },
-            { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
-            { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
-            { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] },
-            { "action": "Delete the entity (only when it has no children)", "components": ["Entity Tab"] },
-            { "action": "Drop entity and all children via status change confirmation", "components": ["Entity Tab", "Status Picker"] }
+            { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
+            { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
+            { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
+            { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["EntityView", "Copy Anchor"] },
+            { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
+            { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
           ]
         },
         {
           "title": "Add Assumption children",
           "stories": [
-            { "action": "Click \"Add Assumption\" in the children section", "components": ["Add Child Button"] }
+            { "action": "Add a child Assumption from the children section", "components": ["EntityView", "Add Child Button"] }
           ]
         }
       ]
@@ -253,70 +243,61 @@
       "goal": "Surface and test the riskiest assumptions behind a solution.",
       "steps": [
         {
-          "title": "Open parent Solution",
+          "title": "Navigate to parent",
           "stories": [
-            { "action": "Click the Solution in the Entity Tree or Breadcrumb", "components": ["Entity Tree", "Breadcrumb"] }
+            { "action": "Open the parent Solution via the Entity Tree or Breadcrumb", "components": ["SectionNav", "EntityBreadcrumb"] }
           ]
         },
         {
           "title": "Add Assumption",
           "stories": [
-            { "action": "Click \"Add Assumption\" in the children section", "components": ["Add Child Button"] },
-            { "action": "Enter title and description, then confirm — template creates Belief and Evidence accordion blocks", "components": ["Add Child Button", "EntityView"] }
+            { "action": "Create a new Assumption with title and description (auto-generates Impact if True and Evidence blocks)", "components": ["EntityView", "Add Child Button"] }
           ]
         },
         {
           "title": "Classify the Assumption",
           "stories": [
-            { "action": "Click \"Set type\" pill in assumption header to open type picker", "components": ["EntityView", "AssumptionTypePicker"] },
-            { "action": "Select one of 5 types: Desirability, Usability, Feasibility, Viability, Ethical", "components": ["AssumptionTypePicker"] },
-            { "action": "View colored type pill with tooltip on hover", "components": ["EntityView", "AssumptionTypePicker"] },
-            { "action": "Change or clear the type by reopening the picker", "components": ["AssumptionTypePicker"] },
-            { "action": "See assumption type pill on child cards in parent's children grid", "components": ["ChildEntityCard"] }
+            { "action": "Assign an assumption type (Desirability, Usability, Feasibility, Viability, or Ethical) via the type picker", "components": ["EntityView", "AssumptionTypePicker"] },
+            { "action": "View the colored type pill on the entity and on child cards in the parent grid", "components": ["EntityView", "ChildEntityCard"] }
           ]
         },
         {
           "title": "Refine the Assumption",
           "stories": [
-            { "action": "Edit title inline (click pencil on hover)", "components": ["EntityView", "Inline Edit"] },
-            { "action": "Add or edit description inline", "components": ["EntityView", "Inline Edit"] },
-            { "action": "Add a content block (accordion, pills, quote, metric)", "components": ["EntityView", "Add Block Button"] },
-            { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
-            { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
-            { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] },
-            { "action": "Delete the entity (only when it has no children)", "components": ["Entity Tab"] },
-            { "action": "Drop entity and all children via status change confirmation", "components": ["Entity Tab", "Status Picker"] }
+            { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
+            { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
+            { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
+            { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["EntityView", "Copy Anchor"] },
+            { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
+            { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
           ]
         },
         {
           "title": "Add Test children",
           "stories": [
-            { "action": "Click \"Add Test\" in the children section — template creates Define Test and Pass/Fail Criteria accordion blocks", "components": ["Add Child Button", "EntityView"] }
+            { "action": "Create a new Test under the assumption (auto-generates Define Test and Pass/Fail Criteria blocks)", "components": ["EntityView", "Add Child Button"] }
           ]
         },
         {
           "title": "Classify the Test",
           "stories": [
-            { "action": "Click \"Set type\" pill in test header to open type picker", "components": ["EntityView", "TestTypePicker"] },
-            { "action": "Select one of 4 types: Prototype Test, One-Question Survey, Data Mining, Research Spike", "components": ["TestTypePicker"] },
-            { "action": "View colored type pill with tooltip on hover", "components": ["EntityView", "TestTypePicker"] },
-            { "action": "Change or clear the type by reopening the picker", "components": ["TestTypePicker"] },
-            { "action": "See test type pill on child cards in parent's children grid", "components": ["ChildEntityCard"] }
+            { "action": "Assign a test type (Prototype Test, One-Question Survey, Data Mining, or Research Spike) via the type picker", "components": ["EntityView", "TestTypePicker"] },
+            { "action": "View the colored type pill on the entity and on child cards in the parent grid", "components": ["EntityView", "ChildEntityCard"] }
           ]
         },
         {
           "title": "Refine the Test",
           "stories": [
-            { "action": "Edit title inline (click pencil on hover)", "components": ["EntityView", "Inline Edit"] },
-            { "action": "Add or edit description inline", "components": ["EntityView", "Inline Edit"] },
-            { "action": "Add a content block (accordion, pills, quote, metric)", "components": ["EntityView", "Add Block Button"] },
-            { "action": "Edit an existing block", "components": ["EntityView", "Block Toolbar"] },
-            { "action": "Delete a block", "components": ["EntityView", "Block Toolbar"] },
-            { "action": "Change status via the Status Picker", "components": ["Entity Tab", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["Entity Tab", "Copy Anchor"] },
-            { "action": "Delete the entity (only when it has no children)", "components": ["Entity Tab"] },
-            { "action": "Drop entity and all children via status change confirmation", "components": ["Entity Tab", "Status Picker"] }
+            { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
+            { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
+            { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
+            { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["EntityView", "Copy Anchor"] },
+            { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
+            { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
           ]
         }
       ]
@@ -327,53 +308,46 @@
       "goal": "Manage entity statuses and views to focus on what matters most.",
       "steps": [
         {
-          "title": "Change status",
+          "title": "Change entity status",
           "stories": [
-            { "action": "Open an entity and use the Status Picker", "components": ["Entity Tab", "Status Picker"] }
+            { "action": "Change an entity's status (draft, explore, commit, done, archived, dropped) via the Status Picker", "components": ["EntityView", "Status Picker"] }
           ]
         },
         {
-          "title": "Switch to Kanban view",
+          "title": "Switch view modes",
           "stories": [
-            { "action": "Click the Kanban icon in the View Toggle", "components": ["View Toggle"] }
+            { "action": "Switch between Grid and Kanban views using the view mode toggle", "components": ["EntityView", "View Toggle"] }
           ]
         },
         {
-          "title": "Drag between columns",
+          "title": "Move entities between statuses in Kanban",
           "stories": [
-            { "action": "Drag a Child Card from one Kanban Column to another", "components": ["Kanban View", "Kanban Column", "Child Card", "Drag Overlay"] }
+            { "action": "Drag a child card from one Kanban column to another to change its status", "components": ["Kanban View", "ChildEntityCard", "Drag Overlay"] }
           ]
         },
         {
-          "title": "Show/hide archived",
+          "title": "Stack-rank entities by priority",
           "stories": [
-            { "action": "Click the Archived Toggle in the Done column", "components": ["Kanban View", "Archived Toggle"] }
+            { "action": "Drag cards up or down within a Kanban column to reorder by priority", "components": ["Kanban View", "ChildEntityCard", "SortableContext"] },
+            { "action": "Reorder root Business Outcome cards within a column on the Overview page", "components": ["RootView", "ChildEntityCard", "SortableContext"] }
           ]
         },
         {
-          "title": "Switch to Grid view",
+          "title": "Show/hide archived and dropped",
           "stories": [
-            { "action": "Click the Grid icon in the View Toggle", "components": ["View Toggle"] }
-          ]
-        },
-        {
-          "title": "Stack-rank within column",
-          "stories": [
-            { "action": "Drag a Child Card up or down within a Kanban Column to reorder by priority", "components": ["Kanban View", "Kanban Column", "Child Card", "SortableContext"] },
-            { "action": "Drag a root Business Outcome card within a column to reorder", "components": ["Root View", "Kanban Column", "Child Card", "SortableContext"] }
+            { "action": "Toggle visibility of archived and dropped items in the Done column", "components": ["Kanban View", "Archived Toggle"] }
           ]
         },
         {
           "title": "View priority-sorted grid",
           "stories": [
-            { "action": "Switch to Grid view to see cards grouped by status: commit → explore → draft → done → archived → dropped", "components": ["Grid View", "Child Card"] }
+            { "action": "View cards in Grid mode grouped by status priority: commit, explore, draft, done, archived, dropped", "components": ["Grid View", "ChildEntityCard"] }
           ]
         },
         {
           "title": "Compare ICE scores",
           "stories": [
-            { "action": "View ICE score badges on opportunity child cards to compare priorities", "components": ["ChildEntityCard", "ICE Badge"] },
-            { "action": "Open an opportunity to adjust its ICE score via sliders", "components": ["EntityView", "IceScorePanel"] }
+            { "action": "Compare ICE score badges on opportunity cards to prioritize across the grid", "components": ["ChildEntityCard", "ICE Badge"] }
           ]
         }
       ]
@@ -386,31 +360,31 @@
         {
           "title": "Open Overview",
           "stories": [
-            { "action": "Click \"Overview\" in the sidebar", "components": ["Overview Button", "SectionNav"] }
+            { "action": "Navigate to the Overview page to see all Business Outcomes", "components": ["SectionNav"] }
           ]
         },
         {
           "title": "Browse the entity tree",
           "stories": [
-            { "action": "Click any entity in the Entity Tree sidebar", "components": ["Entity Tree", "SectionNav"] }
+            { "action": "Navigate to any entity by clicking it in the sidebar tree", "components": ["SectionNav"] }
           ]
         },
         {
           "title": "Use breadcrumbs",
           "stories": [
-            { "action": "Click any segment in the Breadcrumb to jump up", "components": ["Breadcrumb"] }
+            { "action": "Jump to any ancestor entity using the breadcrumb trail", "components": ["EntityBreadcrumb"] }
           ]
         },
         {
           "title": "Switch product line",
           "stories": [
-            { "action": "Open the Product Line Selector and choose another line", "components": ["Product Line Selector"] }
+            { "action": "Switch to a different product line via the Product Line Selector", "components": ["Product Line Selector"] }
           ]
         },
         {
           "title": "Toggle sidebar",
           "stories": [
-            { "action": "Click the Sidebar Toggle to collapse/expand", "components": ["Sidebar Toggle"] }
+            { "action": "Collapse or expand the sidebar to control workspace layout", "components": ["DashboardLayout", "Sidebar Toggle"] }
           ]
         }
       ]

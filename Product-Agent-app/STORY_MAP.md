@@ -25,12 +25,11 @@
 
 | Step | Story | Components |
 |:-----|:------|:-----------|
-| **Create product line** | Open the Product Line Selector dropdown | `Product Line Selector` |
-|  | Click "New Product Line" | `Product Line Selector` |
-|  | Enter name and confirm | `Product Line Selector` |
-| **Edit product line details** | Click product line title to edit inline | `Overview Title` |
-|  | Click product line description to edit inline | `Overview Description` |
-| **Delete product line** | Open Product Line Selector and click delete | `Product Line Selector` |
+| **Create product line** | Create a new product line with a name via the Product Line Selector | `Product Line Selector` |
+| **Edit product line details** | Edit the product line title inline on the Overview page | `RootView` · `EditableText` |
+|  | Edit the product line description with markdown formatting and preview | `RootView` · `EditableText` · `MarkdownToolbar` |
+| **Change product line status** | Change product line status (active, closed, archived) via the status indicator | `Product Line Selector` |
+| **Delete product line** | Delete a product line from the Product Line Selector | `Product Line Selector` |
 
 
 ### Activity 2: Define Personas
@@ -39,9 +38,9 @@
 | Step | Story | Components |
 |:-----|:------|:-----------|
 | **View existing personas** | Expand the Persona Manager to see all personas for this product line | `PersonaManager` |
-|  | Hover a persona name to see its description in a tooltip | `PersonaManager` · `Tooltip` |
-| **Add a persona** | Create a new persona with name and description via the slide-over form | `PersonaManager` · `PersonaSlideOver` |
-| **Edit a persona** | Open an existing persona in the slide-over to update its details | `PersonaManager` · `PersonaSlideOver` |
+|  | Hover a persona name to see its markdown-rendered description in a tooltip | `PersonaManager` · `Tooltip` · `MarkdownBlock` |
+| **Add a persona** | Create a new persona with name and markdown description via the slide-over form | `PersonaManager` · `PersonaSlideOver` · `MarkdownToolbar` |
+| **Edit a persona** | Open an existing persona in the slide-over to update its details | `PersonaManager` · `PersonaSlideOver` · `MarkdownToolbar` |
 | **Delete a persona** | Remove a persona with a confirmation prompt | `PersonaManager` |
 
 
@@ -50,19 +49,17 @@
 
 | Step | Story | Components |
 |:-----|:------|:-----------|
-| **Open Overview** | Click "Overview" in the sidebar | `Overview Button` · `SectionNav` |
-| **Add Business Outcome** | Click the dashed "Add Business Outcome" button | `Add Root Form` |
-|  | Enter title and description, then confirm | `Add Root Form` |
-| **Refine the entity** | Edit title inline (click pencil on hover) | `EntityView` · `Inline Edit` |
-|  | Add or edit description inline | `EntityView` · `Inline Edit` |
-|  | Add a content block (accordion, pills, quote, metric) | `EntityView` · `Add Block Button` |
-|  | Edit an existing block | `EntityView` · `Block Toolbar` |
-|  | Delete a block | `EntityView` · `Block Toolbar` |
-|  | Change status via the Status Picker | `Entity Tab` · `Status Picker` |
-|  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
-|  | Delete the entity (only when it has no children) | `Entity Tab` |
-|  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
-| **Add Product Outcome children** | Click "Add Product Outcome" in the children section | `Add Child Button` |
+| **Open Overview** | Navigate to the Overview page from the sidebar | `SectionNav` |
+| **Add Business Outcome** | Create a new Business Outcome with title and description | `RootView` · `Add Root Form` |
+| **Refine the entity** | Edit the entity title inline | `EntityView` · `EditableText` |
+|  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
+|  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
+|  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
+|  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
+|  | Copy the context anchor for AI reference | `EntityView` · `Copy Anchor` |
+|  | Delete the entity (only when it has no children) | `EntityView` |
+|  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
+| **Add Product Outcome children** | Add a child Product Outcome from the children section | `EntityView` · `Add Child Button` |
 
 
 > **Pattern note:** Activities 3–7 each include a "Refine the entity" step with the same core stories (edit title, edit description, manage blocks, change status, copy anchor). This reflects the consistent editing experience across all entity levels.
@@ -73,22 +70,19 @@
 
 | Step | Story | Components |
 |:-----|:------|:-----------|
-| **Open parent Business Outcome** | Click the Business Outcome in the Entity Tree or Breadcrumb | `Entity Tree` · `Breadcrumb` |
-| **Add Product Outcome** | Click "Add Product Outcome" in the children section | `Add Child Button` |
-|  | Enter title and description, then confirm | `Add Child Button` |
-| **Refine the entity** | Edit title inline (click pencil on hover) | `EntityView` · `Inline Edit` |
-|  | Add or edit description inline | `EntityView` · `Inline Edit` |
-|  | Add a content block (accordion, pills, quote, metric) | `EntityView` · `Add Block Button` |
-|  | Edit an existing block | `EntityView` · `Block Toolbar` |
-|  | Delete a block | `EntityView` · `Block Toolbar` |
-|  | Change status via the Status Picker | `Entity Tab` · `Status Picker` |
-|  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
-|  | Delete the entity (only when it has no children) | `Entity Tab` |
-|  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
-| **Assign Personas** | Assign a primary persona via the Persona Picker pill | `EntityView` · `PersonaPicker` |
-|  | Add secondary personas via the multi-select picker | `EntityView` · `SecondaryPersonaPicker` |
-|  | Remove a secondary persona by unchecking in the picker | `EntityView` · `SecondaryPersonaPicker` |
-| **Add Opportunity children** | Click "Add Opportunity" in the children section | `Add Child Button` |
+| **Navigate to parent** | Open the parent Business Outcome via the Entity Tree or Breadcrumb | `SectionNav` · `EntityBreadcrumb` |
+| **Add Product Outcome** | Create a new Product Outcome with title and description | `EntityView` · `Add Child Button` |
+| **Refine the entity** | Edit the entity title inline | `EntityView` · `EditableText` |
+|  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
+|  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
+|  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
+|  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
+|  | Copy the context anchor for AI reference | `EntityView` · `Copy Anchor` |
+|  | Delete the entity (only when it has no children) | `EntityView` |
+|  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
+| **Assign Personas** | Assign a primary persona via the Persona Picker | `EntityView` · `PersonaPicker` |
+|  | Add or remove secondary personas via the multi-select picker | `EntityView` · `SecondaryPersonaPicker` |
+| **Add Opportunity children** | Add a child Opportunity from the children section | `EntityView` · `Add Child Button` |
 
 
 ### Activity 5: Map Opportunities
@@ -96,26 +90,19 @@
 
 | Step | Story | Components |
 |:-----|:------|:-----------|
-| **Open parent Product Outcome** | Click the Product Outcome in the Entity Tree or Breadcrumb | `Entity Tree` · `Breadcrumb` |
-| **Add Opportunity** | Click "Add Opportunity" in the children section | `Add Child Button` |
-|  | Enter title and description, then confirm | `Add Child Button` |
-| **Assign a Persona** | Click the Persona Picker pill on the entity tab | `Entity Tab` · `Persona Picker` |
-|  | Select a persona from the dropdown | `Persona Picker` |
-| **Score opportunity with ICE** | Open the ICE Score panel on an opportunity entity | `EntityView` · `IceScorePanel` |
-|  | Adjust the Impact slider (1–10) | `IceScorePanel` |
-|  | Adjust the Confidence slider (1–10) | `IceScorePanel` |
-|  | Adjust the Ease slider (1–10) | `IceScorePanel` |
-|  | View the computed ICE score (Impact × Confidence × Ease) | `IceScorePanel` |
-| **Refine the entity** | Edit title inline (click pencil on hover) | `EntityView` · `Inline Edit` |
-|  | Add or edit description inline | `EntityView` · `Inline Edit` |
-|  | Add a content block (accordion, pills, quote, metric) | `EntityView` · `Add Block Button` |
-|  | Edit an existing block | `EntityView` · `Block Toolbar` |
-|  | Delete a block | `EntityView` · `Block Toolbar` |
-|  | Change status via the Status Picker | `Entity Tab` · `Status Picker` |
-|  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
-|  | Delete the entity (only when it has no children) | `Entity Tab` |
-|  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
-| **Add Solution children** | Click "Add Solution" in the children section | `Add Child Button` |
+| **Navigate to parent** | Open the parent Product Outcome via the Entity Tree or Breadcrumb | `SectionNav` · `EntityBreadcrumb` |
+| **Add Opportunity** | Create a new Opportunity with title and description | `EntityView` · `Add Child Button` |
+| **Assign a Persona** | Assign a primary persona to the opportunity (primary only — secondary personas are available only on Product Outcomes) | `EntityView` · `PersonaPicker` |
+| **Score opportunity with ICE** | Rate the opportunity using Impact, Confidence, and Ease sliders (1–10 each) to compute an ICE score | `EntityView` · `IceScorePanel` |
+| **Refine the entity** | Edit the entity title inline | `EntityView` · `EditableText` |
+|  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
+|  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
+|  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
+|  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
+|  | Copy the context anchor for AI reference | `EntityView` · `Copy Anchor` |
+|  | Delete the entity (only when it has no children) | `EntityView` |
+|  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
+| **Add Solution children** | Add a child Solution from the children section | `EntityView` · `Add Child Button` |
 
 
 ### Activity 6: Design Solutions
@@ -123,19 +110,17 @@
 
 | Step | Story | Components |
 |:-----|:------|:-----------|
-| **Open parent Opportunity** | Click the Opportunity in the Entity Tree or Breadcrumb | `Entity Tree` · `Breadcrumb` |
-| **Add Solution** | Click "Add Solution" in the children section | `Add Child Button` |
-|  | Enter title and description, then confirm | `Add Child Button` |
-| **Refine the entity** | Edit title inline (click pencil on hover) | `EntityView` · `Inline Edit` |
-|  | Add or edit description inline | `EntityView` · `Inline Edit` |
-|  | Add a content block (accordion, pills, quote, metric) | `EntityView` · `Add Block Button` |
-|  | Edit an existing block | `EntityView` · `Block Toolbar` |
-|  | Delete a block | `EntityView` · `Block Toolbar` |
-|  | Change status via the Status Picker | `Entity Tab` · `Status Picker` |
-|  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
-|  | Delete the entity (only when it has no children) | `Entity Tab` |
-|  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
-| **Add Assumption children** | Click "Add Assumption" in the children section | `Add Child Button` |
+| **Navigate to parent** | Open the parent Opportunity via the Entity Tree or Breadcrumb | `SectionNav` · `EntityBreadcrumb` |
+| **Add Solution** | Create a new Solution with title and description | `EntityView` · `Add Child Button` |
+| **Refine the entity** | Edit the entity title inline | `EntityView` · `EditableText` |
+|  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
+|  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
+|  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
+|  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
+|  | Copy the context anchor for AI reference | `EntityView` · `Copy Anchor` |
+|  | Delete the entity (only when it has no children) | `EntityView` |
+|  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
+| **Add Assumption children** | Add a child Assumption from the children section | `EntityView` · `Add Child Button` |
 
 
 ### Activity 7: Validate Assumptions
@@ -143,38 +128,29 @@
 
 | Step | Story | Components |
 |:-----|:------|:-----------|
-| **Open parent Solution** | Click the Solution in the Entity Tree or Breadcrumb | `Entity Tree` · `Breadcrumb` |
-| **Add Assumption** | Click "Add Assumption" in the children section | `Add Child Button` |
-|  | Enter title and description, then confirm — template creates Belief and Evidence accordion blocks | `Add Child Button` · `EntityView` |
-| **Classify the Assumption** | Click "Set type" pill in assumption header to open type picker | `EntityView` · `AssumptionTypePicker` |
-|  | Select one of 5 types: Desirability, Usability, Feasibility, Viability, Ethical | `AssumptionTypePicker` |
-|  | View colored type pill with tooltip on hover | `EntityView` · `AssumptionTypePicker` |
-|  | Change or clear the type by reopening the picker | `AssumptionTypePicker` |
-|  | See assumption type pill on child cards in parent's children grid | `ChildEntityCard` |
-| **Refine the Assumption** | Edit title inline (click pencil on hover) | `EntityView` · `Inline Edit` |
-|  | Add or edit description inline | `EntityView` · `Inline Edit` |
-|  | Add a content block (accordion, pills, quote, metric) | `EntityView` · `Add Block Button` |
-|  | Edit an existing block | `EntityView` · `Block Toolbar` |
-|  | Delete a block | `EntityView` · `Block Toolbar` |
-|  | Change status via the Status Picker | `Entity Tab` · `Status Picker` |
-|  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
-|  | Delete the entity (only when it has no children) | `Entity Tab` |
-|  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
-| **Add Test children** | Click "Add Test" in the children section — template creates Define Test and Pass/Fail Criteria accordion blocks | `Add Child Button` · `EntityView` |
-| **Classify the Test** | Click "Set type" pill in test header to open type picker | `EntityView` · `TestTypePicker` |
-|  | Select one of 4 types: Prototype Test, One-Question Survey, Data Mining, Research Spike | `TestTypePicker` |
-|  | View colored type pill with tooltip on hover | `EntityView` · `TestTypePicker` |
-|  | Change or clear the type by reopening the picker | `TestTypePicker` |
-|  | See test type pill on child cards in parent's children grid | `ChildEntityCard` |
-| **Refine the Test** | Edit title inline (click pencil on hover) | `EntityView` · `Inline Edit` |
-|  | Add or edit description inline | `EntityView` · `Inline Edit` |
-|  | Add a content block (accordion, pills, quote, metric) | `EntityView` · `Add Block Button` |
-|  | Edit an existing block | `EntityView` · `Block Toolbar` |
-|  | Delete a block | `EntityView` · `Block Toolbar` |
-|  | Change status via the Status Picker | `Entity Tab` · `Status Picker` |
-|  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
-|  | Delete the entity (only when it has no children) | `Entity Tab` |
-|  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
+| **Navigate to parent** | Open the parent Solution via the Entity Tree or Breadcrumb | `SectionNav` · `EntityBreadcrumb` |
+| **Add Assumption** | Create a new Assumption with title and description (auto-generates Impact if True and Evidence blocks) | `EntityView` · `Add Child Button` |
+| **Classify the Assumption** | Assign an assumption type (Desirability, Usability, Feasibility, Viability, or Ethical) via the type picker | `EntityView` · `AssumptionTypePicker` |
+|  | View the colored type pill on the entity and on child cards in the parent grid | `EntityView` · `ChildEntityCard` |
+| **Refine the Assumption** | Edit the entity title inline | `EntityView` · `EditableText` |
+|  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
+|  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
+|  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
+|  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
+|  | Copy the context anchor for AI reference | `EntityView` · `Copy Anchor` |
+|  | Delete the entity (only when it has no children) | `EntityView` |
+|  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
+| **Add Test children** | Create a new Test under the assumption (auto-generates Define Test and Pass/Fail Criteria blocks) | `EntityView` · `Add Child Button` |
+| **Classify the Test** | Assign a test type (Prototype Test, One-Question Survey, Data Mining, or Research Spike) via the type picker | `EntityView` · `TestTypePicker` |
+|  | View the colored type pill on the entity and on child cards in the parent grid | `EntityView` · `ChildEntityCard` |
+| **Refine the Test** | Edit the entity title inline | `EntityView` · `EditableText` |
+|  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
+|  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
+|  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
+|  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
+|  | Copy the context anchor for AI reference | `EntityView` · `Copy Anchor` |
+|  | Delete the entity (only when it has no children) | `EntityView` |
+|  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
 
 
 ### Activity 8: Organize & Prioritize
@@ -182,16 +158,14 @@
 
 | Step | Story | Components |
 |:-----|:------|:-----------|
-| **Change status** | Open an entity and use the Status Picker | `Entity Tab` · `Status Picker` |
-| **Switch to Kanban view** | Click the Kanban icon in the View Toggle | `View Toggle` |
-| **Drag between columns** | Drag a Child Card from one Kanban Column to another | `Kanban View` · `Kanban Column` · `Child Card` · `Drag Overlay` |
-| **Show/hide archived** | Click the Archived Toggle in the Done column | `Kanban View` · `Archived Toggle` |
-| **Switch to Grid view** | Click the Grid icon in the View Toggle | `View Toggle` |
-| **Stack-rank within column** | Drag a Child Card up or down within a Kanban Column to reorder by priority | `Kanban View` · `Kanban Column` · `Child Card` · `SortableContext` |
-|  | Drag a root Business Outcome card within a column to reorder | `Root View` · `Kanban Column` · `Child Card` · `SortableContext` |
-| **View priority-sorted grid** | Switch to Grid view to see cards grouped by status: commit → explore → draft → done → archived → dropped | `Grid View` · `Child Card` |
-| **Compare ICE scores** | View ICE score badges on opportunity child cards to compare priorities | `ChildEntityCard` · `ICE Badge` |
-|  | Open an opportunity to adjust its ICE score via sliders | `EntityView` · `IceScorePanel` |
+| **Change entity status** | Change an entity's status (draft, explore, commit, done, archived, dropped) via the Status Picker | `EntityView` · `Status Picker` |
+| **Switch view modes** | Switch between Grid and Kanban views using the view mode toggle | `EntityView` · `View Toggle` |
+| **Move entities between statuses in Kanban** | Drag a child card from one Kanban column to another to change its status | `Kanban View` · `ChildEntityCard` · `Drag Overlay` |
+| **Stack-rank entities by priority** | Drag cards up or down within a Kanban column to reorder by priority | `Kanban View` · `ChildEntityCard` · `SortableContext` |
+|  | Reorder root Business Outcome cards within a column on the Overview page | `RootView` · `ChildEntityCard` · `SortableContext` |
+| **Show/hide archived and dropped** | Toggle visibility of archived and dropped items in the Done column | `Kanban View` · `Archived Toggle` |
+| **View priority-sorted grid** | View cards in Grid mode grouped by status priority: commit, explore, draft, done, archived, dropped | `Grid View` · `ChildEntityCard` |
+| **Compare ICE scores** | Compare ICE score badges on opportunity cards to prioritize across the grid | `ChildEntityCard` · `ICE Badge` |
 
 
 ### Activity 9: Navigate & Review
@@ -199,11 +173,11 @@
 
 | Step | Story | Components |
 |:-----|:------|:-----------|
-| **Open Overview** | Click "Overview" in the sidebar | `Overview Button` · `SectionNav` |
-| **Browse the entity tree** | Click any entity in the Entity Tree sidebar | `Entity Tree` · `SectionNav` |
-| **Use breadcrumbs** | Click any segment in the Breadcrumb to jump up | `Breadcrumb` |
-| **Switch product line** | Open the Product Line Selector and choose another line | `Product Line Selector` |
-| **Toggle sidebar** | Click the Sidebar Toggle to collapse/expand | `Sidebar Toggle` |
+| **Open Overview** | Navigate to the Overview page to see all Business Outcomes | `SectionNav` |
+| **Browse the entity tree** | Navigate to any entity by clicking it in the sidebar tree | `SectionNav` |
+| **Use breadcrumbs** | Jump to any ancestor entity using the breadcrumb trail | `EntityBreadcrumb` |
+| **Switch product line** | Switch to a different product line via the Product Line Selector | `Product Line Selector` |
+| **Toggle sidebar** | Collapse or expand the sidebar to control workspace layout | `DashboardLayout` · `Sidebar Toggle` |
 
 
 ---
