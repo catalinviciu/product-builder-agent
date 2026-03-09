@@ -12,8 +12,8 @@ import {
 import type {
   Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock, EntityLevel, EntityStatus,
 } from "@/app/lib/schemas";
-import { LEVEL_META, CHILD_LEVEL, ENTITY_STATUS_META, ENTITY_STATUSES, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, getDescriptionPlaceholder, createBlockTemplate } from "@/app/lib/schemas";
-import type { AssumptionType } from "@/app/lib/schemas";
+import { LEVEL_META, CHILD_LEVEL, ENTITY_STATUS_META, ENTITY_STATUSES, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getDescriptionPlaceholder, createBlockTemplate } from "@/app/lib/schemas";
+import type { AssumptionType, TestType } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
 import { getEntity, getRootEntities, getEntityPreview, generateId, cn, buildEntityAnchor, buildRootAnchor } from "@/app/lib/utils";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
@@ -406,7 +406,7 @@ function AssumptionTypePicker({ entityId, assumptionType }: { entityId: string; 
         )}
       </TooltipProvider>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[200px]">
+        <div className="absolute right-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[200px]">
           <button
             onClick={(e) => { e.stopPropagation(); assignAssumptionType(entityId, undefined); setOpen(false); }}
             className={cn(
@@ -428,6 +428,84 @@ function AssumptionTypePicker({ entityId, assumptionType }: { entityId: string; 
                 )}
               >
                 <span className={assumptionType === type ? "text-foreground font-medium" : "text-muted-foreground"}>{meta.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Test type picker ─────────────────────────────────────────────────────
+
+const TEST_TYPES = Object.keys(TEST_TYPE_META) as TestType[];
+
+function TestTypePicker({ entityId, testType }: { entityId: string; testType?: TestType }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const { assignTestType } = useAppStore();
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const currentMeta = testType ? TEST_TYPE_META[testType] : undefined;
+
+  return (
+    <div ref={ref} className="relative">
+      <TooltipProvider delayDuration={300}>
+        {currentMeta ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+                className={cn(
+                  "cursor-pointer text-[11px] px-2 py-0.5 rounded-full border transition-colors hover:brightness-110 dark:hover:brightness-125 flex items-center gap-1",
+                  currentMeta.color
+                )}
+              >
+                {currentMeta.label}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{currentMeta.description}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+            className="cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1 text-muted-foreground/50"
+          >
+            Set type
+          </button>
+        )}
+      </TooltipProvider>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[200px]">
+          <button
+            onClick={(e) => { e.stopPropagation(); assignTestType(entityId, undefined); setOpen(false); }}
+            className={cn(
+              "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
+              !testType && "bg-surface-3"
+            )}
+          >
+            <span className={!testType ? "text-foreground font-medium" : "text-muted-foreground"}>Unassigned</span>
+          </button>
+          {TEST_TYPES.map((type) => {
+            const meta = TEST_TYPE_META[type];
+            return (
+              <button
+                key={type}
+                onClick={(e) => { e.stopPropagation(); assignTestType(entityId, type); setOpen(false); }}
+                className={cn(
+                  "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
+                  testType === type && "bg-surface-3"
+                )}
+              >
+                <span className={testType === type ? "text-foreground font-medium" : "text-muted-foreground"}>{meta.label}</span>
               </button>
             );
           })}
@@ -841,6 +919,10 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
     if (child.level !== "assumption" || !child.assumptionType) return undefined;
     return ASSUMPTION_TYPE_META[child.assumptionType];
   };
+  const getTestTypeInfo = (child: Entity) => {
+    if (child.level !== "test" || !child.testType) return undefined;
+    return TEST_TYPE_META[child.testType];
+  };
   const [showAddForm, setShowAddForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -961,6 +1043,10 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                 assumptionTypeColor={getAssumptionTypeInfo(child)?.color}
                 assumptionTypeDescription={getAssumptionTypeInfo(child)?.description}
                 assumptionTypeDotColor={getAssumptionTypeInfo(child)?.dotColor}
+                testTypeLabel={getTestTypeInfo(child)?.label}
+                testTypeColor={getTestTypeInfo(child)?.color}
+                testTypeDescription={getTestTypeInfo(child)?.description}
+                testTypeDotColor={getTestTypeInfo(child)?.dotColor}
               />
             );
           })}
@@ -1013,6 +1099,10 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                         assumptionTypeColor={getAssumptionTypeInfo(child)?.color}
                         assumptionTypeDescription={getAssumptionTypeInfo(child)?.description}
                         assumptionTypeDotColor={getAssumptionTypeInfo(child)?.dotColor}
+                        testTypeLabel={getTestTypeInfo(child)?.label}
+                        testTypeColor={getTestTypeInfo(child)?.color}
+                        testTypeDescription={getTestTypeInfo(child)?.description}
+                        testTypeDotColor={getTestTypeInfo(child)?.dotColor}
                       />
                     );
                   })}
@@ -1047,6 +1137,10 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                             assumptionTypeColor={getAssumptionTypeInfo(child)?.color}
                             assumptionTypeDescription={getAssumptionTypeInfo(child)?.description}
                             assumptionTypeDotColor={getAssumptionTypeInfo(child)?.dotColor}
+                            testTypeLabel={getTestTypeInfo(child)?.label}
+                            testTypeColor={getTestTypeInfo(child)?.color}
+                            testTypeDescription={getTestTypeInfo(child)?.description}
+                            testTypeDotColor={getTestTypeInfo(child)?.dotColor}
                           />
                         );
                       })}
@@ -1075,6 +1169,10 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                   assumptionTypeColor={getAssumptionTypeInfo(activeChild)?.color}
                   assumptionTypeDescription={getAssumptionTypeInfo(activeChild)?.description}
                   assumptionTypeDotColor={getAssumptionTypeInfo(activeChild)?.dotColor}
+                  testTypeLabel={getTestTypeInfo(activeChild)?.label}
+                  testTypeColor={getTestTypeInfo(activeChild)?.color}
+                  testTypeDescription={getTestTypeInfo(activeChild)?.description}
+                  testTypeDotColor={getTestTypeInfo(activeChild)?.dotColor}
                 />
               </div>
             ) : null}
@@ -1549,6 +1647,9 @@ export function EntityView() {
               )}
               {entity.level === "assumption" && (
                 <AssumptionTypePicker entityId={entity.id} assumptionType={entity.assumptionType} />
+              )}
+              {entity.level === "test" && (
+                <TestTypePicker entityId={entity.id} testType={entity.testType} />
               )}
             </div>
 

@@ -157,7 +157,12 @@
 |  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
 |  | Delete the entity (only when it has no children) | `Entity Tab` |
 |  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
-| **Add Test children** | Click "Add Test" in the children section | `Add Child Button` |
+| **Add Test children** | Click "Add Test" in the children section — template creates Define Test and Pass/Fail Criteria accordion blocks | `Add Child Button` · `EntityView` |
+| **Classify the Test** | Click "Set type" pill in test header to open type picker | `EntityView` · `TestTypePicker` |
+|  | Select one of 4 types: Prototype Test, One-Question Survey, Data Mining, Research Spike | `TestTypePicker` |
+|  | View colored type pill with tooltip on hover | `EntityView` · `TestTypePicker` |
+|  | Change or clear the type by reopening the picker | `TestTypePicker` |
+|  | See test type pill on child cards in parent's children grid | `ChildEntityCard` |
 | **Refine the Test** | Edit title inline (click pencil on hover) | `EntityView` · `Inline Edit` |
 |  | Add or edit description inline | `EntityView` · `Inline Edit` |
 |  | Add a content block (accordion, pills, quote, metric) | `EntityView` · `Add Block Button` |

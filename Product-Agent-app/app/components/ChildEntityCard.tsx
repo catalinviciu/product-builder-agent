@@ -32,9 +32,13 @@ interface ChildEntityCardProps {
   assumptionTypeColor?: string;
   assumptionTypeDescription?: string;
   assumptionTypeDotColor?: string;
+  testTypeLabel?: string;
+  testTypeColor?: string;
+  testTypeDescription?: string;
+  testTypeDotColor?: string;
 }
 
-export function ChildEntityCard({ id, title, level, preview, status, badge, hideStatus, draggable, personaName, personaDescription, secondaryPersonaCount, assumptionTypeLabel, assumptionTypeColor, assumptionTypeDescription, assumptionTypeDotColor }: ChildEntityCardProps) {
+export function ChildEntityCard({ id, title, level, preview, status, badge, hideStatus, draggable, personaName, personaDescription, secondaryPersonaCount, assumptionTypeLabel, assumptionTypeColor, assumptionTypeDescription, assumptionTypeDotColor, testTypeLabel, testTypeColor, testTypeDescription, testTypeDotColor }: ChildEntityCardProps) {
   const { navigateToChild } = useAppStore();
   const levelMeta = LEVEL_META[level];
   const IconComponent = LEVEL_ICON_MAP[levelMeta.icon];
@@ -77,7 +81,7 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
 
       <p className="text-xs text-muted-foreground/70 leading-relaxed line-clamp-2">{preview}</p>
 
-      {(personaName || badge || assumptionTypeLabel) && (
+      {(personaName || badge || assumptionTypeLabel || testTypeLabel) && (
         <div className="flex items-center justify-end gap-1.5">
           {assumptionTypeLabel && (
             assumptionTypeDescription ? (
@@ -94,6 +98,24 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border-subtle text-muted-foreground/70 flex items-center gap-1">
                 <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", assumptionTypeDotColor)} />
                 {assumptionTypeLabel}
+              </span>
+            )
+          )}
+          {testTypeLabel && (
+            testTypeDescription ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border-subtle text-muted-foreground/70 flex items-center gap-1">
+                    <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", testTypeDotColor)} />
+                    {testTypeLabel}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{testTypeDescription}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border-subtle text-muted-foreground/70 flex items-center gap-1">
+                <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", testTypeDotColor)} />
+                {testTypeLabel}
               </span>
             )
           )}

@@ -170,6 +170,23 @@ export const ASSUMPTION_TYPE_META: Record<AssumptionType, AssumptionTypeMeta> = 
   ethical:      { label: "Ethical",       description: "Should we build this?", color: "text-violet-600 dark:text-violet-400 bg-violet-500/10 border-violet-500/25", dotColor: "bg-violet-500 dark:bg-violet-400" },
 };
 
+// ── Test Types ─────────────────────────────────────────────────────────
+export type TestType = "prototype" | "survey" | "data_mining" | "research_spike";
+
+export interface TestTypeMeta {
+  label: string;
+  description: string;
+  color: string;
+  dotColor: string;
+}
+
+export const TEST_TYPE_META: Record<TestType, TestTypeMeta> = {
+  prototype:      { label: "Prototype Test",      description: "Simulating a specific moment to evaluate customer behavior", color: "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/25", dotColor: "bg-rose-500 dark:bg-rose-400" },
+  survey:         { label: "One-Question Survey",  description: "Quickly evaluating past or current customer behavior", color: "text-sky-600 dark:text-sky-400 bg-sky-500/10 border-sky-500/25", dotColor: "bg-sky-500 dark:bg-sky-400" },
+  data_mining:    { label: "Data Mining",           description: "Using existing system or product data to evaluate inherent risk", color: "text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/25", dotColor: "bg-orange-500 dark:bg-orange-400" },
+  research_spike: { label: "Research Spike",        description: "Time-boxed engineering activity to evaluate technical difficulty", color: "text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border-indigo-500/25", dotColor: "bg-indigo-500 dark:bg-indigo-400" },
+};
+
 // ── Unified entity ────────────────────────────────────────────────────────
 
 export interface Entity {
@@ -183,6 +200,7 @@ export interface Entity {
   personaId?: string;
   secondaryPersonaIds?: string[];
   assumptionType?: AssumptionType;
+  testType?: TestType;
   children: string[];
   blocks: Block[];
 }
@@ -208,6 +226,7 @@ export function getDescriptionPlaceholder(level: EntityLevel): string {
     case "opportunity":      return "*What unmet need, pain point, or desire does this persona have?*";
     case "solution":         return "*What is this solution and how does it address the opportunity?*";
     case "assumption":       return "*What assumption are we making that needs to be true for this solution to work?*";
+    case "test":             return "*What evaluative method will you use to validate or invalidate the parent assumption?*";
     default:                 return "";
   }
 }
@@ -246,6 +265,11 @@ export function createBlockTemplate(level: EntityLevel, entityId: string): Block
       return [
         { id: `${entityId}-b${ts}`, type: "accordion", label: "Belief", content: "*What specifically do we believe to be true? State it as a falsifiable claim.*" },
         { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Evidence", content: "*What evidence do we have for or against this assumption today?*" },
+      ];
+    case "test":
+      return [
+        { id: `${entityId}-b${ts}`, type: "accordion", label: "Define Test", content: "*Describe the evaluative method you will use to validate or invalidate the assumption. This is not about generating new ideas — it's about designing a specific experiment or measurement to test what you already believe.*" },
+        { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Pass / Fail Criteria", content: "*What specific, observable result would tell you this assumption is true (pass)? What result would tell you it's false (fail)? Define the threshold before running the test.*" },
       ];
     default:
       return [];

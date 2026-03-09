@@ -284,7 +284,17 @@
         {
           "title": "Add Test children",
           "stories": [
-            { "action": "Click \"Add Test\" in the children section", "components": ["Add Child Button"] }
+            { "action": "Click \"Add Test\" in the children section — template creates Define Test and Pass/Fail Criteria accordion blocks", "components": ["Add Child Button", "EntityView"] }
+          ]
+        },
+        {
+          "title": "Classify the Test",
+          "stories": [
+            { "action": "Click \"Set type\" pill in test header to open type picker", "components": ["EntityView", "TestTypePicker"] },
+            { "action": "Select one of 4 types: Prototype Test, One-Question Survey, Data Mining, Research Spike", "components": ["TestTypePicker"] },
+            { "action": "View colored type pill with tooltip on hover", "components": ["EntityView", "TestTypePicker"] },
+            { "action": "Change or clear the type by reopening the picker", "components": ["TestTypePicker"] },
+            { "action": "See test type pill on child cards in parent's children grid", "components": ["ChildEntityCard"] }
           ]
         },
         {
