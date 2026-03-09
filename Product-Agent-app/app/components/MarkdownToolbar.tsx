@@ -10,8 +10,8 @@ import {
 export function MarkdownBlock({ content }: { content: string }) {
   if (!content) return null;
   return (
-    <article className="max-w-none text-[var(--text-body)] leading-[var(--text-body-leading)] text-foreground/80
-      [&_h1]:text-[var(--text-body)] [&_h2]:text-[var(--text-body)] [&_h3]:text-[var(--text-body)] [&_h4]:text-[var(--text-body)]
+    <article className="max-w-none text-[length:var(--text-body)] leading-[var(--text-body-leading)] text-foreground/80
+      [&_h1]:text-[length:var(--text-body)] [&_h2]:text-[length:var(--text-body)] [&_h3]:text-[length:var(--text-body)] [&_h4]:text-[length:var(--text-body)]
       [&_h1]:font-medium [&_h2]:font-medium [&_h3]:font-medium [&_h4]:font-medium
       [&_h1]:text-foreground/70 [&_h2]:text-foreground/70 [&_h3]:text-foreground/70 [&_h4]:text-foreground/70
       [&_h1]:mt-3 [&_h2]:mt-3 [&_h3]:mt-3 [&_h4]:mt-3

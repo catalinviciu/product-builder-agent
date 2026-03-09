@@ -913,7 +913,7 @@ function BlockList({ entity }: { entity: Entity }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="text-sm text-foreground/80 leading-relaxed">
+      <div className="text-[length:var(--text-body)] text-foreground/80 leading-[var(--text-body-leading)]">
         <EditableText
           value={entity.description}
           onSave={(v) => updateEntity(entity.id, { description: v })}
@@ -1845,7 +1845,7 @@ export function EntityView() {
             {/* Collapsed description preview */}
             {!expanded && entity.description && (
               <div className="relative">
-                <div className="text-sm text-foreground/80 leading-relaxed line-clamp-3">
+                <div className="text-[length:var(--text-body)] text-foreground/80 leading-[var(--text-body-leading)] line-clamp-3">
                   <MarkdownBlock content={entity.description} />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-background to-transparent pointer-events-none" />
@@ -1875,7 +1875,7 @@ export function EntityView() {
                     <>
                       {/* Description + ICE side-by-side */}
                       <div className="flex flex-col md:flex-row gap-4">
-                        <div className="md:w-[60%] min-w-0 text-sm text-foreground/80 leading-relaxed">
+                        <div className="md:w-[60%] min-w-0 text-[length:var(--text-body)] text-foreground/80 leading-[var(--text-body-leading)]">
                           <EditableText
                             value={entity.description}
                             onSave={(v) => updateEntity(entity.id, { description: v })}
