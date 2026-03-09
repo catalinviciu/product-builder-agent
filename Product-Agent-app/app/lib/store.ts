@@ -99,6 +99,18 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
             data[plId].personas = PRODUCT_LINES[plId]?.personas ?? [];
           }
         }
+        // Migrate: rename "Belief" block label to "Impact if True" on assumption entities
+        for (const plId of Object.keys(data)) {
+          for (const entity of Object.values(data[plId].entities)) {
+            if (entity.level === "assumption") {
+              for (const block of entity.blocks) {
+                if (block.type === "accordion" && block.label === "Belief") {
+                  block.label = "Impact if True";
+                }
+              }
+            }
+          }
+        }
         set({ productLines: data, isHydrated: true });
         return;
       }

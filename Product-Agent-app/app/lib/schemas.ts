@@ -61,7 +61,7 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
   },
   assumption: {
     label: "Assumption",
-    description: "A belief that must be true for a solution to work",
+    description: "An assumption that must be true for a solution to work",
     childrenLabel: "Tests",
     icon: "HelpCircle",
     accentColor: "text-orange-600 dark:text-orange-400",
@@ -263,7 +263,7 @@ export function createBlockTemplate(level: EntityLevel, entityId: string): Block
       ];
     case "assumption":
       return [
-        { id: `${entityId}-b${ts}`, type: "accordion", label: "Belief", content: "*What specifically do we believe to be true? State it as a falsifiable claim.*" },
+        { id: `${entityId}-b${ts}`, type: "accordion", label: "Impact if True", content: "*What is the expected impact if this assumption turns out to be true? How does it affect the solution's success?*" },
         { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Evidence", content: "*What evidence do we have for or against this assumption today?*" },
       ];
     case "test":
