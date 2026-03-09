@@ -91,21 +91,21 @@ function AccordionSection({ label, children, defaultOpen = false }: {
     <div className="rounded-xl border border-border-default overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="cursor-pointer flex items-center justify-between w-full px-4 py-3 bg-surface-1 hover:bg-surface-2 transition-colors"
+        className="cursor-pointer flex items-center gap-2 w-full px-[var(--spacing-block-px)] py-[var(--spacing-block-py)] bg-surface-1 hover:bg-surface-2 transition-colors"
       >
+        <ChevronRight
+          size={14}
+          className={cn(
+            "text-muted-foreground/40 transition-transform duration-200 shrink-0",
+            open && "rotate-90"
+          )}
+        />
         <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
           {label}
         </span>
-        <ChevronDown
-          size={14}
-          className={cn(
-            "text-muted-foreground/40 transition-transform duration-200",
-            open && "rotate-180"
-          )}
-        />
       </button>
       {open && (
-        <div className="px-4 py-3 border-t border-border-subtle">
+        <div className="px-[var(--spacing-block-px)] py-[var(--spacing-block-py)] border-t border-border-subtle">
           {children}
         </div>
       )}
@@ -168,8 +168,9 @@ function StatusPicker({ status, onChange }: { status: EntityStatus; onChange: (s
 
 // ── Persona picker ────────────────────────────────────────────────────────
 
-function PersonaPicker({ entityId, personaId }: { entityId: string; personaId?: string }) {
+function PersonaPicker({ entityId, personaId, secondaryPersonaIds }: { entityId: string; personaId?: string; secondaryPersonaIds?: string[] }) {
   const [open, setOpen] = useState(false);
+  const [confirmUnassign, setConfirmUnassign] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { assignPersona } = useAppStore();
   const productLine = useProductLine();
@@ -219,15 +220,43 @@ function PersonaPicker({ entityId, personaId }: { entityId: string; personaId?: 
       </TooltipProvider>
       {open && (
         <div className="absolute right-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[160px]">
-          <button
-            onClick={(e) => { e.stopPropagation(); assignPersona(entityId, undefined); setOpen(false); }}
-            className={cn(
-              "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
-              !personaId && "bg-surface-3"
-            )}
-          >
-            <span className={!personaId ? "text-foreground font-medium" : "text-muted-foreground"}>Unassigned</span>
-          </button>
+          {confirmUnassign ? (
+            <div className="px-3 py-2 flex flex-col gap-1.5">
+              <span className="text-[10px] text-muted-foreground">This will also clear {(secondaryPersonaIds ?? []).length} secondary persona(s)</span>
+              <div className="flex gap-1">
+                <button
+                  onClick={(e) => { e.stopPropagation(); assignPersona(entityId, undefined); setConfirmUnassign(false); setOpen(false); }}
+                  className="cursor-pointer text-[10px] font-medium px-2 py-1 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 transition-colors"
+                >
+                  Unassign all
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmUnassign(false); }}
+                  className="cursor-pointer text-[10px] font-medium px-2 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if ((secondaryPersonaIds ?? []).length > 0) {
+                  setConfirmUnassign(true);
+                } else {
+                  assignPersona(entityId, undefined);
+                  setOpen(false);
+                }
+              }}
+              className={cn(
+                "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
+                !personaId && "bg-surface-3"
+              )}
+            >
+              <span className={!personaId ? "text-foreground font-medium" : "text-muted-foreground"}>Unassigned</span>
+            </button>
+          )}
           {personas.map((p) => (
             <button
               key={p.id}
@@ -664,7 +693,7 @@ function BlockToolbar({ onEdit, onDelete }: { onEdit: () => void; onDelete: () =
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
-    <div className="absolute top-2 right-2 opacity-0 group-hover/block:opacity-100 transition-opacity flex gap-1">
+    <div className="absolute top-1 right-1 opacity-0 group-hover/block:opacity-100 transition-opacity flex gap-1">
       <button onClick={onEdit} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 hover:text-foreground transition-colors">
         <Pencil size={12} />
       </button>
@@ -1676,7 +1705,7 @@ export function EntityView() {
   const hasBlocks = entity.blocks.length > 0;
 
   return (
-    <div className="px-8 py-6 pb-28 flex flex-col gap-5">
+    <div className="px-[var(--spacing-page-px)] py-[var(--spacing-page-py)] pb-28 flex flex-col gap-[var(--spacing-page-gap)]">
       <EntityBreadcrumb />
 
       {/* File-shaped entity detail — collapsible */}
@@ -1754,9 +1783,9 @@ export function EntityView() {
             tabIndex={0}
             onClick={() => setExpanded(!expanded)}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(!expanded); } }}
-            className="cursor-pointer text-left w-full p-5 flex flex-col gap-3 group/collapse"
+            className="cursor-pointer text-left w-full px-[var(--spacing-entity-px)] py-[var(--spacing-entity-py)] flex flex-col gap-[var(--spacing-entity-gap)] group/collapse"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               {/* Collapse/expand chevron — left side, before icon */}
               <motion.div
                 animate={{ rotate: expanded ? 90 : 0 }}
@@ -1766,7 +1795,7 @@ export function EntityView() {
                 <ChevronRight size={12} className="text-muted-foreground/50 group-hover/collapse:text-muted-foreground transition-colors" />
               </motion.div>
               {IconComponent && (
-                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", levelMeta.iconBg)}>
+                <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", levelMeta.iconBg)}>
                   <IconComponent size={16} className={levelMeta.accentColor} />
                 </div>
               )}
@@ -1798,8 +1827,8 @@ export function EntityView() {
               )}
               {PERSONA_LEVELS.has(entity.level) && (
                 <div className="flex items-center gap-2 flex-wrap">
-                  <PersonaPicker entityId={entity.id} personaId={entity.personaId} />
-                  {MULTI_PERSONA_LEVELS.has(entity.level) && (
+                  <PersonaPicker entityId={entity.id} personaId={entity.personaId} secondaryPersonaIds={entity.secondaryPersonaIds} />
+                  {MULTI_PERSONA_LEVELS.has(entity.level) && entity.personaId && (
                     <SecondaryPersonaPicker
                       entityId={entity.id}
                       secondaryPersonaIds={entity.secondaryPersonaIds ?? []}
@@ -1848,7 +1877,7 @@ export function EntityView() {
                 transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
                 className="overflow-hidden"
               >
-                <div className="px-5 pb-5 flex flex-col gap-4 border-t border-border-subtle pt-4">
+                <div className="px-[var(--spacing-content-px)] pb-[var(--spacing-content-py)] flex flex-col gap-[var(--spacing-content-gap)] border-t border-border-subtle pt-[var(--spacing-content-py)]">
                   {entity.level === "opportunity" ? (
                     <>
                       {/* Description + ICE side-by-side */}

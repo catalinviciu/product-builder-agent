@@ -468,7 +468,11 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
             ...pl,
             entities: {
               ...pl.entities,
-              [entityId]: { ...pl.entities[entityId], personaId },
+              [entityId]: {
+                ...pl.entities[entityId],
+                personaId,
+                ...(personaId === undefined && { secondaryPersonaIds: [] }),
+              },
             },
           },
         },

@@ -59,6 +59,23 @@
   --color-border-focus: var(--border-focus);
   --color-overlay: var(--overlay);
   --color-shadow-color: var(--shadow-color);
+
+  /* ── Spacing tokens ── */
+  --spacing-entity-px: var(--spacing-entity-px);
+  --spacing-entity-py: var(--spacing-entity-py);
+  --spacing-entity-gap: var(--spacing-entity-gap);
+  --spacing-content-px: var(--spacing-content-px);
+  --spacing-content-py: var(--spacing-content-py);
+  --spacing-content-gap: var(--spacing-content-gap);
+  --spacing-block-px: var(--spacing-block-px);
+  --spacing-block-py: var(--spacing-block-py);
+  --spacing-page-px: var(--spacing-page-px);
+  --spacing-page-py: var(--spacing-page-py);
+  --spacing-page-gap: var(--spacing-page-gap);
+
+  /* ── Typography tokens ── */
+  --text-body: var(--text-body);
+  --text-body-leading: var(--text-body-leading);
 }
 
 :root {
@@ -111,6 +128,23 @@
   /* ── Overlay & shadow (light mode) ── */
   --overlay: oklch(0 0 0 / 40%);
   --shadow-color: oklch(0 0 0 / 8%);
+
+  /* ── Spacing tokens ── */
+  --spacing-entity-px: 1rem;
+  --spacing-entity-py: 0.75rem;
+  --spacing-entity-gap: 0.5rem;
+  --spacing-content-px: 1rem;
+  --spacing-content-py: 0.75rem;
+  --spacing-content-gap: 0.75rem;
+  --spacing-block-px: 0.75rem;
+  --spacing-block-py: 0.5rem;
+  --spacing-page-px: 1.5rem;
+  --spacing-page-py: 1rem;
+  --spacing-page-gap: 1rem;
+
+  /* ── Typography tokens ── */
+  --text-body: 0.8125rem;
+  --text-body-leading: 1.625;
 }
 
 .dark {
