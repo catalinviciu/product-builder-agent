@@ -239,7 +239,7 @@ function PersonaPicker({ entityId, personaId }: { entityId: string; personaId?: 
         )}
       </TooltipProvider>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[160px]">
+        <div className="absolute right-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[160px]">
           <button
             onClick={(e) => { e.stopPropagation(); assignPersona(entityId, undefined); setOpen(false); }}
             className={cn(
@@ -329,7 +329,7 @@ function SecondaryPersonaPicker({ entityId, secondaryPersonaIds, excludePersonaI
         )}
       </TooltipProvider>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[180px]">
+        <div className="absolute right-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[180px]">
           {personas.length === 0 && (
             <div className="px-3 py-2 text-xs text-muted-foreground">No other personas</div>
           )}
