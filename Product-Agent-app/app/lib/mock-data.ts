@@ -97,6 +97,7 @@ const FRESHCART_ENTITIES: EntityStore = {
   "opp-1": {
     id: "opp-1", level: "opportunity", title: "Cart abandonment from poor substitution suggestions", icon: "Lightbulb", status: "commit", parentId: "po-1a", personaId: "persona-fc-busy-parent",
     description: "When items are out of stock, our current substitution logic picks alternatives based on category + price. Users frequently reject these substitutions, leading to incomplete orders and frustration. 23% of orders with substitutions result in the user removing items entirely rather than accepting the suggestion.",
+    iceScore: { i: 8, c: 7, e: 5 },
     children: ["sol-1", "sol-2"],
     blocks: [
       { id: "opp-1-b0", type: "quote", content: "I ordered organic whole milk and they suggested fat-free almond milk. That's not even close. I just deleted the item and went to the store myself.", attribution: "Sarah, Berlin, interview #14" },
@@ -108,6 +109,7 @@ const FRESHCART_ENTITIES: EntityStore = {
   "opp-2": {
     id: "opp-2", level: "opportunity", title: "First-time users don't understand delivery time slots", icon: "Lightbulb", status: "commit", parentId: "po-1a", personaId: "persona-fc-busy-parent",
     description: "Our onboarding flow asks new users to select a delivery time slot before their first order. The current slot picker is a text-based list of times. 31% of first-time users abandon during slot selection — the highest drop-off point in the checkout funnel.",
+    iceScore: { i: 7, c: 8, e: 3 },
     children: ["sol-3"],
     blocks: [
       { id: "opp-2-b0", type: "quote", content: "I didn't understand if '2-4pm' means it arrives at 2 or somewhere in that window. I just wanted it today, but all the 'today' slots were grey and I couldn't tell if that meant sold out or what.", attribution: "Marco, Amsterdam, usability test #7" },
@@ -119,6 +121,7 @@ const FRESHCART_ENTITIES: EntityStore = {
   "opp-3": {
     id: "opp-3", level: "opportunity", title: "Users miss complementary items they'd want", icon: "Lightbulb", status: "commit", parentId: "po-1b", personaId: "persona-fc-impulse-adder",
     description: "Users shop for individual ingredients but think in terms of meals. They frequently forget items that would complete a recipe or complement their basket. Post-order surveys show 42% of users wish they'd \"remembered to add something\" — most commonly herbs, sauces, or side ingredients.",
+    iceScore: { i: 6, c: 5, e: 7 },
     children: ["sol-4"],
     blocks: [
       { id: "opp-3-b0", type: "quote", content: "I bought pasta and tomatoes but forgot to get basil and parmesan. Every time. I wish the app just told me what I'm missing for the meal I'm obviously making.", attribution: "Lena, Munich, diary study #3" },

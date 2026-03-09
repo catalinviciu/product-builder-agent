@@ -201,6 +201,7 @@ export interface Entity {
   secondaryPersonaIds?: string[];
   assumptionType?: AssumptionType;
   testType?: TestType;
+  iceScore?: { i: number; c: number; e: number };
   children: string[];
   blocks: Block[];
 }
@@ -215,6 +216,71 @@ export const CHILD_LEVEL: Record<EntityLevel, EntityLevel | null> = {
   assumption: "test",
   test: null,
 };
+
+// ── ICE Scoring ─────────────────────────────────────────────────────────
+
+export interface IceDimensionMeta {
+  key: "i" | "c" | "e";
+  label: string;
+  description: string;
+  color: string;
+  dotColor: string;
+  valueLabels: Record<number, string>;
+}
+
+export const ICE_DIMENSIONS: IceDimensionMeta[] = [
+  {
+    key: "i",
+    label: "Impact",
+    description: "How much will this move the product outcome?",
+    color: "text-blue-600 dark:text-blue-400",
+    dotColor: "bg-blue-500 dark:bg-blue-400",
+    valueLabels: {
+      1: "Negligible", 2: "Minimal", 3: "Low", 4: "Below Average", 5: "Moderate",
+      6: "Meaningful", 7: "Significant", 8: "High", 9: "Very High", 10: "Transformative",
+    },
+  },
+  {
+    key: "c",
+    label: "Confidence",
+    description: "How strong is the evidence supporting this?",
+    color: "text-violet-600 dark:text-violet-400",
+    dotColor: "bg-violet-500 dark:bg-violet-400",
+    valueLabels: {
+      1: "Pure guess", 2: "Gut feel", 3: "Anecdotal", 4: "Some signals", 5: "Moderate evidence",
+      6: "Decent data", 7: "Strong signals", 8: "Well-supported", 9: "Very confident", 10: "Proven",
+    },
+  },
+  {
+    key: "e",
+    label: "Ease",
+    description: "How easy is this to address?",
+    color: "text-emerald-600 dark:text-emerald-400",
+    dotColor: "bg-emerald-500 dark:bg-emerald-400",
+    valueLabels: {
+      1: "Enormous effort", 2: "Very hard", 3: "Hard", 4: "Significant work", 5: "Moderate effort",
+      6: "Manageable", 7: "Fairly easy", 8: "Easy", 9: "Very easy", 10: "Trivial",
+    },
+  },
+];
+
+export function getIceScoreColor(score: number): { text: string; bg: string; border: string } {
+  if (score >= 400) return {
+    text: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-500/10",
+    border: "border-emerald-500/25",
+  };
+  if (score >= 100) return {
+    text: "text-amber-600 dark:text-amber-400",
+    bg: "bg-amber-500/10",
+    border: "border-amber-500/25",
+  };
+  return {
+    text: "text-red-600 dark:text-red-400",
+    bg: "bg-red-500/10",
+    border: "border-red-500/25",
+  };
+}
 
 // ── Block templates ──────────────────────────────────────────────────────
 

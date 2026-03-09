@@ -12,7 +12,7 @@ import {
 import type {
   Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock, EntityLevel, EntityStatus,
 } from "@/app/lib/schemas";
-import { LEVEL_META, CHILD_LEVEL, ENTITY_STATUS_META, ENTITY_STATUSES, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getDescriptionPlaceholder, createBlockTemplate } from "@/app/lib/schemas";
+import { LEVEL_META, CHILD_LEVEL, ENTITY_STATUS_META, ENTITY_STATUSES, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, ICE_DIMENSIONS, getIceScoreColor, getDescriptionPlaceholder, createBlockTemplate } from "@/app/lib/schemas";
 import type { AssumptionType, TestType } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
 import { getEntity, getRootEntities, getEntityPreview, generateId, cn, buildEntityAnchor, buildRootAnchor } from "@/app/lib/utils";
@@ -515,6 +515,87 @@ function TestTypePicker({ entityId, testType }: { entityId: string; testType?: T
   );
 }
 
+// ── ICE Score Panel ───────────────────────────────────────────────────────
+
+function IceScorePanel({ entityId, iceScore }: { entityId: string; iceScore?: { i: number; c: number; e: number } }) {
+  const { updateIceScore } = useAppStore();
+  const scored = iceScore != null;
+  const current = iceScore ?? { i: 5, c: 5, e: 5 };
+  const total = current.i * current.c * current.e;
+  const tierColor = getIceScoreColor(total);
+
+  const handleInit = () => {
+    updateIceScore(entityId, { i: 5, c: 5, e: 5 });
+  };
+
+  const handleChange = (key: "i" | "c" | "e", value: number) => {
+    updateIceScore(entityId, { ...current, [key]: value });
+  };
+
+  if (!scored) {
+    return (
+      <div className="rounded-xl border border-border-default bg-surface-1 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-sm font-semibold text-foreground">ICE Score</span>
+            <p className="text-xs text-muted-foreground/60 mt-0.5">Prioritize this opportunity with Impact × Confidence × Ease</p>
+          </div>
+          <button
+            onClick={handleInit}
+            className="cursor-pointer text-xs px-3 py-1.5 rounded-lg bg-surface-2 border border-border-default text-foreground hover:bg-surface-hover transition-colors"
+          >
+            Set ICE Score
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-border-default bg-surface-1 p-4 flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-semibold text-foreground">ICE Score</span>
+        <span className={cn("text-sm font-bold px-2.5 py-0.5 rounded-full border", tierColor.text, tierColor.bg, tierColor.border)}>
+          {total}
+        </span>
+      </div>
+      {ICE_DIMENSIONS.map((dim) => {
+        const val = current[dim.key];
+        return (
+          <div key={dim.key} className="flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className={cn("w-2 h-2 rounded-full", dim.dotColor)} />
+                <span className={cn("text-xs font-medium", dim.color)}>{dim.label}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-foreground">{val}</span>
+                <span className="text-[10px] text-muted-foreground/60">{dim.valueLabels[val]}</span>
+              </div>
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              value={val}
+              onChange={(e) => handleChange(dim.key, Number(e.target.value))}
+              className="w-full h-1.5 rounded-full appearance-none bg-surface-3 cursor-pointer accent-current"
+              style={{ accentColor: dim.key === "i" ? "#3b82f6" : dim.key === "c" ? "#8b5cf6" : "#10b981" }}
+            />
+            <div className="flex justify-between text-[9px] text-muted-foreground/30">
+              <span>{dim.valueLabels[1]}</span>
+              <span>{dim.valueLabels[10]}</span>
+            </div>
+          </div>
+        );
+      })}
+      <p className="text-[10px] text-muted-foreground/40 text-center">
+        {current.i} × {current.c} × {current.e} = {total}
+      </p>
+    </div>
+  );
+}
+
 // ── Click-to-edit helpers ─────────────────────────────────────────────────
 
 function EditableText({ value, onSave, as = "input", placeholder, maxLength }: {
@@ -954,6 +1035,8 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
   function getChildCardProps(child: Entity) {
     let preview = getEntityPreview(child);
     let badge = "";
+    let iceScoreTotal: number | undefined;
+    let iceScoreColorObj: { text: string; bg: string; border: string } | undefined;
     if (child.level === "product_outcome") {
       const metricBlock = child.blocks.find((b) => b.type === "metric");
       const childCount = child.children?.length ?? 0;
@@ -962,7 +1045,11 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
       }
       badge = `${childCount} opportunit${childCount !== 1 ? "ies" : "y"}`;
     }
-    return { preview, badge };
+    if (child.level === "opportunity" && child.iceScore) {
+      iceScoreTotal = child.iceScore.i * child.iceScore.c * child.iceScore.e;
+      iceScoreColorObj = getIceScoreColor(iceScoreTotal);
+    }
+    return { preview, badge, iceScoreTotal, iceScoreColorObj };
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -1025,7 +1112,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
       {viewMode === "grid" && children.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {children.map((child) => {
-            const { preview, badge } = getChildCardProps(child);
+            const { preview, badge, iceScoreTotal, iceScoreColorObj } = getChildCardProps(child);
             return (
               <ChildEntityCard
                 key={child.id}
@@ -1047,6 +1134,8 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                 testTypeColor={getTestTypeInfo(child)?.color}
                 testTypeDescription={getTestTypeInfo(child)?.description}
                 testTypeDotColor={getTestTypeInfo(child)?.dotColor}
+                iceScore={iceScoreTotal}
+                iceScoreColor={iceScoreColorObj}
               />
             );
           })}
@@ -1079,7 +1168,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                     <p className="text-xs text-muted-foreground/30 italic px-1 py-3 text-center">No items</p>
                   )}
                   {colChildren.map((child) => {
-                    const { preview, badge } = getChildCardProps(child);
+                    const { preview, badge, iceScoreTotal, iceScoreColorObj } = getChildCardProps(child);
                     return (
                       <ChildEntityCard
                         key={child.id}
@@ -1103,6 +1192,8 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                         testTypeColor={getTestTypeInfo(child)?.color}
                         testTypeDescription={getTestTypeInfo(child)?.description}
                         testTypeDotColor={getTestTypeInfo(child)?.dotColor}
+                        iceScore={iceScoreTotal}
+                        iceScoreColor={iceScoreColorObj}
                       />
                     );
                   })}
@@ -1117,7 +1208,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                         {showArchived ? "Hide" : "Show"} {archivedOrDroppedItems.length} archived/dropped
                       </button>
                       {showArchived && archivedOrDroppedItems.map((child) => {
-                        const { preview, badge } = getChildCardProps(child);
+                        const { preview, badge, iceScoreTotal, iceScoreColorObj } = getChildCardProps(child);
                         return (
                           <ChildEntityCard
                             key={child.id}
@@ -1141,6 +1232,8 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                             testTypeColor={getTestTypeInfo(child)?.color}
                             testTypeDescription={getTestTypeInfo(child)?.description}
                             testTypeDotColor={getTestTypeInfo(child)?.dotColor}
+                            iceScore={iceScoreTotal}
+                            iceScoreColor={iceScoreColorObj}
                           />
                         );
                       })}
@@ -1173,6 +1266,8 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                   testTypeColor={getTestTypeInfo(activeChild)?.color}
                   testTypeDescription={getTestTypeInfo(activeChild)?.description}
                   testTypeDotColor={getTestTypeInfo(activeChild)?.dotColor}
+                  iceScore={getChildCardProps(activeChild).iceScoreTotal}
+                  iceScoreColor={getChildCardProps(activeChild).iceScoreColorObj}
                 />
               </div>
             ) : null}
@@ -1658,6 +1753,10 @@ export function EntityView() {
             <p className="text-xs text-muted-foreground/60 italic">
               {levelMeta.description}
             </p>
+
+            {entity.level === "opportunity" && (
+              <IceScorePanel entityId={entity.id} iceScore={entity.iceScore} />
+            )}
 
             {/* Collapsed description preview */}
             {!expanded && entity.description && (

@@ -23,14 +23,14 @@
 ### Activity 1: Set Up a Product Line
 > Create the top-level container that holds all discovery work for one product.
 
-| Step                          | Story                                         | Components              |
-| :---------------------------- | :-------------------------------------------- | :---------------------- |
-| **Create product line**       | Open the Product Line Selector dropdown       | `Product Line Selector` |
-|                               | Click "New Product Line"                      | `Product Line Selector` |
-|                               | Enter name and confirm                        | `Product Line Selector` |
-| **Edit product line details** | Click product line title to edit inline       | `Overview Title`        |
-|                               | Click product line description to edit inline | `Overview Description`  |
-| **Delete product line**       | Open Product Line Selector and click delete   | `Product Line Selector` |
+| Step | Story | Components |
+|:-----|:------|:-----------|
+| **Create product line** | Open the Product Line Selector dropdown | `Product Line Selector` |
+|  | Click "New Product Line" | `Product Line Selector` |
+|  | Enter name and confirm | `Product Line Selector` |
+| **Edit product line details** | Click product line title to edit inline | `Overview Title` |
+|  | Click product line description to edit inline | `Overview Description` |
+| **Delete product line** | Open Product Line Selector and click delete | `Product Line Selector` |
 
 
 ### Activity 2: Define Personas
@@ -50,21 +50,21 @@
 ### Activity 3: Define a Business Outcome
 > Create the top-level strategic goal for the product line.
 
-| Step                             | Story                                                       | Components                        |
-| :------------------------------- | :---------------------------------------------------------- | :-------------------------------- |
-| **Open Overview**                | Click "Overview" in the sidebar                             | `Overview Button` · `SectionNav`  |
-| **Add Business Outcome**         | Click the dashed "Add Business Outcome" button              | `Add Root Form`                   |
-|                                  | Enter title and description, then confirm                   | `Add Root Form`                   |
-| **Refine the entity**            | Edit title inline (click pencil on hover)                   | `EntityView` · `Inline Edit`      |
-|                                  | Add or edit description inline                              | `EntityView` · `Inline Edit`      |
-|                                  | Add a content block (accordion, pills, quote, metric)       | `EntityView` · `Add Block Button` |
-|                                  | Edit an existing block                                      | `EntityView` · `Block Toolbar`    |
-|                                  | Delete a block                                              | `EntityView` · `Block Toolbar`    |
-|                                  | Change status via the Status Picker                         | `Entity Tab` · `Status Picker`    |
-|                                  | Copy the context anchor for AI reference                    | `Entity Tab` · `Copy Anchor`      |
-|                                  | Delete the entity (only when it has no children)            | `Entity Tab`                      |
-|                                  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker`    |
-| **Add Product Outcome children** | Click "Add Product Outcome" in the children section         | `Add Child Button`                |
+| Step | Story | Components |
+|:-----|:------|:-----------|
+| **Open Overview** | Click "Overview" in the sidebar | `Overview Button` · `SectionNav` |
+| **Add Business Outcome** | Click the dashed "Add Business Outcome" button | `Add Root Form` |
+|  | Enter title and description, then confirm | `Add Root Form` |
+| **Refine the entity** | Edit title inline (click pencil on hover) | `EntityView` · `Inline Edit` |
+|  | Add or edit description inline | `EntityView` · `Inline Edit` |
+|  | Add a content block (accordion, pills, quote, metric) | `EntityView` · `Add Block Button` |
+|  | Edit an existing block | `EntityView` · `Block Toolbar` |
+|  | Delete a block | `EntityView` · `Block Toolbar` |
+|  | Change status via the Status Picker | `Entity Tab` · `Status Picker` |
+|  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
+|  | Delete the entity (only when it has no children) | `Entity Tab` |
+|  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
+| **Add Product Outcome children** | Click "Add Product Outcome" in the children section | `Add Child Button` |
 
 
 > **Pattern note:** Activities 3–7 each include a "Refine the entity" step with the same core stories (edit title, edit description, manage blocks, change status, copy anchor). This reflects the consistent editing experience across all entity levels.
@@ -103,6 +103,11 @@
 |  | Enter title and description, then confirm | `Add Child Button` |
 | **Assign a Persona** | Click the Persona Picker pill on the entity tab | `Entity Tab` · `Persona Picker` |
 |  | Select a persona from the dropdown | `Persona Picker` |
+| **Score opportunity with ICE** | Open the ICE Score panel on an opportunity entity | `EntityView` · `IceScorePanel` |
+|  | Adjust the Impact slider (1–10) | `IceScorePanel` |
+|  | Adjust the Confidence slider (1–10) | `IceScorePanel` |
+|  | Adjust the Ease slider (1–10) | `IceScorePanel` |
+|  | View the computed ICE score (Impact × Confidence × Ease) | `IceScorePanel` |
 | **Refine the entity** | Edit title inline (click pencil on hover) | `EntityView` · `Inline Edit` |
 |  | Add or edit description inline | `EntityView` · `Inline Edit` |
 |  | Add a content block (accordion, pills, quote, metric) | `EntityView` · `Add Block Button` |
@@ -184,6 +189,8 @@
 | **Drag between columns** | Drag a Child Card from one Kanban Column to another | `Kanban View` · `Kanban Column` · `Child Card` · `Drag Overlay` |
 | **Show/hide archived** | Click the Archived Toggle in the Done column | `Kanban View` · `Archived Toggle` |
 | **Switch to Grid view** | Click the Grid icon in the View Toggle | `View Toggle` |
+| **Compare ICE scores** | View ICE score badges on opportunity child cards to compare priorities | `ChildEntityCard` · `ICE Badge` |
+|  | Open an opportunity to adjust its ICE score via sliders | `EntityView` · `IceScorePanel` |
 
 
 ### Activity 9: Navigate & Review

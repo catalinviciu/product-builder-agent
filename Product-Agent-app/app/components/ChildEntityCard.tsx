@@ -36,9 +36,11 @@ interface ChildEntityCardProps {
   testTypeColor?: string;
   testTypeDescription?: string;
   testTypeDotColor?: string;
+  iceScore?: number;
+  iceScoreColor?: { text: string; bg: string; border: string };
 }
 
-export function ChildEntityCard({ id, title, level, preview, status, badge, hideStatus, draggable, personaName, personaDescription, secondaryPersonaCount, assumptionTypeLabel, assumptionTypeColor, assumptionTypeDescription, assumptionTypeDotColor, testTypeLabel, testTypeColor, testTypeDescription, testTypeDotColor }: ChildEntityCardProps) {
+export function ChildEntityCard({ id, title, level, preview, status, badge, hideStatus, draggable, personaName, personaDescription, secondaryPersonaCount, assumptionTypeLabel, assumptionTypeColor, assumptionTypeDescription, assumptionTypeDotColor, testTypeLabel, testTypeColor, testTypeDescription, testTypeDotColor, iceScore, iceScoreColor }: ChildEntityCardProps) {
   const { navigateToChild } = useAppStore();
   const levelMeta = LEVEL_META[level];
   const IconComponent = LEVEL_ICON_MAP[levelMeta.icon];
@@ -81,8 +83,13 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
 
       <p className="text-xs text-muted-foreground/70 leading-relaxed line-clamp-2">{preview}</p>
 
-      {(personaName || badge || assumptionTypeLabel || testTypeLabel) && (
+      {(personaName || badge || assumptionTypeLabel || testTypeLabel || iceScore != null) && (
         <div className="flex items-center justify-end gap-1.5">
+          {iceScore != null && iceScoreColor && (
+            <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full border font-medium", iceScoreColor.text, iceScoreColor.bg, iceScoreColor.border)}>
+              ICE: {iceScore}
+            </span>
+          )}
           {assumptionTypeLabel && (
             assumptionTypeDescription ? (
               <Tooltip>

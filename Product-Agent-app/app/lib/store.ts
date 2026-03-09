@@ -55,6 +55,7 @@ interface AppStore {
   assignSecondaryPersonas: (entityId: string, personaIds: string[]) => void;
   assignAssumptionType: (entityId: string, assumptionType: AssumptionType | undefined) => void;
   assignTestType: (entityId: string, testType: TestType | undefined) => void;
+  updateIceScore: (entityId: string, iceScore: { i: number; c: number; e: number }) => void;
 }
 
 function deepCloneProductLines(pls: Record<string, ProductLine>): Record<string, ProductLine> {
@@ -505,6 +506,24 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
             entities: {
               ...pl.entities,
               [entityId]: { ...pl.entities[entityId], testType },
+            },
+          },
+        },
+      };
+    }),
+
+  updateIceScore: (entityId, iceScore) =>
+    set((state) => {
+      const pl = state.productLines[state.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return state;
+      return {
+        productLines: {
+          ...state.productLines,
+          [state.currentProductLineId]: {
+            ...pl,
+            entities: {
+              ...pl.entities,
+              [entityId]: { ...pl.entities[entityId], iceScore },
             },
           },
         },

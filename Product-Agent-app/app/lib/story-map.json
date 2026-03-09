@@ -178,6 +178,16 @@
           ]
         },
         {
+          "title": "Score opportunity with ICE",
+          "stories": [
+            { "action": "Open the ICE Score panel on an opportunity entity", "components": ["EntityView", "IceScorePanel"] },
+            { "action": "Adjust the Impact slider (1–10)", "components": ["IceScorePanel"] },
+            { "action": "Adjust the Confidence slider (1–10)", "components": ["IceScorePanel"] },
+            { "action": "Adjust the Ease slider (1–10)", "components": ["IceScorePanel"] },
+            { "action": "View the computed ICE score (Impact × Confidence × Ease)", "components": ["IceScorePanel"] }
+          ]
+        },
+        {
           "title": "Refine the entity",
           "stories": [
             { "action": "Edit title inline (click pencil on hover)", "components": ["EntityView", "Inline Edit"] },
@@ -346,6 +356,13 @@
           "title": "Switch to Grid view",
           "stories": [
             { "action": "Click the Grid icon in the View Toggle", "components": ["View Toggle"] }
+          ]
+        },
+        {
+          "title": "Compare ICE scores",
+          "stories": [
+            { "action": "View ICE score badges on opportunity child cards to compare priorities", "components": ["ChildEntityCard", "ICE Badge"] },
+            { "action": "Open an opportunity to adjust its ICE score via sliders", "components": ["EntityView", "IceScorePanel"] }
           ]
         }
       ]
