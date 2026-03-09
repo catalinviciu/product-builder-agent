@@ -111,11 +111,21 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
             }
           }
         }
-        set({ productLines: data, isHydrated: true });
+        // Restore last selected product line from localStorage
+        const savedPlId = typeof window !== "undefined" ? localStorage.getItem("pa-current-pl") : null;
+        const currentProductLineId = savedPlId && data[savedPlId] ? savedPlId : Object.keys(data)[0] || DEFAULT_PRODUCT_LINE_ID;
+        set({ productLines: data, currentProductLineId, isHydrated: true });
         return;
       }
     } catch {}
-    set({ isHydrated: true });
+    // Restore last selected product line even without persisted data
+    const savedPlId = typeof window !== "undefined" ? localStorage.getItem("pa-current-pl") : null;
+    const pls = useAppStore.getState().productLines;
+    if (savedPlId && pls[savedPlId]) {
+      set({ currentProductLineId: savedPlId, isHydrated: true });
+    } else {
+      set({ isHydrated: true });
+    }
   },
 
   resetData: async () => {
@@ -129,7 +139,10 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
     });
   },
 
-  switchProductLine: (id) => set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null }),
+  switchProductLine: (id) => {
+    if (typeof window !== "undefined") localStorage.setItem("pa-current-pl", id);
+    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null });
+  },
   navigateTo: (id) => set({ currentEntityId: id }),
   navigateUp: () =>
     set((state) => {
