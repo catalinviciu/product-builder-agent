@@ -201,7 +201,7 @@ export interface Entity {
   secondaryPersonaIds?: string[];
   assumptionType?: AssumptionType;
   testType?: TestType;
-  iceScore?: { i: number; c: number; e: number };
+  iceScore?: IceScore;
   children: string[];
   blocks: Block[];
 }
@@ -218,6 +218,13 @@ export const CHILD_LEVEL: Record<EntityLevel, EntityLevel | null> = {
 };
 
 // ── ICE Scoring ─────────────────────────────────────────────────────────
+
+export interface IceScore {
+  i: number;
+  c: number;
+  e: number;
+  rationale?: string;
+}
 
 export interface IceDimensionMeta {
   key: "i" | "c" | "e";

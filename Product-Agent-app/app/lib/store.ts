@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { PRODUCT_LINES, DEFAULT_PRODUCT_LINE_ID } from "./mock-data";
-import type { Entity, Block, ProductLine, DiscoveryTree, Persona, AssumptionType, TestType } from "./schemas";
+import type { Entity, Block, ProductLine, DiscoveryTree, Persona, AssumptionType, TestType, IceScore } from "./schemas";
 
 interface AppStore {
   // Data
@@ -55,7 +55,7 @@ interface AppStore {
   assignSecondaryPersonas: (entityId: string, personaIds: string[]) => void;
   assignAssumptionType: (entityId: string, assumptionType: AssumptionType | undefined) => void;
   assignTestType: (entityId: string, testType: TestType | undefined) => void;
-  updateIceScore: (entityId: string, iceScore: { i: number; c: number; e: number }) => void;
+  updateIceScore: (entityId: string, iceScore: IceScore) => void;
 }
 
 function deepCloneProductLines(pls: Record<string, ProductLine>): Record<string, ProductLine> {

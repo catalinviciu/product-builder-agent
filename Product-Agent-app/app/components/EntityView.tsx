@@ -518,7 +518,7 @@ function TestTypePicker({ entityId, testType }: { entityId: string; testType?: T
 
 // ── ICE Score Panel ───────────────────────────────────────────────────────
 
-function IceScorePanel({ entityId, iceScore }: { entityId: string; iceScore?: { i: number; c: number; e: number } }) {
+function IceScorePanel({ entityId, iceScore }: { entityId: string; iceScore?: { i: number; c: number; e: number; rationale?: string } }) {
   const { updateIceScore } = useAppStore();
   const scored = iceScore != null;
   const current = iceScore ?? { i: 5, c: 5, e: 5 };
@@ -530,16 +530,16 @@ function IceScorePanel({ entityId, iceScore }: { entityId: string; iceScore?: { 
   };
 
   const handleChange = (key: "i" | "c" | "e", value: number) => {
-    updateIceScore(entityId, { ...current, [key]: value });
+    updateIceScore(entityId, { ...current, rationale: iceScore?.rationale, [key]: value });
   };
 
   if (!scored) {
     return (
-      <div className="rounded-xl border border-border-default bg-surface-1 p-4">
+      <div className="w-full md:w-[40%] shrink-0 rounded-xl border border-border-default bg-surface-1 p-3">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-sm font-semibold text-foreground">ICE Score</span>
-            <p className="text-xs text-muted-foreground/60 mt-0.5">Prioritize this opportunity with Impact × Confidence × Ease</p>
+            <p className="text-xs text-muted-foreground/60 mt-0.5">Prioritize with Impact × Confidence × Ease</p>
           </div>
           <button
             onClick={handleInit}
@@ -553,12 +553,17 @@ function IceScorePanel({ entityId, iceScore }: { entityId: string; iceScore?: { 
   }
 
   return (
-    <div className="rounded-xl border border-border-default bg-surface-1 p-4 flex flex-col gap-3">
+    <div className="w-full md:w-[40%] shrink-0 rounded-xl border border-border-default bg-surface-1 p-3 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold text-foreground">ICE Score</span>
-        <span className={cn("text-sm font-bold px-2.5 py-0.5 rounded-full border", tierColor.text, tierColor.bg, tierColor.border)}>
-          {total}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground/40">
+            {current.i} × {current.c} × {current.e} =
+          </span>
+          <span className={cn("text-sm font-bold px-2.5 py-0.5 rounded-full border", tierColor.text, tierColor.bg, tierColor.border)}>
+            {total}
+          </span>
+        </div>
       </div>
       {ICE_DIMENSIONS.map((dim) => {
         const val = current[dim.key];
@@ -583,16 +588,16 @@ function IceScorePanel({ entityId, iceScore }: { entityId: string; iceScore?: { 
               className="w-full h-1.5 rounded-full appearance-none bg-surface-3 cursor-pointer accent-current"
               style={{ accentColor: dim.key === "i" ? "#3b82f6" : dim.key === "c" ? "#8b5cf6" : "#10b981" }}
             />
-            <div className="flex justify-between text-[9px] text-muted-foreground/30">
-              <span>{dim.valueLabels[1]}</span>
-              <span>{dim.valueLabels[10]}</span>
-            </div>
           </div>
         );
       })}
-      <p className="text-[10px] text-muted-foreground/40 text-center">
-        {current.i} × {current.c} × {current.e} = {total}
-      </p>
+      <textarea
+        placeholder="Why these scores? (optional)"
+        value={iceScore?.rationale ?? ""}
+        onChange={(e) => updateIceScore(entityId, { ...current, rationale: e.target.value })}
+        rows={2}
+        className="w-full text-xs rounded-lg border border-border-subtle bg-surface-2 px-2.5 py-1.5 text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:border-border-focus"
+      />
     </div>
   );
 }
@@ -1805,10 +1810,6 @@ export function EntityView() {
               {levelMeta.description}
             </p>
 
-            {entity.level === "opportunity" && (
-              <IceScorePanel entityId={entity.id} iceScore={entity.iceScore} />
-            )}
-
             {/* Collapsed description preview */}
             {!expanded && entity.description && (
               <div className="relative">
@@ -1838,7 +1839,29 @@ export function EntityView() {
                 className="overflow-hidden"
               >
                 <div className="px-5 pb-5 flex flex-col gap-4 border-t border-border-subtle pt-4">
-                  <BlockList entity={entity} />
+                  {entity.level === "opportunity" ? (
+                    <>
+                      {/* Description + ICE side-by-side */}
+                      <div className="flex flex-col md:flex-row gap-4">
+                        <div className="md:w-[60%] min-w-0 text-sm text-foreground/80 leading-relaxed">
+                          <EditableText
+                            value={entity.description}
+                            onSave={(v) => updateEntity(entity.id, { description: v })}
+                            as="textarea"
+                            placeholder="Add a description..."
+                          />
+                        </div>
+                        <IceScorePanel entityId={entity.id} iceScore={entity.iceScore} />
+                      </div>
+                      {/* Blocks (without description, already shown above) */}
+                      {entity.blocks.map((block) => (
+                        <BlockRenderer key={block.id} block={block} entityId={entity.id} />
+                      ))}
+                      <AddBlockButton entityId={entity.id} />
+                    </>
+                  ) : (
+                    <BlockList entity={entity} />
+                  )}
                 </div>
               </motion.div>
             )}
