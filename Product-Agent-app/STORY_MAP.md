@@ -142,7 +142,12 @@
 |:-----|:------|:-----------|
 | **Open parent Solution** | Click the Solution in the Entity Tree or Breadcrumb | `Entity Tree` · `Breadcrumb` |
 | **Add Assumption** | Click "Add Assumption" in the children section | `Add Child Button` |
-|  | Enter title and description, then confirm | `Add Child Button` |
+|  | Enter title and description, then confirm — template creates Belief and Evidence accordion blocks | `Add Child Button` · `EntityView` |
+| **Classify the Assumption** | Click "Set type" pill in assumption header to open type picker | `EntityView` · `AssumptionTypePicker` |
+|  | Select one of 5 types: Desirability, Usability, Feasibility, Viability, Ethical | `AssumptionTypePicker` |
+|  | View colored type pill with tooltip on hover | `EntityView` · `AssumptionTypePicker` |
+|  | Change or clear the type by reopening the picker | `AssumptionTypePicker` |
+|  | See assumption type pill on child cards in parent's children grid | `ChildEntityCard` |
 | **Refine the Assumption** | Edit title inline (click pencil on hover) | `EntityView` · `Inline Edit` |
 |  | Add or edit description inline | `EntityView` · `Inline Edit` |
 |  | Add a content block (accordion, pills, quote, metric) | `EntityView` · `Add Block Button` |

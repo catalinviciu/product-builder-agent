@@ -12,7 +12,8 @@ import {
 import type {
   Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock, EntityLevel, EntityStatus,
 } from "@/app/lib/schemas";
-import { LEVEL_META, CHILD_LEVEL, ENTITY_STATUS_META, ENTITY_STATUSES, PERSONA_LEVELS, MULTI_PERSONA_LEVELS } from "@/app/lib/schemas";
+import { LEVEL_META, CHILD_LEVEL, ENTITY_STATUS_META, ENTITY_STATUSES, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, getDescriptionPlaceholder, createBlockTemplate } from "@/app/lib/schemas";
+import type { AssumptionType } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
 import { getEntity, getRootEntities, getEntityPreview, generateId, cn, buildEntityAnchor, buildRootAnchor } from "@/app/lib/utils";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
@@ -358,6 +359,84 @@ function SecondaryPersonaPicker({ entityId, secondaryPersonaIds, excludePersonaI
   );
 }
 
+// ── Assumption type picker ────────────────────────────────────────────────
+
+const ASSUMPTION_TYPES = Object.keys(ASSUMPTION_TYPE_META) as AssumptionType[];
+
+function AssumptionTypePicker({ entityId, assumptionType }: { entityId: string; assumptionType?: AssumptionType }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const { assignAssumptionType } = useAppStore();
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const currentMeta = assumptionType ? ASSUMPTION_TYPE_META[assumptionType] : undefined;
+
+  return (
+    <div ref={ref} className="relative">
+      <TooltipProvider delayDuration={300}>
+        {currentMeta ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+                className={cn(
+                  "cursor-pointer text-[11px] px-2 py-0.5 rounded-full border transition-colors hover:brightness-110 dark:hover:brightness-125 flex items-center gap-1",
+                  currentMeta.color
+                )}
+              >
+                {currentMeta.label}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{currentMeta.description}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+            className="cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1 text-muted-foreground/50"
+          >
+            Set type
+          </button>
+        )}
+      </TooltipProvider>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[200px]">
+          <button
+            onClick={(e) => { e.stopPropagation(); assignAssumptionType(entityId, undefined); setOpen(false); }}
+            className={cn(
+              "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
+              !assumptionType && "bg-surface-3"
+            )}
+          >
+            <span className={!assumptionType ? "text-foreground font-medium" : "text-muted-foreground"}>Unassigned</span>
+          </button>
+          {ASSUMPTION_TYPES.map((type) => {
+            const meta = ASSUMPTION_TYPE_META[type];
+            return (
+              <button
+                key={type}
+                onClick={(e) => { e.stopPropagation(); assignAssumptionType(entityId, type); setOpen(false); }}
+                className={cn(
+                  "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
+                  assumptionType === type && "bg-surface-3"
+                )}
+              >
+                <span className={assumptionType === type ? "text-foreground font-medium" : "text-muted-foreground"}>{meta.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Click-to-edit helpers ─────────────────────────────────────────────────
 
 function EditableText({ value, onSave, as = "input", placeholder }: {
@@ -614,7 +693,7 @@ function AddBlockButton({ entityId }: { entityId: string }) {
         <Plus size={14} /> Add block
       </button>
       {open && (
-        <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden">
+        <div className="absolute left-0 right-0 bottom-full mb-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden">
           {blockTypes.map((bt) => (
             <button
               key={bt.type}
@@ -657,7 +736,6 @@ function BlockList({ entity }: { entity: Entity }) {
 
 function AddChildForm({ parentId, childLevel, onClose }: { parentId: string; childLevel: EntityLevel; onClose: () => void }) {
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const { addChildEntity, navigateToChild } = useAppStore();
   const childMeta = LEVEL_META[childLevel];
 
@@ -669,11 +747,11 @@ function AddChildForm({ parentId, childLevel, onClose }: { parentId: string; chi
       level: childLevel,
       title: title.trim(),
       icon: childMeta.icon,
-      description: description.trim(),
+      description: getDescriptionPlaceholder(childLevel),
       status: "draft",
       parentId,
       children: [],
-      blocks: [],
+      blocks: createBlockTemplate(childLevel, id),
     };
     addChildEntity(parentId, entity);
     navigateToChild(id);
@@ -693,13 +771,6 @@ function AddChildForm({ parentId, childLevel, onClose }: { parentId: string; chi
         className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus"
         autoFocus
         onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
-      />
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Description (optional)"
-        rows={2}
-        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus"
       />
       <div className="flex gap-2">
         <button onClick={handleSubmit} disabled={!title.trim()} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
@@ -765,6 +836,10 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
   const getSecondaryPersonaCount = (child: Entity) => {
     if (!MULTI_PERSONA_LEVELS.has(child.level)) return 0;
     return (child.secondaryPersonaIds ?? []).length;
+  };
+  const getAssumptionTypeInfo = (child: Entity) => {
+    if (child.level !== "assumption" || !child.assumptionType) return undefined;
+    return ASSUMPTION_TYPE_META[child.assumptionType];
   };
   const [showAddForm, setShowAddForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -882,6 +957,10 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                 personaName={getPersonaName(child)}
                 personaDescription={getPersonaDescription(child)}
                 secondaryPersonaCount={getSecondaryPersonaCount(child)}
+                assumptionTypeLabel={getAssumptionTypeInfo(child)?.label}
+                assumptionTypeColor={getAssumptionTypeInfo(child)?.color}
+                assumptionTypeDescription={getAssumptionTypeInfo(child)?.description}
+                assumptionTypeDotColor={getAssumptionTypeInfo(child)?.dotColor}
               />
             );
           })}
@@ -930,6 +1009,10 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                         personaName={getPersonaName(child)}
                         personaDescription={getPersonaDescription(child)}
                         secondaryPersonaCount={getSecondaryPersonaCount(child)}
+                        assumptionTypeLabel={getAssumptionTypeInfo(child)?.label}
+                        assumptionTypeColor={getAssumptionTypeInfo(child)?.color}
+                        assumptionTypeDescription={getAssumptionTypeInfo(child)?.description}
+                        assumptionTypeDotColor={getAssumptionTypeInfo(child)?.dotColor}
                       />
                     );
                   })}
@@ -960,6 +1043,10 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                             personaName={getPersonaName(child)}
                             personaDescription={getPersonaDescription(child)}
                             secondaryPersonaCount={getSecondaryPersonaCount(child)}
+                            assumptionTypeLabel={getAssumptionTypeInfo(child)?.label}
+                            assumptionTypeColor={getAssumptionTypeInfo(child)?.color}
+                            assumptionTypeDescription={getAssumptionTypeInfo(child)?.description}
+                            assumptionTypeDotColor={getAssumptionTypeInfo(child)?.dotColor}
                           />
                         );
                       })}
@@ -984,6 +1071,10 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                   personaName={getPersonaName(activeChild)}
                   personaDescription={getPersonaDescription(activeChild)}
                   secondaryPersonaCount={getSecondaryPersonaCount(activeChild)}
+                  assumptionTypeLabel={getAssumptionTypeInfo(activeChild)?.label}
+                  assumptionTypeColor={getAssumptionTypeInfo(activeChild)?.color}
+                  assumptionTypeDescription={getAssumptionTypeInfo(activeChild)?.description}
+                  assumptionTypeDotColor={getAssumptionTypeInfo(activeChild)?.dotColor}
                 />
               </div>
             ) : null}
@@ -1010,7 +1101,6 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
 
 function AddRootEntityForm({ onClose }: { onClose: () => void }) {
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const { addRootEntity, navigateToChild } = useAppStore();
   const boMeta = LEVEL_META.business_outcome;
 
@@ -1022,10 +1112,10 @@ function AddRootEntityForm({ onClose }: { onClose: () => void }) {
       level: "business_outcome",
       title: title.trim(),
       icon: boMeta.icon,
-      description: description.trim(),
+      description: getDescriptionPlaceholder("business_outcome"),
       status: "draft",
       children: [],
-      blocks: [],
+      blocks: createBlockTemplate("business_outcome", id),
     };
     addRootEntity(entity);
     navigateToChild(id);
@@ -1045,13 +1135,6 @@ function AddRootEntityForm({ onClose }: { onClose: () => void }) {
         className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus"
         autoFocus
         onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
-      />
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Description (optional)"
-        rows={2}
-        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus"
       />
       <div className="flex gap-2">
         <button onClick={handleSubmit} disabled={!title.trim()} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
@@ -1463,6 +1546,9 @@ export function EntityView() {
                     />
                   )}
                 </div>
+              )}
+              {entity.level === "assumption" && (
+                <AssumptionTypePicker entityId={entity.id} assumptionType={entity.assumptionType} />
               )}
             </div>
 

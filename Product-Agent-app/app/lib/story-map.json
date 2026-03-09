@@ -254,7 +254,17 @@
           "title": "Add Assumption",
           "stories": [
             { "action": "Click \"Add Assumption\" in the children section", "components": ["Add Child Button"] },
-            { "action": "Enter title and description, then confirm", "components": ["Add Child Button"] }
+            { "action": "Enter title and description, then confirm — template creates Belief and Evidence accordion blocks", "components": ["Add Child Button", "EntityView"] }
+          ]
+        },
+        {
+          "title": "Classify the Assumption",
+          "stories": [
+            { "action": "Click \"Set type\" pill in assumption header to open type picker", "components": ["EntityView", "AssumptionTypePicker"] },
+            { "action": "Select one of 5 types: Desirability, Usability, Feasibility, Viability, Ethical", "components": ["AssumptionTypePicker"] },
+            { "action": "View colored type pill with tooltip on hover", "components": ["EntityView", "AssumptionTypePicker"] },
+            { "action": "Change or clear the type by reopening the picker", "components": ["AssumptionTypePicker"] },
+            { "action": "See assumption type pill on child cards in parent's children grid", "components": ["ChildEntityCard"] }
           ]
         },
         {

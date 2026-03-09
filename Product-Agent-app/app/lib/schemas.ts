@@ -152,6 +152,24 @@ export interface Persona {
 export const PERSONA_LEVELS: Set<EntityLevel> = new Set(["opportunity", "product_outcome"]);
 export const MULTI_PERSONA_LEVELS: Set<EntityLevel> = new Set(["product_outcome"]);
 
+// ── Assumption Types ────────────────────────────────────────────────────
+export type AssumptionType = "desirability" | "usability" | "feasibility" | "viability" | "ethical";
+
+export interface AssumptionTypeMeta {
+  label: string;
+  description: string;
+  color: string;
+  dotColor: string;
+}
+
+export const ASSUMPTION_TYPE_META: Record<AssumptionType, AssumptionTypeMeta> = {
+  desirability: { label: "Desirability", description: "Will customers want this?", color: "text-pink-600 dark:text-pink-400 bg-pink-500/10 border-pink-500/25", dotColor: "bg-pink-500 dark:bg-pink-400" },
+  usability:    { label: "Usability",    description: "Can customers use it easily?", color: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/25", dotColor: "bg-amber-500 dark:bg-amber-400" },
+  feasibility:  { label: "Feasibility",  description: "Can we build this?", color: "text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 border-cyan-500/25", dotColor: "bg-cyan-500 dark:bg-cyan-400" },
+  viability:    { label: "Viability",     description: "Is this good for our business?", color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/25", dotColor: "bg-emerald-500 dark:bg-emerald-400" },
+  ethical:      { label: "Ethical",       description: "Should we build this?", color: "text-violet-600 dark:text-violet-400 bg-violet-500/10 border-violet-500/25", dotColor: "bg-violet-500 dark:bg-violet-400" },
+};
+
 // ── Unified entity ────────────────────────────────────────────────────────
 
 export interface Entity {
@@ -164,6 +182,7 @@ export interface Entity {
   parentId?: string;
   personaId?: string;
   secondaryPersonaIds?: string[];
+  assumptionType?: AssumptionType;
   children: string[];
   blocks: Block[];
 }
@@ -178,6 +197,60 @@ export const CHILD_LEVEL: Record<EntityLevel, EntityLevel | null> = {
   assumption: "test",
   test: null,
 };
+
+// ── Block templates ──────────────────────────────────────────────────────
+
+/** Returns a placeholder description for new entities of the given level */
+export function getDescriptionPlaceholder(level: EntityLevel): string {
+  switch (level) {
+    case "business_outcome": return "*What is the measurable business result this product must drive?*";
+    case "product_outcome":  return "*What user behavior change will drive the business outcome?*";
+    case "opportunity":      return "*What unmet need, pain point, or desire does this persona have?*";
+    case "solution":         return "*What is this solution and how does it address the opportunity?*";
+    case "assumption":       return "*What assumption are we making that needs to be true for this solution to work?*";
+    default:                 return "";
+  }
+}
+
+/** Returns pre-populated starter blocks for new entities of the given level */
+export function createBlockTemplate(level: EntityLevel, entityId: string): Block[] {
+  const ts = Date.now();
+  switch (level) {
+    case "business_outcome":
+      return [
+        { id: `${entityId}-b${ts}`, type: "metric", metric: "Key Metric", currentValue: "", targetValue: "", timeframe: "" },
+        { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Strategic Alignment", content: "*How does this outcome connect to the company's strategy or OKRs?*" },
+        { id: `${entityId}-b${ts + 2}`, type: "accordion", label: "Why Now", content: "*What makes this outcome urgent or timely?*" },
+        { id: `${entityId}-b${ts + 3}`, type: "accordion", label: "Risk of Inaction", content: "*What happens if we don't pursue this outcome?*" },
+      ];
+    case "product_outcome":
+      return [
+        { id: `${entityId}-b${ts}`, type: "metric", metric: "Key Metric", currentValue: "", targetValue: "", timeframe: "" },
+        { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Strategic Alignment", content: "*How does this product outcome map to the business outcome above?*" },
+        { id: `${entityId}-b${ts + 2}`, type: "accordion", label: "Constraints", content: "*What technical, business, or resource constraints shape this outcome?*" },
+        { id: `${entityId}-b${ts + 3}`, type: "accordion", label: "Trade-offs", content: "*What are we choosing not to do? What trade-offs are we accepting?*" },
+      ];
+    case "opportunity":
+      return [
+        { id: `${entityId}-b${ts}`, type: "accordion", label: "Trigger", content: "*When exactly does this problem occur? What is the context of the need?*" },
+        { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Current Workaround", content: "*How are users solving this problem today without our product?*" },
+        { id: `${entityId}-b${ts + 2}`, type: "accordion", label: "Competition View", content: "*How do competitors or alternatives address this opportunity?*" },
+      ];
+    case "solution":
+      return [
+        { id: `${entityId}-b${ts}`, type: "accordion", label: "Why It Works", content: "*How does this solution address the parent opportunity?*" },
+        { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Trade-offs", content: "*What are the trade-offs of this approach? What are we giving up?*" },
+        { id: `${entityId}-b${ts + 2}`, type: "accordion", label: "High-Level User Journey", content: "*What is the high-level user journey for this feature?*" },
+      ];
+    case "assumption":
+      return [
+        { id: `${entityId}-b${ts}`, type: "accordion", label: "Belief", content: "*What specifically do we believe to be true? State it as a falsifiable claim.*" },
+        { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Evidence", content: "*What evidence do we have for or against this assumption today?*" },
+      ];
+    default:
+      return [];
+  }
+}
 
 // ── Tree / Product Line ───────────────────────────────────────────────────
 
