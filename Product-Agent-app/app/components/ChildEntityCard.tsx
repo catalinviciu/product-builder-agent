@@ -11,6 +11,7 @@ import { cn } from "@/app/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { MarkdownBlock } from "./MarkdownToolbar";
 
 const LEVEL_ICON_MAP: Record<string, LucideIcon> = {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
@@ -150,7 +151,7 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
                     )}
                   </span>
                 </TooltipTrigger>
-                <TooltipContent>{personaDescription}</TooltipContent>
+                <TooltipContent><MarkdownBlock content={personaDescription} /></TooltipContent>
               </Tooltip>
             ) : (
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border-subtle text-muted-foreground/70 flex items-center gap-1">

@@ -202,7 +202,7 @@ function PersonaPicker({ entityId, personaId }: { entityId: string; personaId?: 
                 {currentPersona.name}
               </button>
             </TooltipTrigger>
-            <TooltipContent>{currentPersona.description}</TooltipContent>
+            <TooltipContent><MarkdownBlock content={currentPersona.description} /></TooltipContent>
           </Tooltip>
         ) : (
           <button
