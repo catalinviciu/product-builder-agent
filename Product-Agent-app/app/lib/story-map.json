@@ -36,30 +36,28 @@
       "goal": "Create and manage user/buyer personas for the current product line.",
       "steps": [
         {
-          "title": "Open Persona Manager",
+          "title": "View existing personas",
           "stories": [
-            { "action": "Expand the Persona Manager section in the sidebar", "components": ["Persona Manager"] }
+            { "action": "Expand the Persona Manager to see all personas for this product line", "components": ["PersonaManager"] },
+            { "action": "Hover a persona name to see its description in a tooltip", "components": ["PersonaManager", "Tooltip"] }
           ]
         },
         {
           "title": "Add a persona",
           "stories": [
-            { "action": "Click \"Add Persona\" to open the slide-over form", "components": ["Persona Manager", "PersonaSlideOver"] },
-            { "action": "Enter name and description", "components": ["PersonaSlideOver"] },
-            { "action": "Save the persona", "components": ["PersonaSlideOver"] }
+            { "action": "Create a new persona with name and description via the slide-over form", "components": ["PersonaManager", "PersonaSlideOver"] }
           ]
         },
         {
           "title": "Edit a persona",
           "stories": [
-            { "action": "Click pencil icon on a Persona Item to open slide-over", "components": ["Persona Item", "PersonaSlideOver"] },
-            { "action": "Modify fields and save", "components": ["PersonaSlideOver"] }
+            { "action": "Open an existing persona in the slide-over to update its details", "components": ["PersonaManager", "PersonaSlideOver"] }
           ]
         },
         {
           "title": "Delete a persona",
           "stories": [
-            { "action": "Click trash icon on a Persona Item", "components": ["Persona Item"] }
+            { "action": "Remove a persona with a confirmation prompt", "components": ["PersonaManager"] }
           ]
         }
       ]

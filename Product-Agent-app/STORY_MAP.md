@@ -23,14 +23,14 @@
 ### Activity 1: Set Up a Product Line
 > Create the top-level container that holds all discovery work for one product.
 
-| Step                          | Story                                         | Components              |
-| :---------------------------- | :-------------------------------------------- | :---------------------- |
-| **Create product line**       | Open the Product Line Selector dropdown       | `Product Line Selector` |
-|                               | Click "New Product Line"                      | `Product Line Selector` |
-|                               | Enter name and confirm                        | `Product Line Selector` |
-| **Edit product line details** | Click product line title to edit inline       | `Overview Title`        |
-|                               | Click product line description to edit inline | `Overview Description`  |
-| **Delete product line**       | Open Product Line Selector and click delete   | `Product Line Selector` |
+| Step | Story | Components |
+|:-----|:------|:-----------|
+| **Create product line** | Open the Product Line Selector dropdown | `Product Line Selector` |
+|  | Click "New Product Line" | `Product Line Selector` |
+|  | Enter name and confirm | `Product Line Selector` |
+| **Edit product line details** | Click product line title to edit inline | `Overview Title` |
+|  | Click product line description to edit inline | `Overview Description` |
+| **Delete product line** | Open Product Line Selector and click delete | `Product Line Selector` |
 
 
 ### Activity 2: Define Personas
@@ -38,13 +38,11 @@
 
 | Step | Story | Components |
 |:-----|:------|:-----------|
-| **Open Persona Manager** | Expand the Persona Manager section in the sidebar | `Persona Manager` |
-| **Add a persona** | Click "Add Persona" to open the slide-over form | `Persona Manager` · `PersonaSlideOver` |
-|  | Enter name and description | `PersonaSlideOver` |
-|  | Save the persona | `PersonaSlideOver` |
-| **Edit a persona** | Click pencil icon on a Persona Item to open slide-over | `Persona Item` · `PersonaSlideOver` |
-|  | Modify fields and save | `PersonaSlideOver` |
-| **Delete a persona** | Click trash icon on a Persona Item | `Persona Item` |
+| **View existing personas** | Expand the Persona Manager to see all personas for this product line | `PersonaManager` |
+|  | Hover a persona name to see its description in a tooltip | `PersonaManager` · `Tooltip` |
+| **Add a persona** | Create a new persona with name and description via the slide-over form | `PersonaManager` · `PersonaSlideOver` |
+| **Edit a persona** | Open an existing persona in the slide-over to update its details | `PersonaManager` · `PersonaSlideOver` |
+| **Delete a persona** | Remove a persona with a confirmation prompt | `PersonaManager` |
 
 
 ### Activity 3: Define a Business Outcome

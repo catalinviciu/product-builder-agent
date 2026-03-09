@@ -5,6 +5,8 @@ import { ChevronDown, Pencil, Trash2, Plus, Users } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { useAppStore } from "@/app/lib/store";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { MarkdownBlock } from "./MarkdownToolbar";
 
 export function PersonaManager() {
   const [expanded, setExpanded] = useState(false);
@@ -42,15 +44,27 @@ export function PersonaManager() {
 
       {/* Expanded content */}
       {expanded && (
+        <TooltipProvider delayDuration={300}>
         <div className="flex flex-col gap-1 mt-1 px-1">
           {personas.map((persona) => (
             <div
               key={persona.id}
               className="group/persona flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-surface-hover transition-colors"
             >
-              <span className="text-xs text-foreground/80 truncate flex-1" title={persona.description || persona.name}>
-                {persona.name}
-              </span>
+              {persona.description ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-xs text-foreground/80 truncate flex-1 cursor-default">
+                      {persona.name}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent><MarkdownBlock content={persona.description} /></TooltipContent>
+                </Tooltip>
+              ) : (
+                <span className="text-xs text-foreground/80 truncate flex-1">
+                  {persona.name}
+                </span>
+              )}
               <div className="flex items-center gap-0.5 shrink-0">
                 {confirmDeleteId === persona.id ? (
                   <div className="flex gap-1">
@@ -94,6 +108,7 @@ export function PersonaManager() {
             <Plus size={12} /> Add persona
           </button>
         </div>
+        </TooltipProvider>
       )}
     </div>
   );
