@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { X } from "lucide-react";
+import { MarkdownToolbar, MarkdownBlock } from "./MarkdownToolbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/app/lib/store";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
@@ -20,12 +21,15 @@ export function PersonaSlideOver() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
   // Sync form when panel opens or editId changes
   useEffect(() => {
     if (open) {
       setName(existing?.name ?? "");
       setDescription(existing?.description ?? "");
+      setShowPreview(false);
     }
   }, [open, editId, existing?.name, existing?.description]);
 
@@ -116,14 +120,22 @@ export function PersonaSlideOver() {
                 <label className="text-xs font-medium text-muted-foreground">
                   Description
                 </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Who is this persona? What are their goals, pain points, and behaviors?"
-                  rows={8}
-                  maxLength={1024}
-                  className="bg-surface-1 border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-border-focus transition-colors resize-none"
-                />
+                <MarkdownToolbar textareaRef={descriptionRef} draft={description} setDraft={setDescription} showPreview={showPreview} setShowPreview={setShowPreview} />
+                {showPreview ? (
+                  <div className="bg-surface-1 border border-border-strong rounded-lg px-3 py-2 min-h-[192px]">
+                    {description ? <MarkdownBlock content={description} /> : <span className="text-muted-foreground/40 italic text-sm">Nothing to preview</span>}
+                  </div>
+                ) : (
+                  <textarea
+                    ref={descriptionRef}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Who is this persona? What are their goals, pain points, and behaviors?"
+                    rows={8}
+                    maxLength={1024}
+                    className="bg-surface-1 border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-border-focus transition-colors resize-none"
+                  />
+                )}
                 <span className="text-[10px] text-muted-foreground/40 text-right">
                   {description.length}/1024
                 </span>

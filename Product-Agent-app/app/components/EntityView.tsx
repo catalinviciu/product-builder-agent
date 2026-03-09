@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { MarkdownBlock, MarkdownToolbar, wrapSelection, insertLinePrefix } from "./MarkdownToolbar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
   ChevronDown, ChevronRight, Pencil, Trash2, Plus, X, Check, Copy, LayoutGrid, Columns3, User, Users,
-  Bold, Italic, Link, List, ListOrdered, Eye, EyeOff,
   type LucideIcon,
 } from "lucide-react";
 import type {
@@ -47,120 +45,8 @@ function CopyAnchorButton({ text }: { text: string }) {
 }
 
 // ── Shared components ─────────────────────────────────────────────────────
-
-function MarkdownBlock({ content }: { content: string }) {
-  if (!content) return null;
-  return (
-    <article className="max-w-none text-[14px] leading-relaxed text-foreground/80
-      [&_h1]:text-[14px] [&_h2]:text-[14px] [&_h3]:text-[14px] [&_h4]:text-[14px]
-      [&_h1]:font-medium [&_h2]:font-medium [&_h3]:font-medium [&_h4]:font-medium
-      [&_h1]:text-foreground/70 [&_h2]:text-foreground/70 [&_h3]:text-foreground/70 [&_h4]:text-foreground/70
-      [&_h1]:mt-3 [&_h2]:mt-3 [&_h3]:mt-3 [&_h4]:mt-3
-      [&_h1]:mb-1 [&_h2]:mb-1 [&_h3]:mb-1 [&_h4]:mb-1
-      [&_p]:my-1.5
-      [&_ul]:my-1.5 [&_ol]:my-1.5
-      [&_li]:my-0.5
-      [&_strong]:text-foreground/90 [&_strong]:font-medium
-      [&_code]:text-blue-600 dark:[&_code]:text-blue-300 [&_code]:text-xs [&_code]:bg-surface-hover [&_code]:px-1 [&_code]:rounded
-      [&_blockquote]:text-muted-foreground/70 [&_blockquote]:border-l-2 [&_blockquote]:border-border-strong
-      [&_blockquote]:pl-4 [&_blockquote]:text-[13px] [&_blockquote]:italic [&_blockquote]:my-2"
-    >
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-    </article>
-  );
-}
-
-function wrapSelection(
-  ref: React.RefObject<HTMLTextAreaElement | null>,
-  before: string,
-  after: string,
-  draft: string,
-  setDraft: (v: string) => void,
-) {
-  const el = ref.current;
-  if (!el) return;
-  const start = el.selectionStart;
-  const end = el.selectionEnd;
-  const selected = draft.slice(start, end);
-  const replacement = selected ? `${before}${selected}${after}` : `${before}text${after}`;
-  const newValue = draft.slice(0, start) + replacement + draft.slice(end);
-  setDraft(newValue);
-  // Restore cursor after React re-render
-  requestAnimationFrame(() => {
-    el.focus();
-    const cursorPos = selected
-      ? start + replacement.length
-      : start + before.length; // place cursor on "text"
-    const selEnd = selected ? cursorPos : cursorPos + 4;
-    el.setSelectionRange(cursorPos, selEnd);
-  });
-}
-
-function insertLinePrefix(
-  ref: React.RefObject<HTMLTextAreaElement | null>,
-  prefix: string,
-  draft: string,
-  setDraft: (v: string) => void,
-) {
-  const el = ref.current;
-  if (!el) return;
-  const start = el.selectionStart;
-  const end = el.selectionEnd;
-  const selected = draft.slice(start, end);
-  if (selected) {
-    const lines = selected.split("\n").map((line, i) =>
-      prefix === "1. " ? `${i + 1}. ${line}` : `${prefix}${line}`
-    );
-    const replacement = lines.join("\n");
-    setDraft(draft.slice(0, start) + replacement + draft.slice(end));
-  } else {
-    const insertion = `${prefix}item`;
-    setDraft(draft.slice(0, start) + insertion + draft.slice(end));
-    requestAnimationFrame(() => {
-      el.focus();
-      el.setSelectionRange(start + prefix.length, start + prefix.length + 4);
-    });
-  }
-}
-
-function MarkdownToolbar({
-  textareaRef,
-  draft,
-  setDraft,
-  showPreview,
-  setShowPreview,
-}: {
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
-  draft: string;
-  setDraft: (v: string) => void;
-  showPreview: boolean;
-  setShowPreview: (v: boolean) => void;
-}) {
-  const btnClass = "cursor-pointer p-1.5 rounded-md hover:bg-surface-hover text-muted-foreground/60 hover:text-foreground transition-colors";
-  return (
-    <div className="flex items-center gap-0.5 pb-1.5 border-b border-border-subtle mb-1.5">
-      <button type="button" title="Bold" className={btnClass} onClick={() => wrapSelection(textareaRef, "**", "**", draft, setDraft)}>
-        <Bold size={14} />
-      </button>
-      <button type="button" title="Italic" className={btnClass} onClick={() => wrapSelection(textareaRef, "*", "*", draft, setDraft)}>
-        <Italic size={14} />
-      </button>
-      <button type="button" title="Link" className={btnClass} onClick={() => wrapSelection(textareaRef, "[", "](url)", draft, setDraft)}>
-        <Link size={14} />
-      </button>
-      <button type="button" title="Bullet list" className={btnClass} onClick={() => insertLinePrefix(textareaRef, "- ", draft, setDraft)}>
-        <List size={14} />
-      </button>
-      <button type="button" title="Numbered list" className={btnClass} onClick={() => insertLinePrefix(textareaRef, "1. ", draft, setDraft)}>
-        <ListOrdered size={14} />
-      </button>
-      <div className="w-px h-4 bg-border-subtle mx-1" />
-      <button type="button" title={showPreview ? "Edit" : "Preview"} className={btnClass} onClick={() => setShowPreview(!showPreview)}>
-        {showPreview ? <EyeOff size={14} /> : <Eye size={14} />}
-      </button>
-    </div>
-  );
-}
+// MarkdownBlock, MarkdownToolbar, wrapSelection, insertLinePrefix
+// are imported from ./MarkdownToolbar.tsx
 
 function MetricCard({ metric, currentValue, targetValue, timeframe }: {
   metric: string; currentValue: string; targetValue: string; timeframe?: string;
@@ -803,12 +689,23 @@ function BlockToolbar({ onEdit, onDelete }: { onEdit: () => void; onDelete: () =
 function AccordionBlockEditor({ block, onSave, onCancel }: { block: AccordionBlock; onSave: (b: Partial<AccordionBlock>) => void; onCancel: () => void }) {
   const [label, setLabel] = useState(block.label);
   const [content, setContent] = useState(block.content);
+  const [showPreview, setShowPreview] = useState(false);
+  const contentRef = useRef<HTMLTextAreaElement>(null);
   return (
     <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
       <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Section title"
         className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus font-semibold" />
-      <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={6} placeholder="Content (markdown)"
-        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus font-mono" />
+      <div>
+        <MarkdownToolbar textareaRef={contentRef} draft={content} setDraft={setContent} showPreview={showPreview} setShowPreview={setShowPreview} />
+        {showPreview ? (
+          <div className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 min-h-[144px]">
+            {content ? <MarkdownBlock content={content} /> : <span className="text-muted-foreground/40 italic text-sm">Nothing to preview</span>}
+          </div>
+        ) : (
+          <textarea ref={contentRef} value={content} onChange={(e) => setContent(e.target.value)} rows={6} placeholder="Content (markdown)"
+            className="w-full bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus font-mono" />
+        )}
+      </div>
       <div className="flex gap-2">
         <button onClick={() => onSave({ label, content })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
         <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
