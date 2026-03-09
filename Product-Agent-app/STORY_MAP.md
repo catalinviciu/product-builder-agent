@@ -50,21 +50,21 @@
 ### Activity 3: Define a Business Outcome
 > Create the top-level strategic goal for the product line.
 
-| Step | Story | Components |
-|:-----|:------|:-----------|
-| **Open Overview** | Click "Overview" in the sidebar | `Overview Button` · `SectionNav` |
-| **Add Business Outcome** | Click the dashed "Add Business Outcome" button | `Add Root Form` |
-|  | Enter title and description, then confirm | `Add Root Form` |
-| **Refine the entity** | Edit title inline (click pencil on hover) | `EntityView` · `Inline Edit` |
-|  | Add or edit description inline | `EntityView` · `Inline Edit` |
-|  | Add a content block (accordion, pills, quote, metric) | `EntityView` · `Add Block Button` |
-|  | Edit an existing block | `EntityView` · `Block Toolbar` |
-|  | Delete a block | `EntityView` · `Block Toolbar` |
-|  | Change status via the Status Picker | `Entity Tab` · `Status Picker` |
-|  | Copy the context anchor for AI reference | `Entity Tab` · `Copy Anchor` |
-|  | Delete the entity (only when it has no children) | `Entity Tab` |
-|  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker` |
-| **Add Product Outcome children** | Click "Add Product Outcome" in the children section | `Add Child Button` |
+| Step                             | Story                                                       | Components                        |
+| :------------------------------- | :---------------------------------------------------------- | :-------------------------------- |
+| **Open Overview**                | Click "Overview" in the sidebar                             | `Overview Button` · `SectionNav`  |
+| **Add Business Outcome**         | Click the dashed "Add Business Outcome" button              | `Add Root Form`                   |
+|                                  | Enter title and description, then confirm                   | `Add Root Form`                   |
+| **Refine the entity**            | Edit title inline (click pencil on hover)                   | `EntityView` · `Inline Edit`      |
+|                                  | Add or edit description inline                              | `EntityView` · `Inline Edit`      |
+|                                  | Add a content block (accordion, pills, quote, metric)       | `EntityView` · `Add Block Button` |
+|                                  | Edit an existing block                                      | `EntityView` · `Block Toolbar`    |
+|                                  | Delete a block                                              | `EntityView` · `Block Toolbar`    |
+|                                  | Change status via the Status Picker                         | `Entity Tab` · `Status Picker`    |
+|                                  | Copy the context anchor for AI reference                    | `Entity Tab` · `Copy Anchor`      |
+|                                  | Delete the entity (only when it has no children)            | `Entity Tab`                      |
+|                                  | Drop entity and all children via status change confirmation | `Entity Tab` · `Status Picker`    |
+| **Add Product Outcome children** | Click "Add Product Outcome" in the children section         | `Add Child Button`                |
 
 
 > **Pattern note:** Activities 3–7 each include a "Refine the entity" step with the same core stories (edit title, edit description, manage blocks, change status, copy anchor). This reflects the consistent editing experience across all entity levels.

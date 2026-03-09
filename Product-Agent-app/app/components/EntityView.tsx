@@ -517,8 +517,8 @@ function TestTypePicker({ entityId, testType }: { entityId: string; testType?: T
 
 // ── Click-to-edit helpers ─────────────────────────────────────────────────
 
-function EditableText({ value, onSave, as = "input", placeholder }: {
-  value: string; onSave: (v: string) => void; as?: "input" | "textarea"; placeholder?: string;
+function EditableText({ value, onSave, as = "input", placeholder, maxLength }: {
+  value: string; onSave: (v: string) => void; as?: "input" | "textarea"; placeholder?: string; maxLength?: number;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -558,7 +558,7 @@ function EditableText({ value, onSave, as = "input", placeholder }: {
       {as === "textarea" ? (
         <textarea ref={ref as React.RefObject<HTMLTextAreaElement>} rows={4} {...common} />
       ) : (
-        <input ref={ref as React.RefObject<HTMLInputElement>} maxLength={80} {...common} />
+        <input ref={ref as React.RefObject<HTMLInputElement>} {...(maxLength ? { maxLength } : {})} {...common} />
       )}
       <div className="flex gap-2">
         <button onClick={save} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1">
@@ -1304,6 +1304,7 @@ function RootView() {
             <EditableText
               value={tree.title}
               onSave={(v) => updateTree(plId, { title: v })}
+              maxLength={80}
             />
           </h1>
           <CopyAnchorButton text={buildRootAnchor(productLine.name)} />
@@ -1616,6 +1617,7 @@ export function EntityView() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") { if (titleDraft.trim()) updateEntity(entity.id, { title: titleDraft.trim() }); setEditingTitle(false); }
                     if (e.key === "Escape") setEditingTitle(false);
+                    if (e.key === " ") e.stopPropagation();
                   }}
                   onBlur={() => { if (titleDraft.trim()) updateEntity(entity.id, { title: titleDraft.trim() }); setEditingTitle(false); }}
                   onClick={(e) => e.stopPropagation()}
