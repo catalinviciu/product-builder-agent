@@ -23,14 +23,14 @@
 ### Activity 1: Set Up a Product Line
 > Create the top-level container that holds all discovery work for one product.
 
-| Step | Story | Components |
-|:-----|:------|:-----------|
-| **Create product line** | Open the Product Line Selector dropdown | `Product Line Selector` |
-|  | Click "New Product Line" | `Product Line Selector` |
-|  | Enter name and confirm | `Product Line Selector` |
-| **Edit product line details** | Click product line title to edit inline | `Overview Title` |
-|  | Click product line description to edit inline | `Overview Description` |
-| **Delete product line** | Open Product Line Selector and click delete | `Product Line Selector` |
+| Step                          | Story                                         | Components              |
+| :---------------------------- | :-------------------------------------------- | :---------------------- |
+| **Create product line**       | Open the Product Line Selector dropdown       | `Product Line Selector` |
+|                               | Click "New Product Line"                      | `Product Line Selector` |
+|                               | Enter name and confirm                        | `Product Line Selector` |
+| **Edit product line details** | Click product line title to edit inline       | `Overview Title`        |
+|                               | Click product line description to edit inline | `Overview Description`  |
+| **Delete product line**       | Open Product Line Selector and click delete   | `Product Line Selector` |
 
 
 ### Activity 2: Define Personas

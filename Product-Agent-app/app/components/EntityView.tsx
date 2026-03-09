@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
   ChevronDown, ChevronRight, Pencil, Trash2, Plus, X, Check, Copy, LayoutGrid, Columns3, User, Users,
+  Bold, Italic, Link, List, ListOrdered, Eye, EyeOff,
   type LucideIcon,
 } from "lucide-react";
 import type {
@@ -66,6 +67,98 @@ function MarkdownBlock({ content }: { content: string }) {
     >
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
     </article>
+  );
+}
+
+function wrapSelection(
+  ref: React.RefObject<HTMLTextAreaElement | null>,
+  before: string,
+  after: string,
+  draft: string,
+  setDraft: (v: string) => void,
+) {
+  const el = ref.current;
+  if (!el) return;
+  const start = el.selectionStart;
+  const end = el.selectionEnd;
+  const selected = draft.slice(start, end);
+  const replacement = selected ? `${before}${selected}${after}` : `${before}text${after}`;
+  const newValue = draft.slice(0, start) + replacement + draft.slice(end);
+  setDraft(newValue);
+  // Restore cursor after React re-render
+  requestAnimationFrame(() => {
+    el.focus();
+    const cursorPos = selected
+      ? start + replacement.length
+      : start + before.length; // place cursor on "text"
+    const selEnd = selected ? cursorPos : cursorPos + 4;
+    el.setSelectionRange(cursorPos, selEnd);
+  });
+}
+
+function insertLinePrefix(
+  ref: React.RefObject<HTMLTextAreaElement | null>,
+  prefix: string,
+  draft: string,
+  setDraft: (v: string) => void,
+) {
+  const el = ref.current;
+  if (!el) return;
+  const start = el.selectionStart;
+  const end = el.selectionEnd;
+  const selected = draft.slice(start, end);
+  if (selected) {
+    const lines = selected.split("\n").map((line, i) =>
+      prefix === "1. " ? `${i + 1}. ${line}` : `${prefix}${line}`
+    );
+    const replacement = lines.join("\n");
+    setDraft(draft.slice(0, start) + replacement + draft.slice(end));
+  } else {
+    const insertion = `${prefix}item`;
+    setDraft(draft.slice(0, start) + insertion + draft.slice(end));
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(start + prefix.length, start + prefix.length + 4);
+    });
+  }
+}
+
+function MarkdownToolbar({
+  textareaRef,
+  draft,
+  setDraft,
+  showPreview,
+  setShowPreview,
+}: {
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  draft: string;
+  setDraft: (v: string) => void;
+  showPreview: boolean;
+  setShowPreview: (v: boolean) => void;
+}) {
+  const btnClass = "cursor-pointer p-1.5 rounded-md hover:bg-surface-hover text-muted-foreground/60 hover:text-foreground transition-colors";
+  return (
+    <div className="flex items-center gap-0.5 pb-1.5 border-b border-border-subtle mb-1.5">
+      <button type="button" title="Bold" className={btnClass} onClick={() => wrapSelection(textareaRef, "**", "**", draft, setDraft)}>
+        <Bold size={14} />
+      </button>
+      <button type="button" title="Italic" className={btnClass} onClick={() => wrapSelection(textareaRef, "*", "*", draft, setDraft)}>
+        <Italic size={14} />
+      </button>
+      <button type="button" title="Link" className={btnClass} onClick={() => wrapSelection(textareaRef, "[", "](url)", draft, setDraft)}>
+        <Link size={14} />
+      </button>
+      <button type="button" title="Bullet list" className={btnClass} onClick={() => insertLinePrefix(textareaRef, "- ", draft, setDraft)}>
+        <List size={14} />
+      </button>
+      <button type="button" title="Numbered list" className={btnClass} onClick={() => insertLinePrefix(textareaRef, "1. ", draft, setDraft)}>
+        <ListOrdered size={14} />
+      </button>
+      <div className="w-px h-4 bg-border-subtle mx-1" />
+      <button type="button" title={showPreview ? "Edit" : "Preview"} className={btnClass} onClick={() => setShowPreview(!showPreview)}>
+        {showPreview ? <EyeOff size={14} /> : <Eye size={14} />}
+      </button>
+    </div>
   );
 }
 
@@ -609,6 +702,7 @@ function EditableText({ value, onSave, as = "input", placeholder, maxLength }: {
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
+  const [showPreview, setShowPreview] = useState(false);
   const ref = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -616,13 +710,17 @@ function EditableText({ value, onSave, as = "input", placeholder, maxLength }: {
   }, [editing]);
 
   if (!editing) {
+    const display = as === "textarea" && value
+      ? <MarkdownBlock content={value} />
+      : <span>{value || <span className="text-muted-foreground/40 italic">{placeholder || "Click to edit"}</span>}</span>;
+
     return (
       <button
         onClick={() => { setDraft(value); setEditing(true); }}
-        className="cursor-pointer text-left group inline-flex items-center gap-1.5 hover:bg-surface-hover rounded-md px-1 -mx-1 transition-colors"
+        className="cursor-pointer text-left group inline-flex items-start gap-1.5 hover:bg-surface-hover rounded-md px-1 -mx-1 transition-colors"
       >
-        <span>{value || <span className="text-muted-foreground/40 italic">{placeholder || "Click to edit"}</span>}</span>
-        <Pencil size={12} className="text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        {display}
+        <Pencil size={12} className="text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1" />
       </button>
     );
   }
@@ -643,7 +741,22 @@ function EditableText({ value, onSave, as = "input", placeholder, maxLength }: {
   return (
     <div className="flex flex-col gap-2">
       {as === "textarea" ? (
-        <textarea ref={ref as React.RefObject<HTMLTextAreaElement>} rows={4} {...common} />
+        <div className="flex flex-col">
+          <MarkdownToolbar
+            textareaRef={ref as React.RefObject<HTMLTextAreaElement | null>}
+            draft={draft}
+            setDraft={setDraft}
+            showPreview={showPreview}
+            setShowPreview={setShowPreview}
+          />
+          {showPreview ? (
+            <div className="w-full bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm min-h-[6rem]">
+              {draft ? <MarkdownBlock content={draft} /> : <span className="text-muted-foreground/40 italic">Nothing to preview</span>}
+            </div>
+          ) : (
+            <textarea ref={ref as React.RefObject<HTMLTextAreaElement>} rows={4} {...common} />
+          )}
+        </div>
       ) : (
         <input ref={ref as React.RefObject<HTMLInputElement>} {...(maxLength ? { maxLength } : {})} {...common} />
       )}
@@ -1813,9 +1926,9 @@ export function EntityView() {
             {/* Collapsed description preview */}
             {!expanded && entity.description && (
               <div className="relative">
-                <p className="text-sm text-foreground/80 leading-relaxed line-clamp-3">
-                  {entity.description}
-                </p>
+                <div className="text-sm text-foreground/80 leading-relaxed line-clamp-3">
+                  <MarkdownBlock content={entity.description} />
+                </div>
                 <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-background to-transparent pointer-events-none" />
               </div>
             )}
