@@ -538,7 +538,7 @@ function IceScorePanel({ entityId, iceScore }: { entityId: string; iceScore?: { 
   };
 
   const handleChange = (key: "i" | "c" | "e", value: number) => {
-    updateIceScore(entityId, { ...current, rationale: iceScore?.rationale, [key]: value });
+    updateIceScore(entityId, { ...current, [key]: value });
   };
 
   if (!scored) {
@@ -599,13 +599,6 @@ function IceScorePanel({ entityId, iceScore }: { entityId: string; iceScore?: { 
           </div>
         );
       })}
-      <textarea
-        placeholder="Why these scores? (optional)"
-        value={iceScore?.rationale ?? ""}
-        onChange={(e) => updateIceScore(entityId, { ...current, rationale: e.target.value })}
-        rows={2}
-        className="w-full text-xs rounded-lg border border-border-subtle bg-surface-2 px-2.5 py-1.5 text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:border-border-focus"
-      />
     </div>
   );
 }
