@@ -189,6 +189,9 @@
 | **Drag between columns** | Drag a Child Card from one Kanban Column to another | `Kanban View` · `Kanban Column` · `Child Card` · `Drag Overlay` |
 | **Show/hide archived** | Click the Archived Toggle in the Done column | `Kanban View` · `Archived Toggle` |
 | **Switch to Grid view** | Click the Grid icon in the View Toggle | `View Toggle` |
+| **Stack-rank within column** | Drag a Child Card up or down within a Kanban Column to reorder by priority | `Kanban View` · `Kanban Column` · `Child Card` · `SortableContext` |
+|  | Drag a root Business Outcome card within a column to reorder | `Root View` · `Kanban Column` · `Child Card` · `SortableContext` |
+| **View priority-sorted grid** | Switch to Grid view to see cards grouped by status: commit → explore → draft → done → archived → dropped | `Grid View` · `Child Card` |
 | **Compare ICE scores** | View ICE score badges on opportunity child cards to compare priorities | `ChildEntityCard` · `ICE Badge` |
 |  | Open an opportunity to adjust its ICE score via sliders | `EntityView` · `IceScorePanel` |
 

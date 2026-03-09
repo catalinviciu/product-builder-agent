@@ -18,6 +18,7 @@ import { useAppStore } from "@/app/lib/store";
 import { getEntity, getRootEntities, getEntityPreview, generateId, cn, buildEntityAnchor, buildRootAnchor } from "@/app/lib/utils";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { DndContext, DragEndEvent, useDroppable, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { EntityBreadcrumb } from "./EntityBreadcrumb";
 import { ChildEntityCard } from "./ChildEntityCard";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -945,6 +946,10 @@ function AddChildForm({ parentId, childLevel, onClose }: { parentId: string; chi
 
 // ── Kanban column config ──────────────────────────────────────────────────
 
+const STATUS_GROUP_ORDER: Record<EntityStatus, number> = {
+  commit: 0, explore: 1, draft: 2, done: 3, archived: 4, dropped: 5,
+};
+
 const KANBAN_COLUMNS = [
   { key: "draft",   label: "Draft",    statuses: ["draft"] as EntityStatus[],                        accentBorder: "border-zinc-400/30",    dotColor: "bg-zinc-500 dark:bg-zinc-400" },
   { key: "explore", label: "Explore",  statuses: ["explore"] as EntityStatus[],                      accentBorder: "border-blue-400/30",    dotColor: "bg-blue-500 dark:bg-blue-400" },
@@ -1056,11 +1061,32 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
     setActiveId(null);
     const { active, over } = event;
     if (!over) return;
-    const columnKey = over.id as string;
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // Column drop → status change only
     const statusMap: Record<string, EntityStatus> = { draft: "draft", explore: "explore", commit: "commit", done: "done" };
-    const newStatus = statusMap[columnKey];
-    if (newStatus) {
-      updateEntity(active.id as string, { status: newStatus });
+    if (statusMap[overId]) {
+      updateEntity(activeId, { status: statusMap[overId] });
+      return;
+    }
+
+    // Card drop → reorder (and possibly status change)
+    const activeEntity = children.find(c => c.id === activeId);
+    const overEntity = children.find(c => c.id === overId);
+    if (!activeEntity || !overEntity) return;
+
+    // Reorder in children array
+    const currentChildren = [...entity.children];
+    const oldIdx = currentChildren.indexOf(activeId);
+    const newIdx = currentChildren.indexOf(overId);
+    if (oldIdx !== -1 && newIdx !== -1 && oldIdx !== newIdx) {
+      updateEntity(entity.id, { children: arrayMove(currentChildren, oldIdx, newIdx) });
+    }
+
+    // Cross-column: also change status
+    if (activeEntity.status !== overEntity.status) {
+      updateEntity(activeId, { status: overEntity.status });
     }
   }
 
@@ -1111,7 +1137,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
       {/* Grid view */}
       {viewMode === "grid" && children.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          {children.map((child) => {
+          {[...children].sort((a, b) => STATUS_GROUP_ORDER[a.status] - STATUS_GROUP_ORDER[b.status]).map((child) => {
             const { preview, badge, iceScoreTotal, iceScoreColorObj } = getChildCardProps(child);
             return (
               <ChildEntityCard
@@ -1167,6 +1193,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                   {colChildren.length === 0 && (col.key !== "done" || archivedOrDroppedItems.length === 0) && (
                     <p className="text-xs text-muted-foreground/30 italic px-1 py-3 text-center">No items</p>
                   )}
+                  <SortableContext items={colChildren.map(c => c.id)} strategy={verticalListSortingStrategy}>
                   {colChildren.map((child) => {
                     const { preview, badge, iceScoreTotal, iceScoreColorObj } = getChildCardProps(child);
                     return (
@@ -1197,6 +1224,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
                       />
                     );
                   })}
+                  </SortableContext>
                   {/* Archived toggle in Done column */}
                   {col.key === "done" && archivedOrDroppedItems.length > 0 && (
                     <>
@@ -1380,11 +1408,32 @@ function RootView() {
     setActiveId(null);
     const { active, over } = event;
     if (!over) return;
-    const columnKey = over.id as string;
+    const activeEntityId = active.id as string;
+    const overId = over.id as string;
+
+    // Column drop → status change only
     const statusMap: Record<string, EntityStatus> = { draft: "draft", explore: "explore", commit: "commit", done: "done" };
-    const newStatus = statusMap[columnKey];
-    if (newStatus) {
-      updateEntity(active.id as string, { status: newStatus });
+    if (statusMap[overId]) {
+      updateEntity(activeEntityId, { status: statusMap[overId] });
+      return;
+    }
+
+    // Card drop → reorder (and possibly status change)
+    const activeEntity = roots.find(c => c.id === activeEntityId);
+    const overEntity = roots.find(c => c.id === overId);
+    if (!activeEntity || !overEntity) return;
+
+    // Reorder in rootChildren array
+    const currentRootChildren = [...tree.rootChildren];
+    const oldIdx = currentRootChildren.indexOf(activeEntityId);
+    const newIdx = currentRootChildren.indexOf(overId);
+    if (oldIdx !== -1 && newIdx !== -1 && oldIdx !== newIdx) {
+      updateTree(plId, { rootChildren: arrayMove(currentRootChildren, oldIdx, newIdx) });
+    }
+
+    // Cross-column: also change status
+    if (activeEntity.status !== overEntity.status) {
+      updateEntity(activeEntityId, { status: overEntity.status });
     }
   }
 
@@ -1452,7 +1501,7 @@ function RootView() {
       {/* Grid view */}
       {viewMode === "grid" && roots.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          {roots.map((entity) => {
+          {[...roots].sort((a, b) => STATUS_GROUP_ORDER[a.status] - STATUS_GROUP_ORDER[b.status]).map((entity) => {
             const { preview, badge } = getRootCardProps(entity);
             return (
               <ChildEntityCard
@@ -1495,6 +1544,7 @@ function RootView() {
                   {colChildren.length === 0 && (col.key !== "done" || archivedOrDroppedItems.length === 0) && (
                     <p className="text-xs text-muted-foreground/30 italic px-1 py-3 text-center">No items</p>
                   )}
+                  <SortableContext items={colChildren.map(c => c.id)} strategy={verticalListSortingStrategy}>
                   {colChildren.map((child) => {
                     const { preview, badge } = getRootCardProps(child);
                     return (
@@ -1512,6 +1562,7 @@ function RootView() {
                       />
                     );
                   })}
+                  </SortableContext>
                   {col.key === "done" && archivedOrDroppedItems.length > 0 && (
                     <>
                       <button

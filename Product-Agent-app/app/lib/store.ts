@@ -32,7 +32,7 @@ interface AppStore {
   // Product Line CRUD
   addProductLine: (pl: ProductLine) => void;
   updateProductLine: (id: string, updates: Partial<Pick<ProductLine, "name" | "description" | "status">>) => void;
-  updateTree: (plId: string, updates: Partial<Pick<DiscoveryTree, "title" | "description">>) => void;
+  updateTree: (plId: string, updates: Partial<Pick<DiscoveryTree, "title" | "description" | "rootChildren">>) => void;
   deleteProductLine: (id: string) => void;
   addRootEntity: (entity: Entity) => void;
 

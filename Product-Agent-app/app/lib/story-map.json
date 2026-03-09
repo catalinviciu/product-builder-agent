@@ -359,6 +359,19 @@
           ]
         },
         {
+          "title": "Stack-rank within column",
+          "stories": [
+            { "action": "Drag a Child Card up or down within a Kanban Column to reorder by priority", "components": ["Kanban View", "Kanban Column", "Child Card", "SortableContext"] },
+            { "action": "Drag a root Business Outcome card within a column to reorder", "components": ["Root View", "Kanban Column", "Child Card", "SortableContext"] }
+          ]
+        },
+        {
+          "title": "View priority-sorted grid",
+          "stories": [
+            { "action": "Switch to Grid view to see cards grouped by status: commit → explore → draft → done → archived → dropped", "components": ["Grid View", "Child Card"] }
+          ]
+        },
+        {
           "title": "Compare ICE scores",
           "stories": [
             { "action": "View ICE score badges on opportunity child cards to compare priorities", "components": ["ChildEntityCard", "ICE Badge"] },

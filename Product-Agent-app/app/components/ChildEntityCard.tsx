@@ -8,7 +8,8 @@ import type { EntityLevel, EntityStatus } from "@/app/lib/schemas";
 import { LEVEL_META, ENTITY_STATUS_META } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
 import { cn } from "@/app/lib/utils";
-import { useDraggable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 const LEVEL_ICON_MAP: Record<string, LucideIcon> = {
@@ -45,15 +46,21 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
   const levelMeta = LEVEL_META[level];
   const IconComponent = LEVEL_ICON_MAP[levelMeta.icon];
 
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
     disabled: !draggable,
   });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   return (
     <TooltipProvider delayDuration={300}>
     <button
       ref={setNodeRef}
+      style={style}
       {...(draggable ? { ...listeners, ...attributes } : {})}
       onClick={() => navigateToChild(id)}
       className={cn(
