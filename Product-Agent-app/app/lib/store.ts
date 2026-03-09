@@ -71,7 +71,9 @@ function debouncedSave(productLines: Record<string, ProductLine>) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(productLines),
-    }).catch(() => {});
+    }).catch((err) => {
+      console.warn("[ProductAgent] Failed to save data:", err);
+    });
   }, 500);
 }
 
@@ -89,37 +91,52 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
   closePersonaPanel: () => set({ personaPanelOpen: false, personaPanelId: null }),
 
   hydrate: async () => {
-    try {
-      const res = await fetch("/api/store");
-      const json = await res.json();
-      if (json.exists && json.data) {
-        // Migrate: backfill missing personas from mock data
-        const data = json.data as Record<string, ProductLine>;
-        for (const plId of Object.keys(data)) {
-          if (!data[plId].personas) {
-            data[plId].personas = PRODUCT_LINES[plId]?.personas ?? [];
+    const maxRetries = 3;
+    const retryDelay = 1000; // 1 second between retries
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const res = await fetch("/api/store");
+        const json = await res.json();
+        if (json.exists && json.data) {
+          // Migrate: backfill missing personas from mock data
+          const data = json.data as Record<string, ProductLine>;
+          for (const plId of Object.keys(data)) {
+            if (!data[plId].personas) {
+              data[plId].personas = PRODUCT_LINES[plId]?.personas ?? [];
+            }
           }
-        }
-        // Migrate: rename "Belief" block label to "Impact if True" on assumption entities
-        for (const plId of Object.keys(data)) {
-          for (const entity of Object.values(data[plId].entities)) {
-            if (entity.level === "assumption") {
-              for (const block of entity.blocks) {
-                if (block.type === "accordion" && block.label === "Belief") {
-                  block.label = "Impact if True";
+          // Migrate: rename "Belief" block label to "Impact if True" on assumption entities
+          for (const plId of Object.keys(data)) {
+            for (const entity of Object.values(data[plId].entities)) {
+              if (entity.level === "assumption") {
+                for (const block of entity.blocks) {
+                  if (block.type === "accordion" && block.label === "Belief") {
+                    block.label = "Impact if True";
+                  }
                 }
               }
             }
           }
+          // Restore last selected product line from localStorage
+          const savedPlId = typeof window !== "undefined" ? localStorage.getItem("pa-current-pl") : null;
+          const currentProductLineId = savedPlId && data[savedPlId] ? savedPlId : Object.keys(data)[0] || DEFAULT_PRODUCT_LINE_ID;
+          set({ productLines: data, currentProductLineId, isHydrated: true });
+          return;
         }
-        // Restore last selected product line from localStorage
-        const savedPlId = typeof window !== "undefined" ? localStorage.getItem("pa-current-pl") : null;
-        const currentProductLineId = savedPlId && data[savedPlId] ? savedPlId : Object.keys(data)[0] || DEFAULT_PRODUCT_LINE_ID;
-        set({ productLines: data, currentProductLineId, isHydrated: true });
-        return;
+        // json.exists is false → no store.json yet (first run), fall through
+        break;
+      } catch {
+        if (attempt < maxRetries) {
+          console.warn(`[ProductAgent] Hydration fetch failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${retryDelay}ms...`);
+          await new Promise(r => setTimeout(r, retryDelay));
+          continue;
+        }
+        console.warn("[ProductAgent] Hydration failed after all retries — falling back to initial data");
+        // Exhausted retries — fall through to mock-data fallback
       }
-    } catch {}
-    // Restore last selected product line even without persisted data
+    }
+    // Only reach here if: no persisted data exists OR all retries failed
     const savedPlId = typeof window !== "undefined" ? localStorage.getItem("pa-current-pl") : null;
     const pls = useAppStore.getState().productLines;
     if (savedPlId && pls[savedPlId]) {
