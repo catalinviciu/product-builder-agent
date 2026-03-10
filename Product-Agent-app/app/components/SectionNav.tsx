@@ -78,12 +78,13 @@ function EditProductLineForm({ plId, onClose }: { plId: string; onClose: () => v
   const [name, setName] = useState(pl?.name || "");
   const [description, setDescription] = useState(pl?.description || "");
   const [status, setStatus] = useState<ProductLineStatus>(pl?.status || "active");
+  const [codePath, setCodePath] = useState(pl?.codePath || "");
 
   if (!pl) return null;
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-    updateProductLine(plId, { name: name.trim(), description: description.trim(), status });
+    updateProductLine(plId, { name: name.trim(), description: description.trim(), status, codePath: codePath.trim() });
     updateTree(plId, { title: `Product Line: ${name.trim()}`, description: description.trim() });
     onClose();
   };
@@ -106,6 +107,13 @@ function EditProductLineForm({ plId, onClose }: { plId: string; onClose: () => v
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Description"
+          className="bg-surface-hover border border-border-strong rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-border-focus"
+          onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
+        />
+        <input
+          value={codePath}
+          onChange={(e) => setCodePath(e.target.value)}
+          placeholder="Local code path, e.g. Product-Agent-app/"
           className="bg-surface-hover border border-border-strong rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-border-focus"
           onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
         />

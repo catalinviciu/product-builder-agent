@@ -17,7 +17,8 @@
           "title": "Edit product line details",
           "stories": [
             { "action": "Edit the product line title inline on the Overview page", "components": ["RootView", "EditableText"] },
-            { "action": "Edit the product line description with markdown formatting and preview", "components": ["RootView", "EditableText", "MarkdownToolbar"] }
+            { "action": "Edit the product line description with markdown formatting and preview", "components": ["RootView", "EditableText", "MarkdownToolbar"] },
+            { "action": "Set the local code path for a product line so AI prompts can reference the codebase location", "components": ["EditProductLineForm", "SectionNav"] }
           ]
         },
         {
@@ -385,6 +386,39 @@
           "title": "Toggle sidebar",
           "stories": [
             { "action": "Collapse or expand the sidebar to control workspace layout", "components": ["DashboardLayout", "Sidebar Toggle"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manage-preferences",
+      "title": "Manage Preferences",
+      "goal": "Customize how the workspace looks and behaves.",
+      "steps": [
+        {
+          "title": "Set display theme",
+          "stories": [
+            { "action": "Open the account menu to access display preferences", "components": ["AccountMenu"] },
+            { "action": "Choose between automatic (time-based) or manual light/dark theme", "components": ["AccountMenu", "ThemePreferenceContext"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "export-context-ai",
+      "title": "Export Context for AI Agent",
+      "goal": "Generate context-rich prompts from the discovery tree to drive AI-assisted planning and coding.",
+      "steps": [
+        {
+          "title": "Copy entity anchor",
+          "stories": [
+            { "action": "Copy a context anchor for any entity to reference it in an AI agent", "components": ["CopyAnchorButton", "EntityView"] }
+          ]
+        },
+        {
+          "title": "Generate solution planning prompt",
+          "stories": [
+            { "action": "Copy a full planning prompt from a Solution entity that includes Opportunity context, Solution details, persona, codebase path, and skill instructions", "components": ["CopyAnchorButton", "EntityView", "buildSolutionPlanningPrompt"] }
           ]
         }
       ]

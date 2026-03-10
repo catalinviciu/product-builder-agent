@@ -151,11 +151,12 @@
               "title": "Outline of STORY_MAP"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
-    "width": 300,
+    "width": 285.5,
     "collapsed": true
   },
   "left-ribbon": {
@@ -171,6 +172,9 @@
   },
   "active": "8f3f5600c2f68fd7",
   "lastOpenFiles": [
+    "app/components/AccountMenu.tsx",
+    "app/lib/ThemePreferenceContext.tsx",
+    "components/ui/dropdown-menu.tsx",
     "app/components/MarkdownToolbar.tsx",
     "README.md",
     "STORY_MAP.md"

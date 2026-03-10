@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Source_Serif_4 } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { ThemePreferenceProvider } from "./lib/ThemePreferenceContext";
 import { TimeBasedTheme } from "./components/TimeBasedTheme";
 import "./globals.css";
 
@@ -31,8 +32,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${dmSans.variable} ${sourceSerif.variable} font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
-          <TimeBasedTheme />
-          {children}
+          <ThemePreferenceProvider>
+            <TimeBasedTheme />
+            {children}
+          </ThemePreferenceProvider>
         </ThemeProvider>
       </body>
     </html>

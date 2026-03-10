@@ -363,6 +363,7 @@ export interface ProductLine {
   description: string;
   status: ProductLineStatus;
   personas?: Persona[];
+  codePath?: string;
   tree: DiscoveryTree;
   entities: EntityStore;
 }

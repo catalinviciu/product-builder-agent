@@ -31,7 +31,7 @@ interface AppStore {
 
   // Product Line CRUD
   addProductLine: (pl: ProductLine) => void;
-  updateProductLine: (id: string, updates: Partial<Pick<ProductLine, "name" | "description" | "status">>) => void;
+  updateProductLine: (id: string, updates: Partial<Pick<ProductLine, "name" | "description" | "status" | "codePath">>) => void;
   updateTree: (plId: string, updates: Partial<Pick<DiscoveryTree, "title" | "description" | "rootChildren">>) => void;
   deleteProductLine: (id: string) => void;
   addRootEntity: (entity: Entity) => void;
@@ -104,6 +104,12 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
           for (const plId of Object.keys(data)) {
             if (!data[plId].personas) {
               data[plId].personas = PRODUCT_LINES[plId]?.personas ?? [];
+            }
+          }
+          // Migrate: backfill missing codePath
+          for (const plId of Object.keys(data)) {
+            if (data[plId].codePath === undefined) {
+              data[plId].codePath = "";
             }
           }
           // Migrate: rename "Belief" block label to "Impact if True" on assumption entities

@@ -14,7 +14,7 @@ import type {
 import { LEVEL_META, CHILD_LEVEL, ENTITY_STATUS_META, ENTITY_STATUSES, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, ICE_DIMENSIONS, getIceScoreColor, getDescriptionPlaceholder, createBlockTemplate } from "@/app/lib/schemas";
 import type { AssumptionType, TestType } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
-import { getEntity, getRootEntities, getEntityPreview, generateId, cn, buildEntityAnchor, buildRootAnchor } from "@/app/lib/utils";
+import { getEntity, getRootEntities, getEntityPreview, generateId, cn, buildEntityAnchor, buildRootAnchor, buildSolutionPlanningPrompt } from "@/app/lib/utils";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { DndContext, DragEndEvent, useDroppable, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
@@ -26,7 +26,7 @@ const LEVEL_ICON_MAP: Record<string, LucideIcon> = {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
 };
 
-function CopyAnchorButton({ text }: { text: string }) {
+function CopyAnchorButton({ text, tooltip }: { text: string; tooltip?: string }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = () => {
     navigator.clipboard.writeText(text);
@@ -36,7 +36,7 @@ function CopyAnchorButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      title="Copy context anchor for AI agent"
+      title={tooltip ?? "Copy context anchor for AI agent"}
       className="cursor-pointer p-1 rounded text-muted-foreground/50 hover:text-foreground transition-colors"
     >
       {copied ? <Check size={14} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={14} />}
@@ -1718,7 +1718,14 @@ export function EntityView() {
               updateEntity(entity.id, { status: s });
             }
           }} />
-          <CopyAnchorButton text={buildEntityAnchor(entities, productLine.name, entity.id)} />
+          <CopyAnchorButton
+            text={entity.level === "solution"
+              ? buildSolutionPlanningPrompt(entities, productLine, entity.id)
+              : buildEntityAnchor(entities, productLine.name, entity.id)}
+            tooltip={entity.level === "solution"
+              ? "Copy planning prompt for Claude Code"
+              : undefined}
+          />
           {entity.children.length === 0 && (
             confirmDeleteEntity ? (
               <div className="flex items-center gap-1 ml-1">

@@ -4,6 +4,7 @@ import { useEffect, useCallback } from "react";
 import { SectionNav } from "./SectionNav";
 import { EntityView } from "./EntityView";
 import { PersonaSlideOver } from "./PersonaSlideOver";
+import { AccountMenu } from "./AccountMenu";
 import { useAppStore } from "@/app/lib/store";
 import { Menu, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/app/lib/utils";
@@ -96,6 +97,7 @@ export function DashboardLayout() {
           >
             {sidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
           </button>
+          <AccountMenu />
           <EntityView />
         </main>
 

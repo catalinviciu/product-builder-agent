@@ -12,8 +12,8 @@
 
 ## Backbone (Activity Overview)
 
-| 1. Set Up a Product Line | 2. Define Personas | 3. Define a Business Outcome | 4. Define a Product Outcome | 5. Map Opportunities | 6. Design Solutions | 7. Validate Assumptions | 8. Organize & Prioritize | 9. Navigate & Review |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1. Set Up a Product Line | 2. Define Personas | 3. Define a Business Outcome | 4. Define a Product Outcome | 5. Map Opportunities | 6. Design Solutions | 7. Validate Assumptions | 8. Organize & Prioritize | 9. Navigate & Review | 10. Manage Preferences | 11. Export Context for AI Agent |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 ---
 
@@ -28,6 +28,7 @@
 | **Create product line** | Create a new product line with a name via the Product Line Selector | `Product Line Selector` |
 | **Edit product line details** | Edit the product line title inline on the Overview page | `RootView` · `EditableText` |
 |  | Edit the product line description with markdown formatting and preview | `RootView` · `EditableText` · `MarkdownToolbar` |
+|  | Set the local code path for a product line so AI prompts can reference the codebase location | `EditProductLineForm` · `SectionNav` |
 | **Change product line status** | Change product line status (active, closed, archived) via the status indicator | `Product Line Selector` |
 | **Delete product line** | Delete a product line from the Product Line Selector | `Product Line Selector` |
 
@@ -178,6 +179,24 @@
 | **Use breadcrumbs** | Jump to any ancestor entity using the breadcrumb trail | `EntityBreadcrumb` |
 | **Switch product line** | Switch to a different product line via the Product Line Selector | `Product Line Selector` |
 | **Toggle sidebar** | Collapse or expand the sidebar to control workspace layout | `DashboardLayout` · `Sidebar Toggle` |
+
+
+### Activity 10: Manage Preferences
+> Customize how the workspace looks and behaves.
+
+| Step | Story | Components |
+|:-----|:------|:-----------|
+| **Set display theme** | Open the account menu to access display preferences | `AccountMenu` |
+|  | Choose between automatic (time-based) or manual light/dark theme | `AccountMenu` · `ThemePreferenceContext` |
+
+
+### Activity 11: Export Context for AI Agent
+> Generate context-rich prompts from the discovery tree to drive AI-assisted planning and coding.
+
+| Step | Story | Components |
+|:-----|:------|:-----------|
+| **Copy entity anchor** | Copy a context anchor for any entity to reference it in an AI agent | `CopyAnchorButton` · `EntityView` |
+| **Generate solution planning prompt** | Copy a full planning prompt from a Solution entity that includes Opportunity context, Solution details, persona, codebase path, and skill instructions | `CopyAnchorButton` · `EntityView` · `buildSolutionPlanningPrompt` |
 
 
 ---
