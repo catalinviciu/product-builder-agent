@@ -1,1055 +1,41 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MarkdownBlock, MarkdownToolbar, wrapSelection, insertLinePrefix } from "./MarkdownToolbar";
+import { MarkdownBlock } from "./MarkdownToolbar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
-  ChevronDown, ChevronRight, Pencil, Trash2, Plus, X, Check, Copy, LayoutGrid, Columns3, User, Users,
+  ChevronRight, Pencil, Trash2, Plus,
   type LucideIcon,
 } from "lucide-react";
-import type {
-  Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock, EntityLevel, EntityStatus,
-} from "@/app/lib/schemas";
-import { LEVEL_META, CHILD_LEVEL, ENTITY_STATUS_META, ENTITY_STATUSES, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, ICE_DIMENSIONS, getIceScoreColor, getDescriptionPlaceholder, createBlockTemplate } from "@/app/lib/schemas";
-import type { AssumptionType, TestType } from "@/app/lib/schemas";
+import type { Entity, EntityStatus } from "@/app/lib/schemas";
+import { LEVEL_META, CHILD_LEVEL, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getIceScoreColor } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
-import { getEntity, getRootEntities, getEntityPreview, generateId, cn, buildEntityAnchor, buildRootAnchor, buildSolutionPlanningPrompt } from "@/app/lib/utils";
+import { getEntity, getRootEntities, getEntityPreview, cn, buildEntityAnchor, buildRootAnchor, buildSolutionPlanningPrompt } from "@/app/lib/utils";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
-import { DndContext, DragEndEvent, useDroppable, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { EntityBreadcrumb } from "./EntityBreadcrumb";
-import { ChildEntityCard } from "./ChildEntityCard";
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+
+// Extracted components
+import { CopyAnchorButton } from "./CopyAnchorButton";
+import { StatusPicker, PersonaPicker, SecondaryPersonaPicker, AssumptionTypePicker, TestTypePicker } from "./EntityPickers";
+import { EditableText } from "./EditableText";
+import { BlockRenderer, AddBlockButton, BlockList } from "./EntityBlocks";
+import { IceScorePanel } from "./IceScorePanel";
+import { AddChildForm, AddRootEntityForm } from "./EntityForms";
+import { EntityGridView, type CardDisplayProps } from "./EntityGridView";
 
 const LEVEL_ICON_MAP: Record<string, LucideIcon> = {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
 };
 
-function CopyAnchorButton({ text, tooltip }: { text: string; tooltip?: string }) {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = () => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-  return (
-    <button
-      onClick={handleCopy}
-      title={tooltip ?? "Copy context anchor for AI agent"}
-      className="cursor-pointer p-1 rounded text-muted-foreground/50 hover:text-foreground transition-colors"
-    >
-      {copied ? <Check size={14} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={14} />}
-    </button>
-  );
-}
-
-// ── Shared components ─────────────────────────────────────────────────────
-// MarkdownBlock, MarkdownToolbar, wrapSelection, insertLinePrefix
-// are imported from ./MarkdownToolbar.tsx
-
-function MetricCard({ metric, currentValue, targetValue, timeframe }: {
-  metric: string; currentValue: string; targetValue: string; timeframe?: string;
-}) {
-  return (
-    <div className="flex items-center gap-4 p-4 rounded-xl bg-surface-2 border border-border-default">
-      <div className="flex flex-col gap-0.5">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">{metric}</span>
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-semibold text-foreground/60">{currentValue}</span>
-          <span className="text-muted-foreground/40">&rarr;</span>
-          <span className="text-lg font-semibold text-foreground">{targetValue}</span>
-        </div>
-        {timeframe && <span className="text-[11px] text-muted-foreground/40">{timeframe}</span>}
-      </div>
-    </div>
-  );
-}
-
-function Pills({ items }: { items: { label: string; value: string; color?: string }[] }) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {items.map((item) => (
-        <span key={item.label} className={cn(
-          "text-[11px] px-2.5 py-1 rounded-lg border",
-          item.color || "text-foreground/70 bg-surface-2 border-border-default"
-        )}>
-          <span className="text-muted-foreground/50 mr-1">{item.label}:</span>
-          {item.value}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function AccordionSection({ label, children, defaultOpen = false }: {
-  label: string; children: React.ReactNode; defaultOpen?: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-
-  return (
-    <div className="rounded-xl border border-border-default overflow-hidden">
-      <button
-        onClick={() => setOpen(!open)}
-        className="cursor-pointer flex items-center gap-2 w-full px-[var(--spacing-block-px)] py-[var(--spacing-block-py)] bg-surface-1 hover:bg-surface-2 transition-colors"
-      >
-        <ChevronRight
-          size={14}
-          className={cn(
-            "text-muted-foreground/40 transition-transform duration-200 shrink-0",
-            open && "rotate-90"
-          )}
-        />
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-          {label}
-        </span>
-      </button>
-      {open && (
-        <div className="px-[var(--spacing-block-px)] py-[var(--spacing-block-py)] border-t border-border-subtle">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Status picker ─────────────────────────────────────────────────────────
-
-function StatusPicker({ status, onChange }: { status: EntityStatus; onChange: (s: EntityStatus) => void }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  const meta = ENTITY_STATUS_META[status];
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className={cn(
-          "cursor-pointer text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-md border transition-all duration-150 group/status flex items-center gap-1.5",
-          meta.color,
-          "hover:brightness-125 hover:shadow-[0_0_8px_rgba(255,255,255,0.06)] hover:scale-105"
-        )}
-      >
-        {meta.label}
-        <ChevronDown size={10} />
-      </button>
-      {open && (
-        <div className="absolute left-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[120px]">
-          {ENTITY_STATUSES.map((s) => {
-            const m = ENTITY_STATUS_META[s];
-            return (
-              <button
-                key={s}
-                onClick={() => { onChange(s); setOpen(false); }}
-                className={cn(
-                  "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
-                  status === s && "bg-surface-3"
-                )}
-              >
-                <span className={cn("w-2 h-2 rounded-full", m.dotColor)} />
-                <span className={status === s ? "text-foreground font-medium" : "text-muted-foreground"}>{m.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Persona picker ────────────────────────────────────────────────────────
-
-function PersonaPicker({ entityId, personaId, secondaryPersonaIds }: { entityId: string; personaId?: string; secondaryPersonaIds?: string[] }) {
-  const [open, setOpen] = useState(false);
-  const [confirmUnassign, setConfirmUnassign] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const { assignPersona } = useAppStore();
-  const productLine = useProductLine();
-  const personas = productLine.personas ?? [];
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  const currentPersona = personas.find((p) => p.id === personaId);
-
-  return (
-    <div ref={ref} className="relative">
-      <TooltipProvider delayDuration={300}>
-        {currentPersona?.description ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-                className={cn(
-                  "cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1",
-                  "text-foreground/70"
-                )}
-              >
-                <User size={10} />
-                {currentPersona.name}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent><MarkdownBlock content={currentPersona.description} /></TooltipContent>
-          </Tooltip>
-        ) : (
-          <button
-            onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-            className={cn(
-              "cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1",
-              currentPersona ? "text-foreground/70" : "text-muted-foreground/50"
-            )}
-          >
-            <User size={10} />
-            {currentPersona ? currentPersona.name : "Unassigned"}
-          </button>
-        )}
-      </TooltipProvider>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[160px]">
-          {confirmUnassign ? (
-            <div className="px-3 py-2 flex flex-col gap-1.5">
-              <span className="text-[10px] text-muted-foreground">This will also clear {(secondaryPersonaIds ?? []).length} secondary persona(s)</span>
-              <div className="flex gap-1">
-                <button
-                  onClick={(e) => { e.stopPropagation(); assignPersona(entityId, undefined); setConfirmUnassign(false); setOpen(false); }}
-                  className="cursor-pointer text-[10px] font-medium px-2 py-1 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 transition-colors"
-                >
-                  Unassign all
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setConfirmUnassign(false); }}
-                  className="cursor-pointer text-[10px] font-medium px-2 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if ((secondaryPersonaIds ?? []).length > 0) {
-                  setConfirmUnassign(true);
-                } else {
-                  assignPersona(entityId, undefined);
-                  setOpen(false);
-                }
-              }}
-              className={cn(
-                "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
-                !personaId && "bg-surface-3"
-              )}
-            >
-              <span className={!personaId ? "text-foreground font-medium" : "text-muted-foreground"}>Unassigned</span>
-            </button>
-          )}
-          {personas.map((p) => (
-            <button
-              key={p.id}
-              onClick={(e) => { e.stopPropagation(); assignPersona(entityId, p.id); setOpen(false); }}
-              className={cn(
-                "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
-                personaId === p.id && "bg-surface-3"
-              )}
-            >
-              <span className={personaId === p.id ? "text-foreground font-medium" : "text-muted-foreground"}>{p.name}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Secondary persona picker (multi-select) ──────────────────────────────
-
-function SecondaryPersonaPicker({ entityId, secondaryPersonaIds, excludePersonaId }: {
-  entityId: string; secondaryPersonaIds: string[]; excludePersonaId?: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const { assignSecondaryPersonas } = useAppStore();
-  const productLine = useProductLine();
-  const personas = (productLine.personas ?? []).filter((p) => p.id !== excludePersonaId);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  const toggle = (personaId: string) => {
-    const next = secondaryPersonaIds.includes(personaId)
-      ? secondaryPersonaIds.filter((id) => id !== personaId)
-      : [...secondaryPersonaIds, personaId];
-    assignSecondaryPersonas(entityId, next);
-  };
-
-  const count = secondaryPersonaIds.length;
-  const selectedPersonaNames = personas
-    .filter((p) => secondaryPersonaIds.includes(p.id))
-    .map((p) => p.name);
-
-  return (
-    <div ref={ref} className="relative">
-      <TooltipProvider delayDuration={300}>
-        {count > 0 ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-                className="cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1 text-foreground/70"
-              >
-                <Users size={10} />
-                {`${count} more`}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {selectedPersonaNames.map((name, i) => (
-                <div key={i}>{name}</div>
-              ))}
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <button
-            onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-            className="cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1 text-muted-foreground/50"
-          >
-            <Users size={10} />
-            Add personas
-          </button>
-        )}
-      </TooltipProvider>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[180px]">
-          {personas.length === 0 && (
-            <div className="px-3 py-2 text-xs text-muted-foreground">No other personas</div>
-          )}
-          {personas.map((p) => {
-            const selected = secondaryPersonaIds.includes(p.id);
-            return (
-              <button
-                key={p.id}
-                onClick={(e) => { e.stopPropagation(); toggle(p.id); }}
-                className={cn(
-                  "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
-                  selected && "bg-surface-3"
-                )}
-              >
-                <span className={cn(
-                  "w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0",
-                  selected ? "bg-foreground/80 border-foreground/80" : "border-border-default"
-                )}>
-                  {selected && <Check size={9} className="text-background" />}
-                </span>
-                <span className={selected ? "text-foreground font-medium" : "text-muted-foreground"}>{p.name}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Assumption type picker ────────────────────────────────────────────────
-
-const ASSUMPTION_TYPES = Object.keys(ASSUMPTION_TYPE_META) as AssumptionType[];
-
-function AssumptionTypePicker({ entityId, assumptionType }: { entityId: string; assumptionType?: AssumptionType }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const { assignAssumptionType } = useAppStore();
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  const currentMeta = assumptionType ? ASSUMPTION_TYPE_META[assumptionType] : undefined;
-
-  return (
-    <div ref={ref} className="relative">
-      <TooltipProvider delayDuration={300}>
-        {currentMeta ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-                className={cn(
-                  "cursor-pointer text-[11px] px-2 py-0.5 rounded-full border transition-colors hover:brightness-110 dark:hover:brightness-125 flex items-center gap-1",
-                  currentMeta.color
-                )}
-              >
-                {currentMeta.label}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>{currentMeta.description}</TooltipContent>
-          </Tooltip>
-        ) : (
-          <button
-            onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-            className="cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1 text-muted-foreground/50"
-          >
-            Set type
-          </button>
-        )}
-      </TooltipProvider>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[200px]">
-          <button
-            onClick={(e) => { e.stopPropagation(); assignAssumptionType(entityId, undefined); setOpen(false); }}
-            className={cn(
-              "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
-              !assumptionType && "bg-surface-3"
-            )}
-          >
-            <span className={!assumptionType ? "text-foreground font-medium" : "text-muted-foreground"}>Unassigned</span>
-          </button>
-          {ASSUMPTION_TYPES.map((type) => {
-            const meta = ASSUMPTION_TYPE_META[type];
-            return (
-              <button
-                key={type}
-                onClick={(e) => { e.stopPropagation(); assignAssumptionType(entityId, type); setOpen(false); }}
-                className={cn(
-                  "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
-                  assumptionType === type && "bg-surface-3"
-                )}
-              >
-                <span className={assumptionType === type ? "text-foreground font-medium" : "text-muted-foreground"}>{meta.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Test type picker ─────────────────────────────────────────────────────
-
-const TEST_TYPES = Object.keys(TEST_TYPE_META) as TestType[];
-
-function TestTypePicker({ entityId, testType }: { entityId: string; testType?: TestType }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const { assignTestType } = useAppStore();
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  const currentMeta = testType ? TEST_TYPE_META[testType] : undefined;
-
-  return (
-    <div ref={ref} className="relative">
-      <TooltipProvider delayDuration={300}>
-        {currentMeta ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-                className={cn(
-                  "cursor-pointer text-[11px] px-2 py-0.5 rounded-full border transition-colors hover:brightness-110 dark:hover:brightness-125 flex items-center gap-1",
-                  currentMeta.color
-                )}
-              >
-                {currentMeta.label}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>{currentMeta.description}</TooltipContent>
-          </Tooltip>
-        ) : (
-          <button
-            onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-            className="cursor-pointer text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-surface-1 transition-colors hover:bg-surface-hover flex items-center gap-1 text-muted-foreground/50"
-          >
-            Set type
-          </button>
-        )}
-      </TooltipProvider>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-[200px]">
-          <button
-            onClick={(e) => { e.stopPropagation(); assignTestType(entityId, undefined); setOpen(false); }}
-            className={cn(
-              "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
-              !testType && "bg-surface-3"
-            )}
-          >
-            <span className={!testType ? "text-foreground font-medium" : "text-muted-foreground"}>Unassigned</span>
-          </button>
-          {TEST_TYPES.map((type) => {
-            const meta = TEST_TYPE_META[type];
-            return (
-              <button
-                key={type}
-                onClick={(e) => { e.stopPropagation(); assignTestType(entityId, type); setOpen(false); }}
-                className={cn(
-                  "cursor-pointer flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
-                  testType === type && "bg-surface-3"
-                )}
-              >
-                <span className={testType === type ? "text-foreground font-medium" : "text-muted-foreground"}>{meta.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── ICE Score Panel ───────────────────────────────────────────────────────
-
-function IceScorePanel({ entityId, iceScore }: { entityId: string; iceScore?: { i: number; c: number; e: number; rationale?: string } }) {
-  const { updateIceScore } = useAppStore();
-  const scored = iceScore != null;
-  const current = iceScore ?? { i: 5, c: 5, e: 5 };
-  const total = current.i * current.c * current.e;
-  const tierColor = getIceScoreColor(total);
-
-  const handleInit = () => {
-    updateIceScore(entityId, { i: 5, c: 5, e: 5 });
-  };
-
-  const handleChange = (key: "i" | "c" | "e", value: number) => {
-    updateIceScore(entityId, { ...current, [key]: value });
-  };
-
-  if (!scored) {
-    return (
-      <div className="w-full md:w-[40%] shrink-0 rounded-xl border border-border-default bg-surface-1 p-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-sm font-semibold text-foreground">ICE Score</span>
-            <p className="text-xs text-muted-foreground/60 mt-0.5">Prioritize with Impact × Confidence × Ease</p>
-          </div>
-          <button
-            onClick={handleInit}
-            className="cursor-pointer text-xs px-3 py-1.5 rounded-lg bg-surface-2 border border-border-default text-foreground hover:bg-surface-hover transition-colors"
-          >
-            Set ICE Score
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full md:w-[40%] shrink-0 rounded-xl border border-border-default bg-surface-1 p-3 flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-foreground">ICE Score</span>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground/40">
-            {current.i} × {current.c} × {current.e} =
-          </span>
-          <span className={cn("text-sm font-bold px-2.5 py-0.5 rounded-full border", tierColor.text, tierColor.bg, tierColor.border)}>
-            {total}
-          </span>
-        </div>
-      </div>
-      {ICE_DIMENSIONS.map((dim) => {
-        const val = current[dim.key];
-        return (
-          <div key={dim.key} className="flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className={cn("w-2 h-2 rounded-full", dim.dotColor)} />
-                <span className={cn("text-xs font-medium", dim.color)}>{dim.label}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold text-foreground">{val}</span>
-                <span className="text-[10px] text-muted-foreground/60">{dim.valueLabels[val]}</span>
-              </div>
-            </div>
-            <input
-              type="range"
-              min={1}
-              max={10}
-              value={val}
-              onChange={(e) => handleChange(dim.key, Number(e.target.value))}
-              className="w-full h-1.5 rounded-full appearance-none bg-surface-3 cursor-pointer accent-current"
-              style={{ accentColor: dim.key === "i" ? "#3b82f6" : dim.key === "c" ? "#8b5cf6" : "#10b981" }}
-            />
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ── Click-to-edit helpers ─────────────────────────────────────────────────
-
-function EditableText({ value, onSave, as = "input", placeholder, maxLength }: {
-  value: string; onSave: (v: string) => void; as?: "input" | "textarea"; placeholder?: string; maxLength?: number;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-  const [showPreview, setShowPreview] = useState(false);
-  const ref = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    if (editing && ref.current) ref.current.focus();
-  }, [editing]);
-
-  if (!editing) {
-    const display = as === "textarea" && value
-      ? <MarkdownBlock content={value} />
-      : <span>{value || <span className="text-muted-foreground/40 italic">{placeholder || "Click to edit"}</span>}</span>;
-
-    return (
-      <button
-        onClick={() => { setDraft(value); setEditing(true); }}
-        className="cursor-pointer text-left group inline-flex items-start gap-1.5 hover:bg-surface-hover rounded-md px-1 -mx-1 transition-colors"
-      >
-        {display}
-        <Pencil size={12} className="text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1" />
-      </button>
-    );
-  }
-
-  const save = () => { onSave(draft); setEditing(false); };
-  const cancel = () => setEditing(false);
-
-  const common = {
-    value: draft,
-    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDraft(e.target.value),
-    onKeyDown: (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" && as === "input") save();
-      if (e.key === "Escape") cancel();
-    },
-    className: "w-full bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus",
-  };
-
-  return (
-    <div className="flex flex-col gap-2">
-      {as === "textarea" ? (
-        <div className="flex flex-col">
-          <MarkdownToolbar
-            textareaRef={ref as React.RefObject<HTMLTextAreaElement | null>}
-            draft={draft}
-            setDraft={setDraft}
-            showPreview={showPreview}
-            setShowPreview={setShowPreview}
-          />
-          {showPreview ? (
-            <div className="w-full bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm min-h-[6rem]">
-              {draft ? <MarkdownBlock content={draft} /> : <span className="text-muted-foreground/40 italic">Nothing to preview</span>}
-            </div>
-          ) : (
-            <textarea ref={ref as React.RefObject<HTMLTextAreaElement>} rows={4} {...common} />
-          )}
-        </div>
-      ) : (
-        <input ref={ref as React.RefObject<HTMLInputElement>} {...(maxLength ? { maxLength } : {})} {...common} />
-      )}
-      <div className="flex gap-2">
-        <button onClick={save} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1">
-          <Check size={12} /> Save
-        </button>
-        <button onClick={cancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1">
-          <X size={12} /> Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Block renderers ───────────────────────────────────────────────────────
-
-function BlockToolbar({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
-  return (
-    <div className="absolute top-1 right-1 opacity-0 group-hover/block:opacity-100 transition-opacity flex gap-1">
-      <button onClick={onEdit} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 hover:text-foreground transition-colors">
-        <Pencil size={12} />
-      </button>
-      {confirmDelete ? (
-        <div className="flex gap-1">
-          <button onClick={onDelete} className="cursor-pointer p-1.5 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 transition-colors text-[10px] font-medium px-2">
-            Delete
-          </button>
-          <button onClick={() => setConfirmDelete(false)} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 transition-colors text-[10px] px-2">
-            Cancel
-          </button>
-        </div>
-      ) : (
-        <button onClick={() => setConfirmDelete(true)} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 hover:text-red-600 dark:hover:text-red-400 transition-colors">
-          <Trash2 size={12} />
-        </button>
-      )}
-    </div>
-  );
-}
-
-function AccordionBlockEditor({ block, onSave, onCancel }: { block: AccordionBlock; onSave: (b: Partial<AccordionBlock>) => void; onCancel: () => void }) {
-  const [label, setLabel] = useState(block.label);
-  const [content, setContent] = useState(block.content);
-  const [showPreview, setShowPreview] = useState(false);
-  const contentRef = useRef<HTMLTextAreaElement>(null);
-  return (
-    <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
-      <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Section title"
-        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus font-semibold" />
-      <div>
-        <MarkdownToolbar textareaRef={contentRef} draft={content} setDraft={setContent} showPreview={showPreview} setShowPreview={setShowPreview} />
-        {showPreview ? (
-          <div className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 min-h-[144px]">
-            {content ? <MarkdownBlock content={content} /> : <span className="text-muted-foreground/40 italic text-sm">Nothing to preview</span>}
-          </div>
-        ) : (
-          <textarea ref={contentRef} value={content} onChange={(e) => setContent(e.target.value)} rows={6} placeholder="Content (markdown)"
-            className="w-full bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus font-mono" />
-        )}
-      </div>
-      <div className="flex gap-2">
-        <button onClick={() => onSave({ label, content })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
-        <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
-      </div>
-    </div>
-  );
-}
-
-function PillsBlockEditor({ block, onSave, onCancel }: { block: PillsBlock; onSave: (b: Partial<PillsBlock>) => void; onCancel: () => void }) {
-  const [items, setItems] = useState(block.items.map((i) => ({ ...i })));
-  const updateItem = (idx: number, field: "label" | "value", val: string) => {
-    const next = [...items];
-    next[idx] = { ...next[idx], [field]: val };
-    setItems(next);
-  };
-  return (
-    <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
-      {items.map((item, i) => (
-        <div key={i} className="flex gap-2 items-center">
-          <input value={item.label} onChange={(e) => updateItem(i, "label", e.target.value)} placeholder="Label"
-            className="bg-surface-hover border border-border-strong rounded-lg px-2 py-1.5 text-xs text-foreground focus:outline-none w-28" />
-          <input value={item.value} onChange={(e) => updateItem(i, "value", e.target.value)} placeholder="Value"
-            className="bg-surface-hover border border-border-strong rounded-lg px-2 py-1.5 text-xs text-foreground focus:outline-none flex-1" />
-          <button onClick={() => setItems(items.filter((_, j) => j !== i))} className="cursor-pointer p-1 text-muted-foreground/40 hover:text-red-600 dark:hover:text-red-400"><X size={14} /></button>
-        </div>
-      ))}
-      <button onClick={() => setItems([...items, { label: "", value: "" }])} className="cursor-pointer text-xs text-muted-foreground/50 hover:text-foreground flex items-center gap-1"><Plus size={12} /> Add item</button>
-      <div className="flex gap-2">
-        <button onClick={() => onSave({ items })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
-        <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
-      </div>
-    </div>
-  );
-}
-
-function QuoteBlockEditor({ block, onSave, onCancel }: { block: QuoteBlock; onSave: (b: Partial<QuoteBlock>) => void; onCancel: () => void }) {
-  const [content, setContent] = useState(block.content);
-  const [attribution, setAttribution] = useState(block.attribution || "");
-  return (
-    <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
-      <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} placeholder="Quote text"
-        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus italic" />
-      <input value={attribution} onChange={(e) => setAttribution(e.target.value)} placeholder="Attribution (optional)"
-        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-border-focus" />
-      <div className="flex gap-2">
-        <button onClick={() => onSave({ content, attribution: attribution || undefined })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
-        <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
-      </div>
-    </div>
-  );
-}
-
-function MetricBlockEditor({ block, onSave, onCancel }: { block: MetricBlock; onSave: (b: Partial<MetricBlock>) => void; onCancel: () => void }) {
-  const [metric, setMetric] = useState(block.metric);
-  const [currentValue, setCurrentValue] = useState(block.currentValue);
-  const [targetValue, setTargetValue] = useState(block.targetValue);
-  const [timeframe, setTimeframe] = useState(block.timeframe || "");
-  return (
-    <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
-      <input value={metric} onChange={(e) => setMetric(e.target.value)} placeholder="Metric name"
-        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none" />
-      <div className="flex gap-2">
-        <input value={currentValue} onChange={(e) => setCurrentValue(e.target.value)} placeholder="Current"
-          className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none flex-1" />
-        <input value={targetValue} onChange={(e) => setTargetValue(e.target.value)} placeholder="Target"
-          className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none flex-1" />
-      </div>
-      <input value={timeframe} onChange={(e) => setTimeframe(e.target.value)} placeholder="Timeframe (optional)"
-        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none" />
-      <div className="flex gap-2">
-        <button onClick={() => onSave({ metric, currentValue, targetValue, timeframe: timeframe || undefined })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
-        <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
-      </div>
-    </div>
-  );
-}
-
-function BlockRenderer({ block, entityId }: { block: Block; entityId: string }) {
-  const [editing, setEditing] = useState(false);
-  const { updateBlock, removeBlock } = useAppStore();
-
-  const handleSave = (updates: Partial<Block>) => {
-    updateBlock(entityId, block.id, updates);
-    setEditing(false);
-  };
-  const handleDelete = () => removeBlock(entityId, block.id);
-
-  if (editing) {
-    switch (block.type) {
-      case "accordion": return <AccordionBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
-      case "pills": return <PillsBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
-      case "quote": return <QuoteBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
-      case "metric": return <MetricBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
-    }
-  }
-
-  return (
-    <div className="relative group/block">
-      <BlockToolbar onEdit={() => setEditing(true)} onDelete={handleDelete} />
-      {block.type === "accordion" && (
-        <AccordionSection label={block.label} defaultOpen={block.defaultOpen}>
-          <MarkdownBlock content={block.content} />
-        </AccordionSection>
-      )}
-      {block.type === "pills" && <Pills items={block.items} />}
-      {block.type === "quote" && (
-        <blockquote className="border-l-2 border-amber-400/30 pl-4 py-2 text-sm text-foreground/70 italic bg-amber-400/[0.03] rounded-r-lg">
-          <p>{block.content}</p>
-          {block.attribution && <cite className="text-xs text-muted-foreground/50 not-italic block mt-1">&mdash; {block.attribution}</cite>}
-        </blockquote>
-      )}
-      {block.type === "metric" && (
-        <MetricCard metric={block.metric} currentValue={block.currentValue} targetValue={block.targetValue} timeframe={block.timeframe} />
-      )}
-    </div>
-  );
-}
-
-// ── Add Block dropdown ────────────────────────────────────────────────────
-
-function AddBlockButton({ entityId }: { entityId: string }) {
-  const [open, setOpen] = useState(false);
-  const { addBlock } = useAppStore();
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  const blockTypes: { type: Block["type"]; label: string }[] = [
-    { type: "accordion", label: "Accordion Section" },
-    { type: "pills", label: "Pills / Tags" },
-    { type: "quote", label: "Quote" },
-    { type: "metric", label: "Metric Card" },
-  ];
-
-  const handleAdd = (type: Block["type"]) => {
-    const id = `${entityId}-b${Date.now()}`;
-    let block: Block;
-    switch (type) {
-      case "accordion": block = { id, type, label: "New Section", content: "" }; break;
-      case "pills": block = { id, type, items: [{ label: "Label", value: "Value" }] }; break;
-      case "quote": block = { id, type, content: "" }; break;
-      case "metric": block = { id, type, metric: "Metric", currentValue: "0", targetValue: "0" }; break;
-    }
-    addBlock(entityId, block);
-    setOpen(false);
-  };
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-border-default hover:border-border-strong transition-colors w-full justify-center"
-      >
-        <Plus size={14} /> Add block
-      </button>
-      {open && (
-        <div className="absolute left-0 right-0 bottom-full mb-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden">
-          {blockTypes.map((bt) => (
-            <button
-              key={bt.type}
-              onClick={() => handleAdd(bt.type)}
-              className="cursor-pointer flex items-center gap-2 w-full px-3 py-2.5 text-left text-xs text-foreground hover:bg-surface-hover transition-colors"
-            >
-              {bt.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Block list (replaces renderEntityContent) ─────────────────────────────
-
-function BlockList({ entity }: { entity: Entity }) {
-  const { updateEntity } = useAppStore();
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="text-[length:var(--text-body)] text-foreground/80 leading-[var(--text-body-leading)]">
-        <EditableText
-          value={entity.description}
-          onSave={(v) => updateEntity(entity.id, { description: v })}
-          as="textarea"
-          placeholder="Add a description..."
-        />
-      </div>
-      {entity.blocks.map((block) => (
-        <BlockRenderer key={block.id} block={block} entityId={entity.id} />
-      ))}
-      <AddBlockButton entityId={entity.id} />
-    </div>
-  );
-}
-
-// ── Children grid + Add child ─────────────────────────────────────────────
-
-function AddChildForm({ parentId, childLevel, onClose }: { parentId: string; childLevel: EntityLevel; onClose: () => void }) {
-  const [title, setTitle] = useState("");
-  const { addChildEntity, navigateToChild } = useAppStore();
-  const childMeta = LEVEL_META[childLevel];
-
-  const handleSubmit = () => {
-    if (!title.trim()) return;
-    const id = generateId();
-    const entity: Entity = {
-      id,
-      level: childLevel,
-      title: title.trim(),
-      icon: childMeta.icon,
-      description: getDescriptionPlaceholder(childLevel),
-      status: "draft",
-      parentId,
-      children: [],
-      blocks: createBlockTemplate(childLevel, id),
-    };
-    addChildEntity(parentId, entity);
-    navigateToChild(id);
-    onClose();
-  };
-
-  return (
-    <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
-      <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-        New {childMeta.label}
-      </span>
-      <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder={`${childMeta.label} title (required)`}
-        maxLength={80}
-        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus"
-        autoFocus
-        onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
-      />
-      <div className="flex gap-2">
-        <button onClick={handleSubmit} disabled={!title.trim()} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
-          <Check size={12} /> Create
-        </button>
-        <button onClick={onClose} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1">
-          <X size={12} /> Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Kanban column config ──────────────────────────────────────────────────
-
-const STATUS_GROUP_ORDER: Record<EntityStatus, number> = {
-  commit: 0, explore: 1, draft: 2, done: 3, archived: 4, dropped: 5,
-};
-
-const KANBAN_COLUMNS = [
-  { key: "draft",   label: "Draft",    statuses: ["draft"] as EntityStatus[],                        accentBorder: "border-zinc-400/30",    dotColor: "bg-zinc-500 dark:bg-zinc-400" },
-  { key: "explore", label: "Explore",  statuses: ["explore"] as EntityStatus[],                      accentBorder: "border-blue-400/30",    dotColor: "bg-blue-500 dark:bg-blue-400" },
-  { key: "commit",  label: "Commit",   statuses: ["commit"] as EntityStatus[],                       accentBorder: "border-emerald-400/30", dotColor: "bg-emerald-500 dark:bg-emerald-400" },
-  { key: "done",    label: "Done",     statuses: ["done", "archived", "dropped"] as EntityStatus[],  accentBorder: "border-violet-400/30",  dotColor: "bg-violet-500 dark:bg-violet-400" },
-];
-
-function KanbanColumn({ columnKey, label, dotColor, accentBorder, children, count }: {
-  columnKey: string; label: string; dotColor: string; accentBorder: string; children: React.ReactNode; count: number;
-}) {
-  const { isOver, setNodeRef } = useDroppable({ id: columnKey });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={cn(
-        "rounded-lg bg-surface-1 border border-border-subtle p-2 flex flex-col gap-2 min-w-[75vw] md:min-w-0 snap-center",
-        "border-t-2",
-        accentBorder,
-        isOver && "border-border-strong bg-surface-2",
-      )}
-    >
-      <div className="flex items-center gap-2 px-1 py-1">
-        <span className={cn("w-2 h-2 rounded-full shrink-0", dotColor)} />
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">{label}</span>
-        <span className="text-[10px] text-muted-foreground/40 ml-auto">{count}</span>
-      </div>
-      <div className="flex flex-col gap-2 flex-1">
-        {children}
-      </div>
-    </div>
-  );
-}
+// ── Children grid (now delegates to EntityGridView) ───────────────────────
 
 function ChildrenGrid({ entity }: { entity: Entity }) {
   const productLine = useProductLine();
   const { entities } = productLine;
   const { updateEntity } = useAppStore();
   const personas = productLine.personas ?? [];
-  const getPersonaName = (child: Entity) => {
-    if (!PERSONA_LEVELS.has(child.level) || !child.personaId) return undefined;
-    return personas.find((p) => p.id === child.personaId)?.name;
-  };
-  const getPersonaDescription = (child: Entity) => {
-    if (!PERSONA_LEVELS.has(child.level) || !child.personaId) return undefined;
-    return personas.find((p) => p.id === child.personaId)?.description;
-  };
-  const getSecondaryPersonaCount = (child: Entity) => {
-    if (!MULTI_PERSONA_LEVELS.has(child.level)) return 0;
-    return (child.secondaryPersonaIds ?? []).length;
-  };
-  const getAssumptionTypeInfo = (child: Entity) => {
-    if (child.level !== "assumption" || !child.assumptionType) return undefined;
-    return ASSUMPTION_TYPE_META[child.assumptionType];
-  };
-  const getTestTypeInfo = (child: Entity) => {
-    if (child.level !== "test" || !child.testType) return undefined;
-    return TEST_TYPE_META[child.testType];
-  };
   const [showAddForm, setShowAddForm] = useState(false);
-  const [showArchived, setShowArchived] = useState(false);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const childLevel = CHILD_LEVEL[entity.level];
 
   const children = entity.children
@@ -1059,22 +45,9 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
   const levelMeta = LEVEL_META[entity.level];
   const hasContent = children.length > 0 || childLevel !== null;
 
-  // Persist view mode in localStorage — default deterministically to avoid hydration mismatch
-  const [viewMode, setViewMode] = useState<"grid" | "kanban">(children.length >= 4 ? "kanban" : "grid");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("pa-view-mode");
-    if (saved === "grid" || saved === "kanban") setViewMode(saved);
-  }, []);
-
-  const handleSetViewMode = (mode: "grid" | "kanban") => {
-    setViewMode(mode);
-    localStorage.setItem("pa-view-mode", mode);
-  };
-
   if (!hasContent) return null;
 
-  function getChildCardProps(child: Entity) {
+  function getChildCardProps(child: Entity): CardDisplayProps {
     let preview = getEntityPreview(child);
     let badge = "";
     let iceScoreTotal: number | undefined;
@@ -1091,320 +64,78 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
       iceScoreTotal = child.iceScore.i * child.iceScore.c * child.iceScore.e;
       iceScoreColorObj = getIceScoreColor(iceScoreTotal);
     }
-    return { preview, badge, iceScoreTotal, iceScoreColorObj };
+
+    const getPersonaName = () => {
+      if (!PERSONA_LEVELS.has(child.level) || !child.personaId) return undefined;
+      return personas.find((p) => p.id === child.personaId)?.name;
+    };
+    const getPersonaDescription = () => {
+      if (!PERSONA_LEVELS.has(child.level) || !child.personaId) return undefined;
+      return personas.find((p) => p.id === child.personaId)?.description;
+    };
+    const getSecondaryPersonaCount = () => {
+      if (!MULTI_PERSONA_LEVELS.has(child.level)) return 0;
+      return (child.secondaryPersonaIds ?? []).length;
+    };
+    const getAssumptionTypeInfo = () => {
+      if (child.level !== "assumption" || !child.assumptionType) return undefined;
+      return ASSUMPTION_TYPE_META[child.assumptionType];
+    };
+    const getTestTypeInfo = () => {
+      if (child.level !== "test" || !child.testType) return undefined;
+      return TEST_TYPE_META[child.testType];
+    };
+
+    return {
+      preview,
+      badge,
+      iceScore: iceScoreTotal,
+      iceScoreColor: iceScoreColorObj,
+      personaName: getPersonaName(),
+      personaDescription: getPersonaDescription(),
+      secondaryPersonaCount: getSecondaryPersonaCount(),
+      assumptionTypeLabel: getAssumptionTypeInfo()?.label,
+      assumptionTypeColor: getAssumptionTypeInfo()?.color,
+      assumptionTypeDescription: getAssumptionTypeInfo()?.description,
+      assumptionTypeDotColor: getAssumptionTypeInfo()?.dotColor,
+      testTypeLabel: getTestTypeInfo()?.label,
+      testTypeColor: getTestTypeInfo()?.color,
+      testTypeDescription: getTestTypeInfo()?.description,
+      testTypeDotColor: getTestTypeInfo()?.dotColor,
+    };
   }
 
-  function handleDragEnd(event: DragEndEvent) {
-    setActiveId(null);
-    const { active, over } = event;
-    if (!over) return;
-    const activeId = active.id as string;
-    const overId = over.id as string;
-
-    // Column drop → status change only
-    const statusMap: Record<string, EntityStatus> = { draft: "draft", explore: "explore", commit: "commit", done: "done" };
-    if (statusMap[overId]) {
-      updateEntity(activeId, { status: statusMap[overId] });
-      return;
-    }
-
-    // Card drop → reorder (and possibly status change)
-    const activeEntity = children.find(c => c.id === activeId);
-    const overEntity = children.find(c => c.id === overId);
-    if (!activeEntity || !overEntity) return;
-
-    // Reorder in children array
-    const currentChildren = [...entity.children];
-    const oldIdx = currentChildren.indexOf(activeId);
-    const newIdx = currentChildren.indexOf(overId);
-    if (oldIdx !== -1 && newIdx !== -1 && oldIdx !== newIdx) {
-      updateEntity(entity.id, { children: arrayMove(currentChildren, oldIdx, newIdx) });
-    }
-
-    // Cross-column: also change status
-    if (activeEntity.status !== overEntity.status) {
-      updateEntity(activeId, { status: overEntity.status });
-    }
-  }
-
-  const activeChild = activeId ? children.find(c => c.id === activeId) : null;
-
-  return (
-    <div className="flex flex-col gap-3 mt-2">
-      {/* Header with view toggle */}
-      {(children.length > 0 || childLevel) && (
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-baseline gap-2">
-            <span className="text-sm font-semibold text-foreground shrink-0">
-              {levelMeta.childrenLabel}
-            </span>
-            {childLevel && (
-              <span className="text-[11px] text-muted-foreground/30 italic hidden sm:inline">
-                {LEVEL_META[childLevel].description}
-              </span>
-            )}
-          </div>
-          {children.length > 0 && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => handleSetViewMode("grid")}
-                className={cn(
-                  "cursor-pointer p-1.5 rounded-md transition-colors",
-                  viewMode === "grid" ? "bg-surface-3 text-foreground" : "text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover"
-                )}
-                title="Grid view"
-              >
-                <LayoutGrid size={14} />
-              </button>
-              <button
-                onClick={() => handleSetViewMode("kanban")}
-                className={cn(
-                  "cursor-pointer p-1.5 rounded-md transition-colors",
-                  viewMode === "kanban" ? "bg-surface-3 text-foreground" : "text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover"
-                )}
-                title="Kanban view"
-              >
-                <Columns3 size={14} />
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Grid view */}
-      {viewMode === "grid" && children.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          {[...children].sort((a, b) => STATUS_GROUP_ORDER[a.status] - STATUS_GROUP_ORDER[b.status]).map((child) => {
-            const { preview, badge, iceScoreTotal, iceScoreColorObj } = getChildCardProps(child);
-            return (
-              <ChildEntityCard
-                key={child.id}
-                id={child.id}
-                title={child.title}
-                icon={child.icon}
-                level={child.level}
-                preview={preview}
-                status={child.status}
-                badge={badge}
-                personaName={getPersonaName(child)}
-                personaDescription={getPersonaDescription(child)}
-                secondaryPersonaCount={getSecondaryPersonaCount(child)}
-                assumptionTypeLabel={getAssumptionTypeInfo(child)?.label}
-                assumptionTypeColor={getAssumptionTypeInfo(child)?.color}
-                assumptionTypeDescription={getAssumptionTypeInfo(child)?.description}
-                assumptionTypeDotColor={getAssumptionTypeInfo(child)?.dotColor}
-                testTypeLabel={getTestTypeInfo(child)?.label}
-                testTypeColor={getTestTypeInfo(child)?.color}
-                testTypeDescription={getTestTypeInfo(child)?.description}
-                testTypeDotColor={getTestTypeInfo(child)?.dotColor}
-                iceScore={iceScoreTotal}
-                iceScoreColor={iceScoreColorObj}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {/* Kanban view */}
-      {viewMode === "kanban" && children.length > 0 && (
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd} onDragStart={(e) => setActiveId(e.active.id as string)} collisionDetection={pointerWithin}>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none flex md:grid">
-            {KANBAN_COLUMNS.map((col) => {
-              const doneItems = children.filter((c) => c.status === "done");
-              const archivedOrDroppedItems = children.filter((c) => c.status === "archived" || c.status === "dropped");
-              const colChildren = col.key === "done"
-                ? doneItems
-                : children.filter((c) => col.statuses.includes(c.status));
-
-              const totalCount = col.key === "done" ? doneItems.length + archivedOrDroppedItems.length : colChildren.length;
-
-              return (
-                <KanbanColumn
-                  key={col.key}
-                  columnKey={col.key}
-                  label={col.label}
-                  dotColor={col.dotColor}
-                  accentBorder={col.accentBorder}
-                  count={totalCount}
-                >
-                  {colChildren.length === 0 && (col.key !== "done" || archivedOrDroppedItems.length === 0) && (
-                    <p className="text-xs text-muted-foreground/30 italic px-1 py-3 text-center">No items</p>
-                  )}
-                  <SortableContext items={colChildren.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                  {colChildren.map((child) => {
-                    const { preview, badge, iceScoreTotal, iceScoreColorObj } = getChildCardProps(child);
-                    return (
-                      <ChildEntityCard
-                        key={child.id}
-                        id={child.id}
-                        title={child.title}
-                        icon={child.icon}
-                        level={child.level}
-                        preview={preview}
-                        status={child.status}
-                        badge={badge}
-                        hideStatus
-                        draggable
-                        personaName={getPersonaName(child)}
-                        personaDescription={getPersonaDescription(child)}
-                        secondaryPersonaCount={getSecondaryPersonaCount(child)}
-                        assumptionTypeLabel={getAssumptionTypeInfo(child)?.label}
-                        assumptionTypeColor={getAssumptionTypeInfo(child)?.color}
-                        assumptionTypeDescription={getAssumptionTypeInfo(child)?.description}
-                        assumptionTypeDotColor={getAssumptionTypeInfo(child)?.dotColor}
-                        testTypeLabel={getTestTypeInfo(child)?.label}
-                        testTypeColor={getTestTypeInfo(child)?.color}
-                        testTypeDescription={getTestTypeInfo(child)?.description}
-                        testTypeDotColor={getTestTypeInfo(child)?.dotColor}
-                        iceScore={iceScoreTotal}
-                        iceScoreColor={iceScoreColorObj}
-                      />
-                    );
-                  })}
-                  </SortableContext>
-                  {/* Archived toggle in Done column */}
-                  {col.key === "done" && archivedOrDroppedItems.length > 0 && (
-                    <>
-                      <button
-                        onClick={() => setShowArchived(!showArchived)}
-                        className="cursor-pointer text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors flex items-center gap-1.5 px-1 py-1"
-                      >
-                        <ChevronDown size={12} className={cn("transition-transform", showArchived && "rotate-180")} />
-                        {showArchived ? "Hide" : "Show"} {archivedOrDroppedItems.length} archived/dropped
-                      </button>
-                      {showArchived && archivedOrDroppedItems.map((child) => {
-                        const { preview, badge, iceScoreTotal, iceScoreColorObj } = getChildCardProps(child);
-                        return (
-                          <ChildEntityCard
-                            key={child.id}
-                            id={child.id}
-                            title={child.title}
-                            icon={child.icon}
-                            level={child.level}
-                            preview={preview}
-                            status={child.status}
-                            badge={badge}
-                            hideStatus
-                            draggable
-                            personaName={getPersonaName(child)}
-                            personaDescription={getPersonaDescription(child)}
-                            secondaryPersonaCount={getSecondaryPersonaCount(child)}
-                            assumptionTypeLabel={getAssumptionTypeInfo(child)?.label}
-                            assumptionTypeColor={getAssumptionTypeInfo(child)?.color}
-                            assumptionTypeDescription={getAssumptionTypeInfo(child)?.description}
-                            assumptionTypeDotColor={getAssumptionTypeInfo(child)?.dotColor}
-                            testTypeLabel={getTestTypeInfo(child)?.label}
-                            testTypeColor={getTestTypeInfo(child)?.color}
-                            testTypeDescription={getTestTypeInfo(child)?.description}
-                            testTypeDotColor={getTestTypeInfo(child)?.dotColor}
-                            iceScore={iceScoreTotal}
-                            iceScoreColor={iceScoreColorObj}
-                          />
-                        );
-                      })}
-                    </>
-                  )}
-                </KanbanColumn>
-              );
-            })}
-          </div>
-          <DragOverlay>
-            {activeChild ? (
-              <div className="bg-popover rounded-xl shadow-2xl shadow-black/50">
-                <ChildEntityCard
-                  id={activeChild.id}
-                  title={activeChild.title}
-                  icon={activeChild.icon}
-                  level={activeChild.level}
-                  preview={getChildCardProps(activeChild).preview}
-                  status={activeChild.status}
-                  badge={getChildCardProps(activeChild).badge}
-                  hideStatus
-                  personaName={getPersonaName(activeChild)}
-                  personaDescription={getPersonaDescription(activeChild)}
-                  secondaryPersonaCount={getSecondaryPersonaCount(activeChild)}
-                  assumptionTypeLabel={getAssumptionTypeInfo(activeChild)?.label}
-                  assumptionTypeColor={getAssumptionTypeInfo(activeChild)?.color}
-                  assumptionTypeDescription={getAssumptionTypeInfo(activeChild)?.description}
-                  assumptionTypeDotColor={getAssumptionTypeInfo(activeChild)?.dotColor}
-                  testTypeLabel={getTestTypeInfo(activeChild)?.label}
-                  testTypeColor={getTestTypeInfo(activeChild)?.color}
-                  testTypeDescription={getTestTypeInfo(activeChild)?.description}
-                  testTypeDotColor={getTestTypeInfo(activeChild)?.dotColor}
-                  iceScore={getChildCardProps(activeChild).iceScoreTotal}
-                  iceScoreColor={getChildCardProps(activeChild).iceScoreColorObj}
-                />
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-      )}
-
-      {childLevel && !showAddForm && (
+  const addButton = childLevel ? (
+    <>
+      {!showAddForm ? (
         <button
           onClick={() => setShowAddForm(true)}
           className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-border-default hover:border-border-strong transition-colors justify-center"
         >
           <Plus size={14} /> Add {LEVEL_META[childLevel].label}
         </button>
-      )}
-      {childLevel && showAddForm && (
+      ) : (
         <AddChildForm parentId={entity.id} childLevel={childLevel} onClose={() => setShowAddForm(false)} />
       )}
-    </div>
+    </>
+  ) : undefined;
+
+  return (
+    <EntityGridView
+      items={children}
+      orderedIds={entity.children}
+      onReorder={(newIds) => updateEntity(entity.id, { children: newIds })}
+      onStatusChange={(id, status) => updateEntity(id, { status })}
+      headerLabel={levelMeta.childrenLabel}
+      headerDescription={childLevel ? LEVEL_META[childLevel].description : undefined}
+      getCardProps={getChildCardProps}
+      addButton={addButton}
+      storageKey="pa-view-mode"
+    />
   );
 }
 
 // ── Root view ─────────────────────────────────────────────────────────────
-
-function AddRootEntityForm({ onClose }: { onClose: () => void }) {
-  const [title, setTitle] = useState("");
-  const { addRootEntity, navigateToChild } = useAppStore();
-  const boMeta = LEVEL_META.business_outcome;
-
-  const handleSubmit = () => {
-    if (!title.trim()) return;
-    const id = generateId();
-    const entity: Entity = {
-      id,
-      level: "business_outcome",
-      title: title.trim(),
-      icon: boMeta.icon,
-      description: getDescriptionPlaceholder("business_outcome"),
-      status: "draft",
-      children: [],
-      blocks: createBlockTemplate("business_outcome", id),
-    };
-    addRootEntity(entity);
-    navigateToChild(id);
-    onClose();
-  };
-
-  return (
-    <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
-      <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-        New Business Outcome
-      </span>
-      <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Business Outcome title (required)"
-        maxLength={80}
-        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus"
-        autoFocus
-        onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
-      />
-      <div className="flex gap-2">
-        <button onClick={handleSubmit} disabled={!title.trim()} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
-          <Check size={12} /> Create
-        </button>
-        <button onClick={onClose} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1">
-          <X size={12} /> Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function RootView() {
   const productLine = useProductLine();
@@ -1412,24 +143,9 @@ function RootView() {
   const { updateTree, updateEntity } = useAppStore();
   const roots = getRootEntities(entities, tree);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [showArchived, setShowArchived] = useState(false);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const boMeta = LEVEL_META.business_outcome;
 
-  // Persist view mode in localStorage — default deterministically to avoid hydration mismatch
-  const [viewMode, setViewMode] = useState<"grid" | "kanban">(roots.length >= 4 ? "kanban" : "grid");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("pa-view-mode");
-    if (saved === "grid" || saved === "kanban") setViewMode(saved);
-  }, []);
-
-  const handleSetViewMode = (mode: "grid" | "kanban") => {
-    setViewMode(mode);
-    localStorage.setItem("pa-view-mode", mode);
-  };
-
-  function getRootCardProps(entity: Entity) {
+  function getRootCardProps(entity: Entity): CardDisplayProps {
     const childCount = entity.children?.length ?? 0;
     const metricBlock = entity.blocks.find((b) => b.type === "metric");
     let preview = "";
@@ -1440,42 +156,6 @@ function RootView() {
     }
     return { preview: preview || getEntityPreview(entity), badge };
   }
-
-  function handleDragEnd(event: DragEndEvent) {
-    setActiveId(null);
-    const { active, over } = event;
-    if (!over) return;
-    const activeEntityId = active.id as string;
-    const overId = over.id as string;
-
-    // Column drop → status change only
-    const statusMap: Record<string, EntityStatus> = { draft: "draft", explore: "explore", commit: "commit", done: "done" };
-    if (statusMap[overId]) {
-      updateEntity(activeEntityId, { status: statusMap[overId] });
-      return;
-    }
-
-    // Card drop → reorder (and possibly status change)
-    const activeEntity = roots.find(c => c.id === activeEntityId);
-    const overEntity = roots.find(c => c.id === overId);
-    if (!activeEntity || !overEntity) return;
-
-    // Reorder in rootChildren array
-    const currentRootChildren = [...tree.rootChildren];
-    const oldIdx = currentRootChildren.indexOf(activeEntityId);
-    const newIdx = currentRootChildren.indexOf(overId);
-    if (oldIdx !== -1 && newIdx !== -1 && oldIdx !== newIdx) {
-      updateTree(plId, { rootChildren: arrayMove(currentRootChildren, oldIdx, newIdx) });
-    }
-
-    // Cross-column: also change status
-    if (activeEntity.status !== overEntity.status) {
-      updateEntity(activeEntityId, { status: overEntity.status });
-    }
-  }
-
-  const activeChild = activeId ? roots.find(c => c.id === activeId) : null;
-  const boMeta = LEVEL_META.business_outcome;
 
   return (
     <div className="px-8 py-8 pb-28 flex flex-col gap-6">
@@ -1499,168 +179,28 @@ function RootView() {
         </div>
       </div>
 
-      {/* Section header with view toggle */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-baseline gap-2">
-          <span className="text-sm font-semibold text-foreground shrink-0">
-            Business Outcomes
-          </span>
-          <span className="text-[11px] text-muted-foreground/30 italic hidden sm:inline">
-            {boMeta.description}
-          </span>
-        </div>
-        {roots.length > 0 && (
-          <div className="flex items-center gap-1">
+      <EntityGridView
+        items={roots}
+        orderedIds={tree.rootChildren}
+        onReorder={(newIds) => updateTree(plId, { rootChildren: newIds })}
+        onStatusChange={(id, status) => updateEntity(id, { status })}
+        headerLabel="Business Outcomes"
+        headerDescription={boMeta.description}
+        getCardProps={getRootCardProps}
+        addButton={
+          !showAddForm ? (
             <button
-              onClick={() => handleSetViewMode("grid")}
-              className={cn(
-                "cursor-pointer p-1.5 rounded-md transition-colors",
-                viewMode === "grid" ? "bg-surface-3 text-foreground" : "text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover"
-              )}
-              title="Grid view"
+              onClick={() => setShowAddForm(true)}
+              className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-border-default hover:border-border-strong transition-colors justify-center"
             >
-              <LayoutGrid size={14} />
+              <Plus size={14} /> Add Business Outcome
             </button>
-            <button
-              onClick={() => handleSetViewMode("kanban")}
-              className={cn(
-                "cursor-pointer p-1.5 rounded-md transition-colors",
-                viewMode === "kanban" ? "bg-surface-3 text-foreground" : "text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover"
-              )}
-              title="Kanban view"
-            >
-              <Columns3 size={14} />
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Grid view */}
-      {viewMode === "grid" && roots.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          {[...roots].sort((a, b) => STATUS_GROUP_ORDER[a.status] - STATUS_GROUP_ORDER[b.status]).map((entity) => {
-            const { preview, badge } = getRootCardProps(entity);
-            return (
-              <ChildEntityCard
-                key={entity.id}
-                id={entity.id}
-                title={entity.title}
-                icon={entity.icon}
-                level={entity.level}
-                preview={preview}
-                status={entity.status}
-                badge={badge}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {/* Kanban view */}
-      {viewMode === "kanban" && roots.length > 0 && (
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd} onDragStart={(e) => setActiveId(e.active.id as string)} collisionDetection={pointerWithin}>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none flex md:grid">
-            {KANBAN_COLUMNS.map((col) => {
-              const doneItems = roots.filter((c) => c.status === "done");
-              const archivedOrDroppedItems = roots.filter((c) => c.status === "archived" || c.status === "dropped");
-              const colChildren = col.key === "done"
-                ? doneItems
-                : roots.filter((c) => col.statuses.includes(c.status));
-
-              const totalCount = col.key === "done" ? doneItems.length + archivedOrDroppedItems.length : colChildren.length;
-
-              return (
-                <KanbanColumn
-                  key={col.key}
-                  columnKey={col.key}
-                  label={col.label}
-                  dotColor={col.dotColor}
-                  accentBorder={col.accentBorder}
-                  count={totalCount}
-                >
-                  {colChildren.length === 0 && (col.key !== "done" || archivedOrDroppedItems.length === 0) && (
-                    <p className="text-xs text-muted-foreground/30 italic px-1 py-3 text-center">No items</p>
-                  )}
-                  <SortableContext items={colChildren.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                  {colChildren.map((child) => {
-                    const { preview, badge } = getRootCardProps(child);
-                    return (
-                      <ChildEntityCard
-                        key={child.id}
-                        id={child.id}
-                        title={child.title}
-                        icon={child.icon}
-                        level={child.level}
-                        preview={preview}
-                        status={child.status}
-                        badge={badge}
-                        hideStatus
-                        draggable
-                      />
-                    );
-                  })}
-                  </SortableContext>
-                  {col.key === "done" && archivedOrDroppedItems.length > 0 && (
-                    <>
-                      <button
-                        onClick={() => setShowArchived(!showArchived)}
-                        className="cursor-pointer text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors flex items-center gap-1.5 px-1 py-1"
-                      >
-                        <ChevronDown size={12} className={cn("transition-transform", showArchived && "rotate-180")} />
-                        {showArchived ? "Hide" : "Show"} {archivedOrDroppedItems.length} archived/dropped
-                      </button>
-                      {showArchived && archivedOrDroppedItems.map((child) => {
-                        const { preview, badge } = getRootCardProps(child);
-                        return (
-                          <ChildEntityCard
-                            key={child.id}
-                            id={child.id}
-                            title={child.title}
-                            icon={child.icon}
-                            level={child.level}
-                            preview={preview}
-                            status={child.status}
-                            badge={badge}
-                            hideStatus
-                            draggable
-                          />
-                        );
-                      })}
-                    </>
-                  )}
-                </KanbanColumn>
-              );
-            })}
-          </div>
-          <DragOverlay>
-            {activeChild ? (
-              <div className="bg-popover rounded-xl shadow-2xl shadow-black/50">
-                <ChildEntityCard
-                  id={activeChild.id}
-                  title={activeChild.title}
-                  icon={activeChild.icon}
-                  level={activeChild.level}
-                  preview={getRootCardProps(activeChild).preview}
-                  status={activeChild.status}
-                  badge={getRootCardProps(activeChild).badge}
-                  hideStatus
-                />
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-      )}
-
-      {!showAddForm ? (
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-border-default hover:border-border-strong transition-colors justify-center"
-        >
-          <Plus size={14} /> Add Business Outcome
-        </button>
-      ) : (
-        <AddRootEntityForm onClose={() => setShowAddForm(false)} />
-      )}
+          ) : (
+            <AddRootEntityForm onClose={() => setShowAddForm(false)} />
+          )
+        }
+        storageKey="pa-view-mode"
+      />
     </div>
   );
 }
