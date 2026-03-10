@@ -191,7 +191,7 @@ export function buildSolutionPlanningPrompt(
     `## Instructions`,
     ``,
     `1. Plan the implementation of this solution in the codebase at \`${productLine.codePath || codePathLine}\`.`,
-    `2. Read and follow \`Product skills/story-map-updater/SKILL.md\` to include story map updates as part of your plan.`,
+    `2. Read and follow \`ProductSkills/story-map-updater/SKILL.md\` to include story map updates as part of your plan.`,
     `3. Ask clarifying questions before proceeding if anything is unclear.`,
     `4. Follow existing patterns and conventions in the codebase.`,
   ].join("\n"));
