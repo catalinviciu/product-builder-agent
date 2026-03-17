@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
 import { PRODUCT_LINES, DEFAULT_PRODUCT_LINE_ID } from "./mock-data";
 import type { Entity, Block, ProductLine, DiscoveryTree, Persona, AssumptionType, TestType, IceScore } from "./schemas";
 
@@ -77,13 +78,13 @@ function debouncedSave(productLines: Record<string, ProductLine>) {
   }, 500);
 }
 
-export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
+export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set) => ({
   productLines: deepCloneProductLines(PRODUCT_LINES),
   currentProductLineId: DEFAULT_PRODUCT_LINE_ID,
   currentEntityId: null,
   isHydrated: false,
   sidebarOpen: true,
-  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+  toggleSidebar: () => set((draft) => { draft.sidebarOpen = !draft.sidebarOpen; }),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   personaPanelOpen: false,
   personaPanelId: null,
@@ -169,394 +170,200 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set) => ({
   },
   navigateTo: (id) => set({ currentEntityId: id }),
   navigateUp: () =>
-    set((state) => {
-      if (!state.currentEntityId) return state;
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl) return { currentEntityId: null };
-      const entity = pl.entities[state.currentEntityId];
-      if (!entity) return { currentEntityId: null };
-      return { currentEntityId: entity.parentId || null };
+    set((draft) => {
+      if (!draft.currentEntityId) return;
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl) { draft.currentEntityId = null; return; }
+      const entity = pl.entities[draft.currentEntityId];
+      draft.currentEntityId = entity ? (entity.parentId || null) : null;
     }),
   navigateToChild: (childId) => set({ currentEntityId: childId }),
 
   addProductLine: (pl) =>
-    set((state) => ({
-      productLines: { ...state.productLines, [pl.id]: pl },
-      currentProductLineId: pl.id,
-      currentEntityId: null,
-    })),
+    set((draft) => {
+      draft.productLines[pl.id] = pl;
+      draft.currentProductLineId = pl.id;
+      draft.currentEntityId = null;
+    }),
 
   updateProductLine: (id, updates) =>
-    set((state) => {
-      const pl = state.productLines[id];
-      if (!pl) return state;
-      return {
-        productLines: {
-          ...state.productLines,
-          [id]: { ...pl, ...updates },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[id];
+      if (!pl) return;
+      Object.assign(pl, updates);
     }),
 
   updateTree: (plId, updates) =>
-    set((state) => {
-      const pl = state.productLines[plId];
-      if (!pl) return state;
-      return {
-        productLines: {
-          ...state.productLines,
-          [plId]: { ...pl, tree: { ...pl.tree, ...updates } },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[plId];
+      if (!pl) return;
+      Object.assign(pl.tree, updates);
     }),
 
   deleteProductLine: (id) =>
-    set((state) => {
-      const remaining = { ...state.productLines };
-      delete remaining[id];
-      const keys = Object.keys(remaining);
-      if (keys.length === 0) return state;
-      return {
-        productLines: remaining,
-        currentProductLineId: state.currentProductLineId === id ? keys[0] : state.currentProductLineId,
-        currentEntityId: state.currentProductLineId === id ? null : state.currentEntityId,
-      };
+    set((draft) => {
+      const remaining = Object.keys(draft.productLines).filter((k) => k !== id);
+      if (remaining.length === 0) return;
+      delete draft.productLines[id];
+      if (draft.currentProductLineId === id) {
+        draft.currentProductLineId = remaining[0];
+        draft.currentEntityId = null;
+      }
     }),
 
   addRootEntity: (entity) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl) return state;
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: {
-            ...pl,
-            tree: { ...pl.tree, rootChildren: [...pl.tree.rootChildren, entity.id] },
-            entities: { ...pl.entities, [entity.id]: entity },
-          },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl) return;
+      pl.tree.rootChildren.push(entity.id);
+      pl.entities[entity.id] = entity;
     }),
 
   updateEntity: (id, updates) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl || !pl.entities[id]) return state;
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: {
-            ...pl,
-            entities: {
-              ...pl.entities,
-              [id]: { ...pl.entities[id], ...updates },
-            },
-          },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[id]) return;
+      Object.assign(pl.entities[id], updates);
     }),
 
   addChildEntity: (parentId, entity) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl || !pl.entities[parentId]) return state;
-      const parent = pl.entities[parentId];
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: {
-            ...pl,
-            entities: {
-              ...pl.entities,
-              [parentId]: { ...parent, children: [...parent.children, entity.id] },
-              [entity.id]: entity,
-            },
-          },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[parentId]) return;
+      pl.entities[parentId].children.push(entity.id);
+      pl.entities[entity.id] = entity;
     }),
 
   deleteEntity: (id) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl || !pl.entities[id]) return state;
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[id]) return;
       const entity = pl.entities[id];
-      const newEntities = { ...pl.entities };
 
-      // Recursively collect all descendant IDs
+      // Collect all descendant IDs before deleting
       const toDelete: string[] = [];
-      const collect = (eid: string) => {
+      const collectIds = (eid: string) => {
         toDelete.push(eid);
-        const e = newEntities[eid];
-        if (e) e.children.forEach(collect);
+        const e = pl.entities[eid];
+        if (e) e.children.forEach(collectIds);
       };
-      collect(id);
-      toDelete.forEach((did) => delete newEntities[did]);
+      collectIds(id);
+      toDelete.forEach((did) => delete pl.entities[did]);
 
       // Remove from parent's children
-      if (entity.parentId && newEntities[entity.parentId]) {
-        const parent = newEntities[entity.parentId];
-        newEntities[entity.parentId] = {
-          ...parent,
-          children: parent.children.filter((cid) => cid !== id),
-        };
+      if (entity.parentId && pl.entities[entity.parentId]) {
+        pl.entities[entity.parentId].children = pl.entities[entity.parentId].children.filter((cid) => cid !== id);
       }
 
       // Remove from tree rootChildren if applicable
-      const newTree = {
-        ...pl.tree,
-        rootChildren: pl.tree.rootChildren.filter((rid) => rid !== id),
-      };
+      pl.tree.rootChildren = pl.tree.rootChildren.filter((rid) => rid !== id);
 
-      return {
-        currentEntityId: state.currentEntityId === id ? entity.parentId || null : state.currentEntityId,
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: { ...pl, tree: newTree, entities: newEntities },
-        },
-      };
+      if (draft.currentEntityId === id) {
+        draft.currentEntityId = entity.parentId || null;
+      }
     }),
 
   dropEntityCascade: (id) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl || !pl.entities[id]) return state;
-      const newEntities = { ...pl.entities };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[id]) return;
       const cascade = (eid: string) => {
-        const e = newEntities[eid];
+        const e = pl.entities[eid];
         if (!e) return;
-        newEntities[eid] = { ...e, status: 'dropped' };
+        e.status = "dropped";
         e.children.forEach(cascade);
       };
       cascade(id);
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: { ...pl, entities: newEntities },
-        },
-      };
     }),
 
   addBlock: (entityId, block) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl || !pl.entities[entityId]) return state;
-      const entity = pl.entities[entityId];
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: {
-            ...pl,
-            entities: {
-              ...pl.entities,
-              [entityId]: { ...entity, blocks: [...entity.blocks, block] },
-            },
-          },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return;
+      pl.entities[entityId].blocks.push(block);
     }),
 
   updateBlock: (entityId, blockId, updates) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl || !pl.entities[entityId]) return state;
-      const entity = pl.entities[entityId];
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: {
-            ...pl,
-            entities: {
-              ...pl.entities,
-              [entityId]: {
-                ...entity,
-                blocks: entity.blocks.map((b) =>
-                  b.id === blockId ? { ...b, ...updates } as Block : b
-                ),
-              },
-            },
-          },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return;
+      const block = pl.entities[entityId].blocks.find((b) => b.id === blockId);
+      if (block) Object.assign(block, updates);
     }),
 
   removeBlock: (entityId, blockId) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl || !pl.entities[entityId]) return state;
-      const entity = pl.entities[entityId];
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: {
-            ...pl,
-            entities: {
-              ...pl.entities,
-              [entityId]: {
-                ...entity,
-                blocks: entity.blocks.filter((b) => b.id !== blockId),
-              },
-            },
-          },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return;
+      pl.entities[entityId].blocks = pl.entities[entityId].blocks.filter((b) => b.id !== blockId);
     }),
 
   addPersona: (persona) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl) return state;
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: {
-            ...pl,
-            personas: [...(pl.personas ?? []), persona],
-          },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl) return;
+      if (!pl.personas) pl.personas = [];
+      pl.personas.push(persona);
     }),
 
   updatePersona: (id, updates) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl) return state;
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: {
-            ...pl,
-            personas: (pl.personas ?? []).map((p) =>
-              p.id === id ? { ...p, ...updates } : p
-            ),
-          },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl) return;
+      const persona = (pl.personas ?? []).find((p) => p.id === id);
+      if (persona) Object.assign(persona, updates);
     }),
 
   deletePersona: (id) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl) return state;
-      const newEntities = { ...pl.entities };
-      for (const eid of Object.keys(newEntities)) {
-        if (newEntities[eid].personaId === id) {
-          newEntities[eid] = { ...newEntities[eid], personaId: undefined };
-        }
-        if (newEntities[eid].secondaryPersonaIds?.includes(id)) {
-          newEntities[eid] = {
-            ...newEntities[eid],
-            secondaryPersonaIds: newEntities[eid].secondaryPersonaIds!.filter(pid => pid !== id),
-          };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl) return;
+      for (const entity of Object.values(pl.entities)) {
+        if (entity.personaId === id) entity.personaId = undefined;
+        if (entity.secondaryPersonaIds?.includes(id)) {
+          entity.secondaryPersonaIds = entity.secondaryPersonaIds.filter((pid) => pid !== id);
         }
       }
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: {
-            ...pl,
-            personas: (pl.personas ?? []).filter((p) => p.id !== id),
-            entities: newEntities,
-          },
-        },
-      };
+      pl.personas = (pl.personas ?? []).filter((p) => p.id !== id);
     }),
 
   assignPersona: (entityId, personaId) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl || !pl.entities[entityId]) return state;
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: {
-            ...pl,
-            entities: {
-              ...pl.entities,
-              [entityId]: {
-                ...pl.entities[entityId],
-                personaId,
-                ...(personaId === undefined && { secondaryPersonaIds: [] }),
-              },
-            },
-          },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return;
+      const entity = pl.entities[entityId];
+      entity.personaId = personaId;
+      if (personaId === undefined) entity.secondaryPersonaIds = [];
     }),
 
   assignSecondaryPersonas: (entityId, personaIds) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl || !pl.entities[entityId]) return state;
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: {
-            ...pl,
-            entities: {
-              ...pl.entities,
-              [entityId]: { ...pl.entities[entityId], secondaryPersonaIds: personaIds },
-            },
-          },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return;
+      pl.entities[entityId].secondaryPersonaIds = personaIds;
     }),
 
   assignAssumptionType: (entityId, assumptionType) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl || !pl.entities[entityId]) return state;
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: {
-            ...pl,
-            entities: {
-              ...pl.entities,
-              [entityId]: { ...pl.entities[entityId], assumptionType },
-            },
-          },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return;
+      pl.entities[entityId].assumptionType = assumptionType;
     }),
 
   assignTestType: (entityId, testType) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl || !pl.entities[entityId]) return state;
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: {
-            ...pl,
-            entities: {
-              ...pl.entities,
-              [entityId]: { ...pl.entities[entityId], testType },
-            },
-          },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return;
+      pl.entities[entityId].testType = testType;
     }),
 
   updateIceScore: (entityId, iceScore) =>
-    set((state) => {
-      const pl = state.productLines[state.currentProductLineId];
-      if (!pl || !pl.entities[entityId]) return state;
-      return {
-        productLines: {
-          ...state.productLines,
-          [state.currentProductLineId]: {
-            ...pl,
-            entities: {
-              ...pl.entities,
-              [entityId]: { ...pl.entities[entityId], iceScore },
-            },
-          },
-        },
-      };
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return;
+      pl.entities[entityId].iceScore = iceScore;
     }),
-})));
+}))));
 
 // Auto-save whenever productLines changes (after hydration)
 useAppStore.subscribe(
