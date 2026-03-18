@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ChevronDown, LayoutGrid, Columns3, Plus } from "lucide-react";
 import type { Entity, EntityStatus } from "@/app/lib/schemas";
 import { cn } from "@/app/lib/utils";
@@ -54,13 +54,12 @@ export function EntityGridView({
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
-  // Persist view mode in localStorage — default deterministically to avoid hydration mismatch
-  const [viewMode, setViewMode] = useState<"grid" | "kanban">(items.length >= 4 ? "kanban" : "grid");
-
-  useEffect(() => {
+  // Lazy initializer reads localStorage synchronously on first render — no flash, no second render
+  const [viewMode, setViewMode] = useState<"grid" | "kanban">(() => {
+    if (typeof window === "undefined") return items.length >= 4 ? "kanban" : "grid";
     const saved = localStorage.getItem(storageKey);
-    if (saved === "grid" || saved === "kanban") setViewMode(saved);
-  }, [storageKey]);
+    return (saved === "grid" || saved === "kanban") ? saved : (items.length >= 4 ? "kanban" : "grid");
+  });
 
   const handleSetViewMode = (mode: "grid" | "kanban") => {
     setViewMode(mode);
