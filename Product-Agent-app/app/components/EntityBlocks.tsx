@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useClickOutside } from "@/app/lib/hooks/useClickOutside";
 import { Pencil, Trash2, Plus, X, Check } from "lucide-react";
+import { cn } from "@/app/lib/utils";
 import type { Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
 import { MarkdownBlock, MarkdownToolbar } from "./MarkdownToolbar";
@@ -41,16 +42,28 @@ export function BlockToolbar({ onEdit, onDelete }: { onEdit: () => void; onDelet
 
 // ── Block editors ─────────────────────────────────────────────────────────
 
-export function AccordionBlockEditor({ block, onSave, onCancel }: { block: AccordionBlock; onSave: (b: Partial<AccordionBlock>) => void; onCancel: () => void }) {
+export function AccordionBlockEditor({ block, onSave, onCancel, labelMaxLength, contentMaxLength }: { block: AccordionBlock; onSave: (b: Partial<AccordionBlock>) => void; onCancel: () => void; labelMaxLength?: number; contentMaxLength?: number }) {
   const [label, setLabel] = useState(block.label);
   const [content, setContent] = useState(block.content);
   const [showPreview, setShowPreview] = useState(false);
   const contentRef = useRef<HTMLTextAreaElement>(null);
   return (
     <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
-      <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Section title"
-        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus font-semibold" />
-      <div>
+      <div className="flex flex-col gap-0.5">
+        <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Section title"
+          {...(labelMaxLength ? { maxLength: labelMaxLength } : {})}
+          className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus font-semibold" />
+        {labelMaxLength && (
+          <div className={cn("text-right text-[10px]",
+            label.length >= labelMaxLength        ? "text-red-500 dark:text-red-400" :
+            label.length >= labelMaxLength * 0.85 ? "text-amber-500 dark:text-amber-400" :
+            "text-muted-foreground/40"
+          )}>
+            {label.length}/{labelMaxLength}
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col gap-0.5">
         <MarkdownToolbar textareaRef={contentRef} draft={content} setDraft={setContent} showPreview={showPreview} setShowPreview={setShowPreview} />
         {showPreview ? (
           <div className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 min-h-[144px]">
@@ -58,7 +71,17 @@ export function AccordionBlockEditor({ block, onSave, onCancel }: { block: Accor
           </div>
         ) : (
           <textarea ref={contentRef} value={content} onChange={(e) => setContent(e.target.value)} rows={6} placeholder="Content (markdown)"
+            {...(contentMaxLength ? { maxLength: contentMaxLength } : {})}
             className="w-full bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus font-mono" />
+        )}
+        {contentMaxLength && (
+          <div className={cn("text-right text-[10px]",
+            content.length >= contentMaxLength        ? "text-red-500 dark:text-red-400" :
+            content.length >= contentMaxLength * 0.85 ? "text-amber-500 dark:text-amber-400" :
+            "text-muted-foreground/40"
+          )}>
+            {content.length}/{contentMaxLength}
+          </div>
         )}
       </div>
       <div className="flex gap-2">
@@ -152,7 +175,7 @@ export function BlockRenderer({ block, entityId }: { block: Block; entityId: str
 
   if (editing) {
     switch (block.type) {
-      case "accordion": return <AccordionBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
+      case "accordion": return <AccordionBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} labelMaxLength={40} contentMaxLength={800} />;
       case "pills": return <PillsBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
       case "quote": return <QuoteBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
       case "metric": return <MetricBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
@@ -248,6 +271,7 @@ export function BlockList({ entity }: { entity: Entity }) {
           onSave={(v) => updateEntity(entity.id, { description: v })}
           as="textarea"
           placeholder="Add a description..."
+          maxLength={500}
         />
       </div>
       {entity.blocks.map((block) => (

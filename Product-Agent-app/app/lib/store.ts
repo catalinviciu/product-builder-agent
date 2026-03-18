@@ -23,6 +23,8 @@ export interface AppStore {
   // Persistence
   hydrate: () => Promise<void>;
   resetData: () => Promise<void>;
+  startPolling: () => void;
+  stopPolling: () => void;
 
   // Navigation
   switchProductLine: (id: string) => void;
@@ -61,13 +63,19 @@ export interface AppStore {
 
 // Debounced save to /api/store
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
+let lastSavedAt = 0;
+let pollingInterval: ReturnType<typeof setInterval> | null = null;
+
 function debouncedSave(productLines: Record<string, ProductLine>) {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
+    saveTimer = null;
     fetch("/api/store", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(productLines),
+    }).then(() => {
+      lastSavedAt = Date.now();
     }).catch((err) => {
       console.warn("[ProductAgent] Failed to save data:", err);
     });
@@ -99,6 +107,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set) 
           const data = json.data as Record<string, ProductLine>;
           const savedPlId = typeof window !== "undefined" ? localStorage.getItem("pa-current-pl") : null;
           const currentProductLineId = savedPlId && data[savedPlId] ? savedPlId : Object.keys(data)[0] || DEFAULT_PRODUCT_LINE_ID;
+          if (json.mtime) lastSavedAt = json.mtime;
           set({ productLines: data, currentProductLineId, isHydrated: true });
           return;
         }
@@ -327,6 +336,27 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set) 
       if (!pl || !pl.entities[entityId]) return;
       pl.entities[entityId].iceScore = iceScore;
     }),
+
+  startPolling: () => {
+    if (pollingInterval) return;
+    pollingInterval = setInterval(async () => {
+      if (!useAppStore.getState().isHydrated) return;
+      if (saveTimer !== null) return; // our own save in-flight, skip
+      try {
+        const res = await fetch("/api/store/mtime");
+        const { mtime } = await res.json();
+        if (mtime > lastSavedAt + 1500) {
+          // External write detected — skill wrote to store.json
+          await useAppStore.getState().hydrate();
+          lastSavedAt = Date.now();
+        }
+      } catch { /* ignore network errors */ }
+    }, 3000);
+  },
+
+  stopPolling: () => {
+    if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+  },
 }))));
 
 // Auto-save whenever productLines changes (after hydration)

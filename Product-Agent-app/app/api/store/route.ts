@@ -34,7 +34,9 @@ export async function GET() {
   try {
     const raw = await fs.readFile(STORE_FILE, "utf-8");
     const data = JSON.parse(raw);
-    return NextResponse.json({ exists: true, data: migrateData(data) });
+    let mtime = 0;
+    try { const stat = await fs.stat(STORE_FILE); mtime = stat.mtimeMs; } catch {}
+    return NextResponse.json({ exists: true, data: migrateData(data), mtime });
   } catch (err: unknown) {
     // ENOENT = file doesn't exist yet (first run) — serve mock data
     if (err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "ENOENT") {

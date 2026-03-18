@@ -189,7 +189,8 @@
             { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
             { "action": "Copy the context anchor for AI reference", "components": ["EntityView", "Copy Anchor"] },
             { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
-            { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
+            { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] },
+            { "action": "Copy an opportunity writing prompt to capture or refine the opportunity via the AI skill", "components": ["EntityView", "CopyAnchorButton"] }
           ]
         },
         {
@@ -419,6 +420,13 @@
           "title": "Generate solution planning prompt",
           "stories": [
             { "action": "Copy a full planning prompt from a Solution entity that includes Opportunity context, Solution details, persona, codebase path, and skill instructions", "components": ["CopyAnchorButton", "EntityView", "buildSolutionPlanningPrompt"] }
+          ]
+        },
+        {
+          "title": "Generate opportunity writing prompt",
+          "stories": [
+            { "action": "Copy an AI writing prompt from a Product Outcome to launch the opportunity writer skill for a new opportunity", "components": ["CopyAnchorButton", "EntityView", "buildOpportunityWriterPrompt"] },
+            { "action": "Copy an AI writing prompt from an existing Opportunity to launch the opportunity writer skill for editing", "components": ["CopyAnchorButton", "EntityView", "buildOpportunityWriterPrompt"] }
           ]
         }
       ]

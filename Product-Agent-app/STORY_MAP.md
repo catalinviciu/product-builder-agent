@@ -48,19 +48,19 @@
 ### Activity 3: Define a Business Outcome
 > Create the top-level strategic goal for the product line.
 
-| Step                             | Story                                                            | Components                                         |
-| :------------------------------- | :--------------------------------------------------------------- | :------------------------------------------------- |
-| **Open Overview**                | Navigate to the Overview page from the sidebar                   | `SectionNav`                                       |
-| **Add Business Outcome**         | Create a new Business Outcome with title and description         | `RootView` · `Add Root Form`                       |
-| **Refine the entity**            | Edit the entity title inline                                     | `EntityView` · `EditableText`                      |
-|                                  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar`  |
-|                                  | Add a content block (accordion, pills, quote, or metric)         | `EntityView` · `Add Block Button`                  |
-|                                  | Edit or delete an existing content block                         | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
-|                                  | Change entity status via the Status Picker                       | `EntityView` · `Status Picker`                     |
-|                                  | Copy the context anchor for AI reference                         | `EntityView` · `Copy Anchor`                       |
-|                                  | Delete the entity (only when it has no children)                 | `EntityView`                                       |
-|                                  | Mark entity as dropped, cascading the status to all children     | `EntityView` · `Status Picker`                     |
-| **Add Product Outcome children** | Add a child Product Outcome from the children section            | `EntityView` · `Add Child Button`                  |
+| Step | Story | Components |
+|:-----|:------|:-----------|
+| **Open Overview** | Navigate to the Overview page from the sidebar | `SectionNav` |
+| **Add Business Outcome** | Create a new Business Outcome with title and description | `RootView` · `Add Root Form` |
+| **Refine the entity** | Edit the entity title inline | `EntityView` · `EditableText` |
+|  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
+|  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
+|  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
+|  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
+|  | Copy the context anchor for AI reference | `EntityView` · `Copy Anchor` |
+|  | Delete the entity (only when it has no children) | `EntityView` |
+|  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
+| **Add Product Outcome children** | Add a child Product Outcome from the children section | `EntityView` · `Add Child Button` |
 
 
 > **Pattern note:** Activities 3–7 each include a "Refine the entity" step with the same core stories (edit title, edit description, manage blocks, change status, copy anchor). This reflects the consistent editing experience across all entity levels.
@@ -103,6 +103,7 @@
 |  | Copy the context anchor for AI reference | `EntityView` · `Copy Anchor` |
 |  | Delete the entity (only when it has no children) | `EntityView` |
 |  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
+|  | Copy an opportunity writing prompt to capture or refine the opportunity via the AI skill | `EntityView` · `CopyAnchorButton` |
 | **Add Solution children** | Add a child Solution from the children section | `EntityView` · `Add Child Button` |
 
 
@@ -197,6 +198,8 @@
 |:-----|:------|:-----------|
 | **Copy entity anchor** | Copy a context anchor for any entity to reference it in an AI agent | `CopyAnchorButton` · `EntityView` |
 | **Generate solution planning prompt** | Copy a full planning prompt from a Solution entity that includes Opportunity context, Solution details, persona, codebase path, and skill instructions | `CopyAnchorButton` · `EntityView` · `buildSolutionPlanningPrompt` |
+| **Generate opportunity writing prompt** | Copy an AI writing prompt from a Product Outcome to launch the opportunity writer skill for a new opportunity | `CopyAnchorButton` · `EntityView` · `buildOpportunityWriterPrompt` |
+|  | Copy an AI writing prompt from an existing Opportunity to launch the opportunity writer skill for editing | `CopyAnchorButton` · `EntityView` · `buildOpportunityWriterPrompt` |
 
 
 ---

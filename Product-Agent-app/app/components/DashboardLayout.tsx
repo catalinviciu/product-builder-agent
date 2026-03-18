@@ -18,6 +18,8 @@ function useIsMobile() {
 
 export function DashboardLayout() {
   const hydrate = useAppStore((s) => s.hydrate);
+  const startPolling = useAppStore((s) => s.startPolling);
+  const stopPolling = useAppStore((s) => s.stopPolling);
   const isHydrated = useAppStore((s) => s.isHydrated);
   const sidebarOpen = useAppStore((s) => s.sidebarOpen);
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
@@ -26,8 +28,9 @@ export function DashboardLayout() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+    hydrate().then(() => startPolling());
+    return () => stopPolling();
+  }, [hydrate, startPolling, stopPolling]);
 
   // Auto-close sidebar on mobile when navigating
   useEffect(() => {

@@ -11,7 +11,7 @@ import {
 import type { Entity, EntityStatus } from "@/app/lib/schemas";
 import { LEVEL_META, CHILD_LEVEL, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getIceScoreColor } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
-import { getEntity, getRootEntities, getEntityPreview, cn, buildEntityAnchor, buildRootAnchor, buildSolutionPlanningPrompt } from "@/app/lib/utils";
+import { getEntity, getRootEntities, getEntityPreview, cn, buildEntityAnchor, buildRootAnchor, buildSolutionPlanningPrompt, buildOpportunityWriterPrompt } from "@/app/lib/utils";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { EntityBreadcrumb } from "./EntityBreadcrumb";
 
@@ -266,6 +266,13 @@ export function EntityView() {
               ? "Copy planning prompt for Claude Code"
               : undefined}
           />
+          {(entity.level === "product_outcome" || entity.level === "opportunity") && (
+            <CopyAnchorButton
+              text={buildOpportunityWriterPrompt(entities, productLine, entity.id)}
+              tooltip="Copy opportunity writing prompt for Claude Code"
+              icon="bot"
+            />
+          )}
           {entity.children.length === 0 && (
             confirmDeleteEntity ? (
               <div className="flex items-center gap-1 ml-1">
@@ -340,19 +347,28 @@ export function EntityView() {
                 </div>
               )}
               {editingTitle ? (
-                <input
-                  ref={titleInputRef}
-                  value={titleDraft}
-                  onChange={(e) => setTitleDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") { if (titleDraft.trim()) updateEntity(entity.id, { title: titleDraft.trim() }); setEditingTitle(false); }
-                    if (e.key === "Escape") setEditingTitle(false);
-                    if (e.key === " ") e.stopPropagation();
-                  }}
-                  onBlur={() => { if (titleDraft.trim()) updateEntity(entity.id, { title: titleDraft.trim() }); setEditingTitle(false); }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-xl font-semibold text-foreground flex-1 bg-surface-hover border border-border-strong rounded-lg px-2 py-1 focus:outline-none focus:border-border-focus"
-                />
+                <div className="flex flex-col flex-1 gap-0.5" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    ref={titleInputRef}
+                    value={titleDraft}
+                    maxLength={120}
+                    onChange={(e) => setTitleDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { if (titleDraft.trim()) updateEntity(entity.id, { title: titleDraft.trim() }); setEditingTitle(false); }
+                      if (e.key === "Escape") setEditingTitle(false);
+                      if (e.key === " ") e.stopPropagation();
+                    }}
+                    onBlur={() => { if (titleDraft.trim()) updateEntity(entity.id, { title: titleDraft.trim() }); setEditingTitle(false); }}
+                    className="text-xl font-semibold text-foreground bg-surface-hover border border-border-strong rounded-lg px-2 py-1 focus:outline-none focus:border-border-focus"
+                  />
+                  <div className={cn("text-right text-[10px] px-1",
+                    titleDraft.length >= 120 ? "text-red-500 dark:text-red-400" :
+                    titleDraft.length >= 102 ? "text-amber-500 dark:text-amber-400" :
+                    "text-muted-foreground/40"
+                  )}>
+                    {titleDraft.length}/120
+                  </div>
+                </div>
               ) : (
                 <h1 className="text-xl font-semibold text-foreground flex-1 flex items-center gap-2">
                   {entity.title}
@@ -428,6 +444,7 @@ export function EntityView() {
                             onSave={(v) => updateEntity(entity.id, { description: v })}
                             as="textarea"
                             placeholder="Add a description..."
+                            maxLength={500}
                           />
                         </div>
                         <IceScorePanel entityId={entity.id} iceScore={entity.iceScore} />

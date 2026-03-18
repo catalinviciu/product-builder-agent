@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Pencil, Check, X } from "lucide-react";
+import { cn } from "@/app/lib/utils";
 import { MarkdownBlock, MarkdownToolbar } from "./MarkdownToolbar";
 
 export function EditableText({ value, onSave, as = "input", placeholder, maxLength }: {
@@ -45,6 +46,16 @@ export function EditableText({ value, onSave, as = "input", placeholder, maxLeng
     className: "w-full bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus",
   };
 
+  const charCounter = maxLength ? (
+    <div className={cn("text-right text-[10px]",
+      draft.length >= maxLength        ? "text-red-500 dark:text-red-400" :
+      draft.length >= maxLength * 0.85 ? "text-amber-500 dark:text-amber-400" :
+      "text-muted-foreground/40"
+    )}>
+      {draft.length}/{maxLength}
+    </div>
+  ) : null;
+
   return (
     <div className="flex flex-col gap-2">
       {as === "textarea" ? (
@@ -61,11 +72,15 @@ export function EditableText({ value, onSave, as = "input", placeholder, maxLeng
               {draft ? <MarkdownBlock content={draft} /> : <span className="text-muted-foreground/40 italic">Nothing to preview</span>}
             </div>
           ) : (
-            <textarea ref={ref as React.RefObject<HTMLTextAreaElement>} rows={4} {...common} />
+            <textarea ref={ref as React.RefObject<HTMLTextAreaElement>} rows={4} {...(maxLength ? { maxLength } : {})} {...common} />
           )}
+          {charCounter}
         </div>
       ) : (
-        <input ref={ref as React.RefObject<HTMLInputElement>} {...(maxLength ? { maxLength } : {})} {...common} />
+        <>
+          <input ref={ref as React.RefObject<HTMLInputElement>} {...(maxLength ? { maxLength } : {})} {...common} />
+          {charCounter}
+        </>
       )}
       <div className="flex gap-2">
         <button onClick={save} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1">

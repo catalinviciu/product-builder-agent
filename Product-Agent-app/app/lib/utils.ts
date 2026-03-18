@@ -116,6 +116,44 @@ export function serializeBlocksToText(blocks: Block[]): string {
   return parts.join("\n\n");
 }
 
+// ── Opportunity writing prompt for AI agents ─────────────────────────────
+
+export function buildOpportunityWriterPrompt(
+  store: EntityStore,
+  productLine: ProductLine,
+  entityId: string,
+): string {
+  const entity = store[entityId];
+  if (!entity) return "";
+
+  const isProductOutcome = entity.level === "product_outcome";
+  const isOpportunity = entity.level === "opportunity";
+
+  if (!isProductOutcome && !isOpportunity) return "";
+
+  const sections: string[] = [];
+
+  sections.push(`Use skill: ProductSkills/opportunity-writer/SKILL.md`);
+
+  if (isProductOutcome) {
+    sections.push(`Action: Write a NEW opportunity`);
+    sections.push([
+      `Product Line: ${productLine.name}`,
+      `Parent Product Outcome ID: ${entity.id}`,
+    ].join("\n"));
+  } else {
+    sections.push(`Action: UPDATE existing opportunity`);
+    sections.push([
+      `Product Line: ${productLine.name}`,
+      `Opportunity ID: ${entity.id}`,
+    ].join("\n"));
+  }
+
+  sections.push(`Data: Product-Agent-app/data/store.json`);
+
+  return sections.join("\n\n---\n\n");
+}
+
 // ── Solution planning prompt for AI agents ──────────────────────────────
 
 export function buildSolutionPlanningPrompt(
