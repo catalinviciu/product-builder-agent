@@ -4,7 +4,7 @@ import { immer } from "zustand/middleware/immer";
 import { DEFAULT_PRODUCT_LINE_ID } from "./schemas";
 import type { Entity, Block, ProductLine, DiscoveryTree, Persona, AssumptionType, TestType, IceScore } from "./schemas";
 
-interface AppStore {
+export interface AppStore {
   // Data
   productLines: Record<string, ProductLine>;
 
