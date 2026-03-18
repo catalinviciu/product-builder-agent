@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useAppStore } from "../store";
-import { DEFAULT_PRODUCT_LINE_ID } from "../mock-data";
+import { DEFAULT_PRODUCT_LINE_ID } from "../schemas";
 import type { ProductLine } from "../schemas";
 
 export function useProductLine(): ProductLine {

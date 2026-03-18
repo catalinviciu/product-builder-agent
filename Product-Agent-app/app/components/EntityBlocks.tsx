@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
+import { useClickOutside } from "@/app/lib/hooks/useClickOutside";
 import { Pencil, Trash2, Plus, X, Check } from "lucide-react";
 import type { Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
@@ -186,14 +187,8 @@ export function AddBlockButton({ entityId }: { entityId: string }) {
   const [open, setOpen] = useState(false);
   const { addBlock } = useAppStore();
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+  const handleClickOutside = useCallback(() => setOpen(false), []);
+  useClickOutside(ref, handleClickOutside, open);
 
   const blockTypes: { type: Block["type"]; label: string }[] = [
     { type: "accordion", label: "Accordion Section" },

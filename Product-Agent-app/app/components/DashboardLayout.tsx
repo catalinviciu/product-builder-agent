@@ -18,6 +18,7 @@ function useIsMobile() {
 
 export function DashboardLayout() {
   const hydrate = useAppStore((s) => s.hydrate);
+  const isHydrated = useAppStore((s) => s.isHydrated);
   const sidebarOpen = useAppStore((s) => s.sidebarOpen);
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
   const setSidebarOpen = useAppStore((s) => s.setSidebarOpen);
@@ -34,6 +35,14 @@ export function DashboardLayout() {
       setSidebarOpen(false);
     }
   }, [currentEntityId, isMobile, setSidebarOpen]);
+
+  if (!isHydrated) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <p className="text-muted-foreground text-sm animate-pulse">Loading…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">

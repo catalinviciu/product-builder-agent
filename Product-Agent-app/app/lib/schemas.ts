@@ -1,3 +1,5 @@
+export const DEFAULT_PRODUCT_LINE_ID = "freshcart";
+
 // ── Entity levels ────────────────────────────────────────────────────────
 export type EntityLevel =
   | "business_outcome"

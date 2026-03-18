@@ -1,21 +1,44 @@
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
+import { PRODUCT_LINES } from "@/app/lib/mock-data";
+import type { ProductLine } from "@/app/lib/schemas";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const STORE_FILE = path.join(DATA_DIR, "store.json");
 const STORE_FILE_TMP = STORE_FILE + ".tmp";
 const MAX_BODY_BYTES = 10 * 1024 * 1024; // 10 MB
 
+function migrateData(data: Record<string, ProductLine>): Record<string, ProductLine> {
+  for (const plId of Object.keys(data)) {
+    if (!data[plId].personas) {
+      data[plId].personas = PRODUCT_LINES[plId]?.personas ?? [];
+    }
+    if (data[plId].codePath === undefined) {
+      data[plId].codePath = "";
+    }
+    for (const entity of Object.values(data[plId].entities)) {
+      if (entity.level === "assumption") {
+        for (const block of entity.blocks) {
+          if (block.type === "accordion" && (block as { label?: string }).label === "Belief") {
+            (block as { label?: string }).label = "Impact if True";
+          }
+        }
+      }
+    }
+  }
+  return data;
+}
+
 export async function GET() {
   try {
     const raw = await fs.readFile(STORE_FILE, "utf-8");
     const data = JSON.parse(raw);
-    return NextResponse.json({ exists: true, data });
+    return NextResponse.json({ exists: true, data: migrateData(data) });
   } catch (err: unknown) {
-    // ENOENT = file doesn't exist yet (first run) — not an error
+    // ENOENT = file doesn't exist yet (first run) — serve mock data
     if (err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "ENOENT") {
-      return NextResponse.json({ exists: false });
+      return NextResponse.json({ exists: true, data: PRODUCT_LINES });
     }
     return NextResponse.json({ exists: false });
   }

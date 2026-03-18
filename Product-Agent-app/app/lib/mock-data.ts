@@ -796,4 +796,4 @@ export const PRODUCT_LINES: Record<string, ProductLine> = {
   },
 };
 
-export const DEFAULT_PRODUCT_LINE_ID = "freshcart";
+// DEFAULT_PRODUCT_LINE_ID moved to schemas.ts

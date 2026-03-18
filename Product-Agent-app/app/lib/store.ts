@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import { PRODUCT_LINES, DEFAULT_PRODUCT_LINE_ID } from "./mock-data";
+import { DEFAULT_PRODUCT_LINE_ID } from "./schemas";
 import type { Entity, Block, ProductLine, DiscoveryTree, Persona, AssumptionType, TestType, IceScore } from "./schemas";
 
 interface AppStore {
@@ -59,10 +59,6 @@ interface AppStore {
   updateIceScore: (entityId: string, iceScore: IceScore) => void;
 }
 
-function deepCloneProductLines(pls: Record<string, ProductLine>): Record<string, ProductLine> {
-  return JSON.parse(JSON.stringify(pls));
-}
-
 // Debounced save to /api/store
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 function debouncedSave(productLines: Record<string, ProductLine>) {
@@ -79,7 +75,7 @@ function debouncedSave(productLines: Record<string, ProductLine>) {
 }
 
 export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set) => ({
-  productLines: deepCloneProductLines(PRODUCT_LINES),
+  productLines: {} as Record<string, ProductLine>,
   currentProductLineId: DEFAULT_PRODUCT_LINE_ID,
   currentEntityId: null,
   isHydrated: false,
@@ -93,75 +89,43 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set) 
 
   hydrate: async () => {
     const maxRetries = 3;
-    const retryDelay = 1000; // 1 second between retries
+    const retryDelay = 1000;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const res = await fetch("/api/store");
         const json = await res.json();
         if (json.exists && json.data) {
-          // Migrate: backfill missing personas from mock data
           const data = json.data as Record<string, ProductLine>;
-          for (const plId of Object.keys(data)) {
-            if (!data[plId].personas) {
-              data[plId].personas = PRODUCT_LINES[plId]?.personas ?? [];
-            }
-          }
-          // Migrate: backfill missing codePath
-          for (const plId of Object.keys(data)) {
-            if (data[plId].codePath === undefined) {
-              data[plId].codePath = "";
-            }
-          }
-          // Migrate: rename "Belief" block label to "Impact if True" on assumption entities
-          for (const plId of Object.keys(data)) {
-            for (const entity of Object.values(data[plId].entities)) {
-              if (entity.level === "assumption") {
-                for (const block of entity.blocks) {
-                  if (block.type === "accordion" && block.label === "Belief") {
-                    block.label = "Impact if True";
-                  }
-                }
-              }
-            }
-          }
-          // Restore last selected product line from localStorage
           const savedPlId = typeof window !== "undefined" ? localStorage.getItem("pa-current-pl") : null;
           const currentProductLineId = savedPlId && data[savedPlId] ? savedPlId : Object.keys(data)[0] || DEFAULT_PRODUCT_LINE_ID;
           set({ productLines: data, currentProductLineId, isHydrated: true });
           return;
         }
-        // json.exists is false → no store.json yet (first run), fall through
         break;
       } catch {
         if (attempt < maxRetries) {
-          console.warn(`[ProductAgent] Hydration fetch failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${retryDelay}ms...`);
+          console.warn(`[ProductAgent] Hydration fetch failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying...`);
           await new Promise(r => setTimeout(r, retryDelay));
           continue;
         }
-        console.warn("[ProductAgent] Hydration failed after all retries — falling back to initial data");
-        // Exhausted retries — fall through to mock-data fallback
+        console.warn("[ProductAgent] Hydration failed after all retries");
       }
     }
-    // Only reach here if: no persisted data exists OR all retries failed
-    const savedPlId = typeof window !== "undefined" ? localStorage.getItem("pa-current-pl") : null;
-    const pls = useAppStore.getState().productLines;
-    if (savedPlId && pls[savedPlId]) {
-      set({ currentProductLineId: savedPlId, isHydrated: true });
-    } else {
-      set({ isHydrated: true });
-    }
+    set({ isHydrated: true });
   },
 
   resetData: async () => {
+    try { await fetch("/api/store", { method: "DELETE" }); } catch {}
     try {
-      await fetch("/api/store", { method: "DELETE" });
+      const res = await fetch("/api/store");
+      const json = await res.json();
+      if (json.exists && json.data) {
+        set({ productLines: json.data, currentProductLineId: DEFAULT_PRODUCT_LINE_ID, currentEntityId: null });
+        return;
+      }
     } catch {}
-    set({
-      productLines: deepCloneProductLines(PRODUCT_LINES),
-      currentProductLineId: DEFAULT_PRODUCT_LINE_ID,
-      currentEntityId: null,
-    });
+    set({ productLines: {}, currentProductLineId: DEFAULT_PRODUCT_LINE_ID, currentEntityId: null });
   },
 
   switchProductLine: (id) => {

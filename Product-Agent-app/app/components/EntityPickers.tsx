@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
+import { useClickOutside } from "@/app/lib/hooks/useClickOutside";
 import { ChevronDown, User, Users, Check } from "lucide-react";
 import type { EntityStatus } from "@/app/lib/schemas";
 import { ENTITY_STATUS_META, ENTITY_STATUSES, ASSUMPTION_TYPE_META, TEST_TYPE_META } from "@/app/lib/schemas";
@@ -16,14 +17,8 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/comp
 export function StatusPicker({ status, onChange }: { status: EntityStatus; onChange: (s: EntityStatus) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+  const handleClickOutside = useCallback(() => setOpen(false), []);
+  useClickOutside(ref, handleClickOutside, open);
 
   const meta = ENTITY_STATUS_META[status];
 
@@ -73,14 +68,8 @@ export function PersonaPicker({ entityId, personaId, secondaryPersonaIds }: { en
   const { assignPersona } = useAppStore();
   const productLine = useProductLine();
   const personas = productLine.personas ?? [];
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+  const handleClickOutside = useCallback(() => setOpen(false), []);
+  useClickOutside(ref, handleClickOutside, open);
 
   const currentPersona = personas.find((p) => p.id === personaId);
 
@@ -183,14 +172,8 @@ export function SecondaryPersonaPicker({ entityId, secondaryPersonaIds, excludeP
   const { assignSecondaryPersonas } = useAppStore();
   const productLine = useProductLine();
   const personas = (productLine.personas ?? []).filter((p) => p.id !== excludePersonaId);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+  const handleClickOutside = useCallback(() => setOpen(false), []);
+  useClickOutside(ref, handleClickOutside, open);
 
   const toggle = (personaId: string) => {
     const next = secondaryPersonaIds.includes(personaId)
@@ -274,14 +257,8 @@ export function AssumptionTypePicker({ entityId, assumptionType }: { entityId: s
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { assignAssumptionType } = useAppStore();
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+  const handleClickOutside = useCallback(() => setOpen(false), []);
+  useClickOutside(ref, handleClickOutside, open);
 
   const currentMeta = assumptionType ? ASSUMPTION_TYPE_META[assumptionType] : undefined;
 
@@ -352,14 +329,8 @@ export function TestTypePicker({ entityId, testType }: { entityId: string; testT
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { assignTestType } = useAppStore();
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+  const handleClickOutside = useCallback(() => setOpen(false), []);
+  useClickOutside(ref, handleClickOutside, open);
 
   const currentMeta = testType ? TEST_TYPE_META[testType] : undefined;
 

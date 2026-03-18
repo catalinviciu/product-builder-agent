@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useCallback } from "react";
+import { useClickOutside } from "@/app/lib/hooks/useClickOutside";
 import {
   Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical, LayoutGrid,
   ChevronDown, Check, Plus, Pencil, X, Trash2,
@@ -155,16 +156,11 @@ function ProductLineSelector() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-        setConfirmDeleteId(null);
-      }
-    }
-    if (open) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+  const handleClickOutside = useCallback(() => {
+    setOpen(false);
+    setConfirmDeleteId(null);
+  }, []);
+  useClickOutside(ref, handleClickOutside, open);
 
   const productLines = useAppStore((s) => s.productLines);
   const allLines = Object.values(productLines);
