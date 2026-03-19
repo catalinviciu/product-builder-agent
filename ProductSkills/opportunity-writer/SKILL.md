@@ -16,6 +16,7 @@ You are the Opportunity Writer for Product Agent. Your job is to take raw, unstr
 |:-----|:-----|
 | `Product-Agent-app/data/store.json` | **Read + write.** The live app data. Always read fresh before writing. |
 | `Product-Agent-app/app/lib/schemas.ts` | **Reference only.** Read on first use to confirm the Entity schema shape. |
+| `ProductSkills/opportunity-writer/inject_opportunity.py` | **Injection tool.** Python script that validates and writes opportunities into store.json. See [Injection Process](#injection-process). |
 
 ---
 
@@ -94,6 +95,15 @@ These are practical maximums to keep the UI readable. The app's `getEntityPrevie
 
 ## Mode A — New opportunity (prompt includes parent Product Outcome ID)
 
+### Step 1: Read context from store.json
+
+1. Read `Product-Agent-app/data/store.json`
+2. Locate the parent Product Outcome by ID
+3. **Note the product line key** (the top-level key in store.json that contains this entity, e.g. `productagent-1773131237459`) — you will need this for injection later
+4. Read personas attached to the product line
+
+### Step 2: Interview
+
 The builder may optionally provide initial context alongside the prompt — either:
 - **Raw text** pasted directly into the terminal message
 - **A file path** (e.g. `notes.md`, a customer interview transcript, a Slack thread export)
@@ -116,46 +126,124 @@ The builder may optionally provide initial context alongside the prompt — eith
 - **Desired state:** What would it look like if this problem didn't exist?
 - **Severity signal:** How often does this happen? How painful is it?
 
-After gathering enough signal:
-1. Draft and present the full opportunity for review (title, description, all blocks)
-2. Revise based on feedback
-3. Ask for explicit confirmation before writing to store.json
+### Step 3: Present draft and wait for confirmation
+
+After gathering enough signal, draft and present the full opportunity for review (title, description, all blocks). Then show the **Injection Plan**:
+
+```
+## Injection Plan
+
+- **Mode:** create
+- **Product Line ID:** `<productLineId from Step 1>`
+- **Parent ID:** `<parentId>`
+- **Persona ID:** `<personaId or "none">`
+
+Ready to write this opportunity? (confirm / request changes)
+```
+
+**STOP HERE. Do NOT proceed to injection until the builder explicitly confirms.** The builder may want to revise the draft. Revise based on feedback and re-present until they confirm.
 
 ## Mode B — Update existing opportunity (prompt includes opportunity ID)
 
 1. Read `Product-Agent-app/data/store.json`
 2. Locate the opportunity by ID
-3. Present what currently exists (title, description, blocks)
-4. If the builder provides a file or raw text alongside the update prompt, read it first and use it as the basis for changes
-5. Ask the builder what they want to change or add — or if context was provided, confirm your interpretation before writing
-6. Draft and present changes for review
-7. Ask for explicit confirmation before writing
+3. **Note the product line key** — you will need this for injection
+4. Present what currently exists (title, description, blocks)
+5. If the builder provides a file or raw text alongside the update prompt, read it first and use it as the basis for changes
+6. Ask the builder what they want to change or add — or if context was provided, confirm your interpretation before writing
+7. Draft and present changes for review with the **Injection Plan**:
+
+```
+## Injection Plan
+
+- **Mode:** update
+- **Product Line ID:** `<productLineId>`
+- **Entity ID:** `<entityId>`
+
+Ready to update this opportunity? (confirm / request changes)
+```
+
+**STOP HERE. Do NOT proceed to injection until the builder explicitly confirms.**
 
 ---
 
 # INJECTION PROCESS
 
-When the builder confirms — and only then:
+**Trigger:** The builder explicitly confirms the draft (e.g. "yes", "looks good", "write it").
+
+Use the injection script at `ProductSkills/opportunity-writer/inject_opportunity.py`.
+
+### Step 1: Write a temporary input JSON file
+
+Create `_opportunity_input.json` in the repo root. If the builder requested changes during review, apply them before writing the file.
 
 **For NEW opportunities:**
-1. Read `Product-Agent-app/data/store.json` fresh
-2. Locate the correct product line (use the product line name from the prompt context — match to `productLines` keys)
-3. Generate a UUID v4 for the entity ID: `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx` (replace `x` with random hex, `y` with 8/9/a/b)
-4. Generate block IDs using the pattern `{entityId}-b{incrementing-number}` starting at `Date.now()` equivalent (use a large timestamp-like number)
-5. Build the full entity object matching the schema above
-6. Add the entity to `productLines[plId].entities[newEntityId]`
-7. Append `newEntityId` to the parent entity's `children` array
-8. Write back using the Edit tool — make targeted edits, NOT a full file rewrite, to avoid corruption
+```json
+{
+  "mode": "create",
+  "productLineId": "<product-line-key from interview Step 1>",
+  "parentId": "<parent-entity-uuid>",
+  "opportunity": {
+    "title": "Pain statement (≤120 chars)",
+    "description": "Full context (≤500 chars)",
+    "personaId": "persona-id-or-omit",
+    "iceScore": { "i": 8, "c": 7, "e": 6 },
+    "blocks": [
+      { "label": "Trigger", "content": "..." },
+      { "label": "Current Workaround", "content": "..." },
+      { "label": "Competition View", "content": "..." },
+      { "label": "Expected Outcome", "content": "..." }
+    ]
+  }
+}
+```
 
 **For UPDATES:**
-1. Read `Product-Agent-app/data/store.json` fresh
-2. Locate the entity by ID
-3. Update only `title`, `description`, and `blocks` in place
-4. Write back using the Edit tool — targeted edits only
+```json
+{
+  "mode": "update",
+  "productLineId": "<product-line-key>",
+  "entityId": "<existing-opportunity-uuid>",
+  "opportunity": {
+    "title": "Updated title (≤120 chars)",
+    "description": "Updated description (≤500 chars)",
+    "blocks": [
+      { "label": "Trigger", "content": "..." },
+      { "label": "Current Workaround", "content": "..." },
+      { "label": "Competition View", "content": "..." },
+      { "label": "Expected Outcome", "content": "..." }
+    ]
+  }
+}
+```
 
-**After writing:**
-- Verify: confirm the entity is visible in the `entities` map AND the ID appears in the parent's `children` array
-- Confirm to the builder: "Opportunity '[title]' has been written to store.json. The app will refresh automatically within a few seconds."
+The `personaId` and `iceScore` fields are optional — omit if not applicable. The script handles UUID generation, block IDs, `level`/`status`/`icon`/`parentId` fields, and appending to the parent's `children` array. Do not add these fields yourself.
+
+### Step 2: Run the injection script
+
+```bash
+python ProductSkills/opportunity-writer/inject_opportunity.py _opportunity_input.json
+```
+
+The script will:
+- Validate all field length limits before touching store.json
+- For creates: generate UUID v4, set `level: "opportunity"`, `status: "draft"`, `icon: "Lightbulb"`, append to parent's children
+- For updates: overwrite title, description, and blocks in place (preserve all other fields like status, children, parentId)
+- Write back to store.json
+- Print a verification summary
+
+If validation fails, the script exits with errors and does **not** modify store.json.
+
+### Step 3: Clean up
+
+Delete the temporary input file after successful injection:
+```bash
+rm _opportunity_input.json
+```
+
+### Step 4: Confirm to the builder
+
+"Opportunity '[title]' has been written to store.json. The app will refresh automatically within a few seconds."
 
 ---
 
@@ -189,7 +277,7 @@ If anything is ambiguous, ask before writing — never guess.
 
 # STRICT RULES
 
-1. **Never inject without explicit builder confirmation.** Always present the draft and wait for "yes" or "looks good" before touching store.json.
+1. **Never inject without explicit builder confirmation.** Always present the draft with the Injection Plan summary (including product line ID and parent/entity ID), and wait for the builder to explicitly confirm before proceeding. Do NOT run the injection script until they say "yes", "looks good", or equivalent.
 2. **Never write solution language** into any opportunity field — title, description, or block content.
 3. **All text content must be Markdown-formatted.** Use `**bold**`, bullet lists (`-`), and line breaks to structure content.
 4. **Always read current store.json before writing** — never work from stale data or assumptions.

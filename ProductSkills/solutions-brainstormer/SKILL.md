@@ -18,6 +18,7 @@ Solutions live in the **solution space**. Unlike opportunities (which describe t
 |:-----|:-----|
 | `Product-Agent-app/data/store.json` | **Read + write.** The live app data. Always read fresh before writing. |
 | `Product-Agent-app/app/lib/schemas.ts` | **Reference only.** Read on first use to confirm the Entity schema shape. |
+| `ProductSkills/solutions-brainstormer/inject_solutions.py` | **Injection tool.** Python script that validates and writes solutions into store.json. See [Injection Process](#injection-process). |
 
 ---
 
@@ -87,10 +88,11 @@ You operate in a two-phase workflow. Complete Phase 1, present results, and wait
 
 1. Read `Product-Agent-app/data/store.json`
 2. Locate the opportunity entity by ID
-3. Read its full context: title, description, all blocks (Trigger, Current Workaround, Competition View, Expected Outcome)
-4. Read the parent Product Outcome for broader context
-5. Read the personas attached to the opportunity and product line
-6. **Read all existing solution children** of the opportunity (if any). For each, note:
+3. **Note the product line key** (the top-level key in store.json that contains this opportunity, e.g. `productagent-1773131237459`) — you will need this for injection later
+4. Read its full context: title, description, all blocks (Trigger, Current Workaround, Competition View, Expected Outcome)
+5. Read the parent Product Outcome for broader context
+6. Read the personas attached to the opportunity and product line
+7. **Read all existing solution children** of the opportunity (if any). For each, note:
    - Title, description, status, and all blocks (Why It Works, Trade-offs, High-Level User Journey)
    - Whether it's `explore`, `commit`, `done`, or `dropped`
    - This prevents generating duplicate or near-duplicate solutions and lets you build on what's already been considered
@@ -150,30 +152,87 @@ For each solution, present:
 
 ### Step 3: Present for review
 
-Present all 5 solutions to the builder in a clear comparison format. Ask:
-- Which solutions to write into the tree (could be all 5, could be 2–3)
-- Whether any need refinement before writing
-- Whether to drop any immediately
+Present all 5 solutions to the builder in a clear comparison format. For each solution, number it clearly (Solution 1–5).
 
-*Wait for explicit confirmation before writing.*
+At the end, present the **Injection Plan** — a summary block that shows:
+
+```
+## Injection Plan
+
+- **Product Line ID:** `<productLineId from Step 1>`
+- **Opportunity ID:** `<opportunityId>`
+- **Solutions proposed:** 5
+
+Which solutions should I write into the tree? (e.g., "1, 3, and 5" or "all" or "2 and 4 with changes")
+Do any need refinement before writing?
+```
+
+**STOP HERE. Do NOT proceed to injection until the builder explicitly confirms which solutions to write.** The builder may want to:
+- Select a subset (e.g., "write 1, 2, and 3")
+- Request changes to specific solutions before writing
+- Merge or split solutions
+- Drop all and start over
+
+*Wait for explicit confirmation before proceeding to Phase 3.*
 
 ---
 
-# INJECTION PROCESS
+## Phase 3: Injection
 
-When the builder confirms which solutions to write:
+**Trigger:** The builder explicitly confirms which solutions to write (e.g., "write solutions 1, 3, and 5" or "write all").
 
-1. Read `Product-Agent-app/data/store.json` fresh
-2. Locate the correct product line and parent opportunity
-3. For each selected solution:
-   - Generate a UUID v4 for the entity ID
-   - Generate block IDs using pattern `{entityId}-b{incrementing-number}`
-   - Build the entity object with `level: "solution"`, `status: "explore"`, `icon: "Puzzle"`
-   - Set `parentId` to the opportunity ID
-   - Add entity to `productLines[plId].entities[newEntityId]`
-   - Append `newEntityId` to the parent opportunity's `children` array
-4. Write back using the Edit tool — targeted edits, NOT a full file rewrite
-5. After writing, verify each entity appears in `entities` and its ID appears in the parent's `children`
+Use the injection script at `ProductSkills/solutions-brainstormer/inject_solutions.py`.
+
+### Step 1: Write a temporary input JSON file
+
+Create `_solutions_input.json` in the repo root. **Only include the solutions the builder approved.** If the builder requested changes to any solution during confirmation, apply those changes before writing the file.
+
+```json
+{
+  "productLineId": "<product-line-key from Phase 1 Step 1>",
+  "opportunityId": "<parent-opportunity-uuid>",
+  "solutions": [
+    {
+      "title": "Solution Title (≤120 chars)",
+      "description": "What this solution does (≤500 chars)",
+      "blocks": [
+        { "label": "Why It Works", "content": "..." },
+        { "label": "Trade-offs", "content": "..." },
+        { "label": "High-Level User Journey", "content": "..." }
+      ]
+    }
+  ]
+}
+```
+
+The script handles UUID generation, block ID generation, `level`/`status`/`icon`/`parentId` fields, and appending to the parent's `children` array — do not add these fields yourself.
+
+### Step 2: Run the injection script
+
+```bash
+python ProductSkills/solutions-brainstormer/inject_solutions.py _solutions_input.json
+```
+
+The script will:
+- Validate all field length limits before touching store.json
+- Generate UUID v4 for each entity and timestamp-based block IDs
+- Add entities to the product line's `entities` map
+- Append IDs to the parent opportunity's `children` array
+- Write back to store.json
+- Print a verification summary
+
+If validation fails, the script exits with errors and does **not** modify store.json.
+
+### Step 3: Clean up
+
+Delete the temporary input file after successful injection:
+```bash
+rm _solutions_input.json
+```
+
+### Step 4: Verify in app
+
+The app auto-refreshes within ~3 seconds. Confirm all solutions appear under the opportunity with correct titles, descriptions, and blocks.
 
 **Status conventions:**
 - Brainstormed solutions start as `"explore"` — they're options being considered
@@ -196,7 +255,7 @@ Each solution's **Why It Works** block must explicitly connect back to the paren
 
 # STRICT RULES
 
-1. **Never inject without explicit builder confirmation.** Present all solutions and wait for approval before touching store.json.
+1. **Never inject without explicit builder confirmation.** Present all solutions, show the Injection Plan summary (with product line ID and opportunity ID), and wait for the builder to say which solutions to write. Do NOT proceed to Phase 3 until the builder explicitly names the solutions to inject.
 2. **Never skip the research step.** Phase 1 research is mandatory — it prevents generic, obvious solutions.
 3. **Ensure wide variety.** If two solutions use the same core mechanism, merge them or replace one. The builder needs genuinely different options to compare.
 4. **All text content must be Markdown-formatted.** Use `**bold**`, bullet lists (`-`), and line breaks.
