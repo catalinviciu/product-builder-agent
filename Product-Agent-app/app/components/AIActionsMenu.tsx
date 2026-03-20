@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, ChevronDown, Copy, FileText, PenLine, Clipboard, Check, type LucideIcon } from "lucide-react";
+import { Sparkles, ChevronDown, Copy, FileText, PenLine, Clipboard, Check, Lightbulb, type LucideIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import type { Entity, EntityStore, ProductLine } from "@/app/lib/schemas";
-import { buildEntityAnchor, buildOpportunityWriterPrompt, buildSolutionPlanningPrompt } from "@/app/lib/utils";
+import { buildEntityAnchor, buildOpportunityWriterPrompt, buildSolutionPlanningPrompt, buildSolutionsBrainstormerPrompt } from "@/app/lib/utils";
 
 interface AIAction {
   id: string;
@@ -44,8 +44,8 @@ function getActions(entity: Entity, entities: EntityStore, productLine: ProductL
   if (entity.level === "solution") {
     actions.push({
       id: "copy-planning",
-      label: "Copy planning prompt for Claude Code",
-      description: "Full prompt with opportunity context, solution details, and skill instructions",
+      label: "Plan & implement this solution",
+      description: "Full prompt to plan and build this feature — includes opportunity context, solution details, and codebase path",
       icon: Clipboard,
       getText: () => buildSolutionPlanningPrompt(entities, productLine, entity.id),
     });
@@ -69,6 +69,13 @@ function getActions(entity: Entity, entities: EntityStore, productLine: ProductL
       description: "Use the AI writing skill to refine this opportunity",
       icon: PenLine,
       getText: () => buildOpportunityWriterPrompt(entities, productLine, entity.id),
+    });
+    actions.push({
+      id: "brainstorm-solutions",
+      label: "Brainstorm solutions",
+      description: "Use the AI skill to generate 5 distinct solution approaches",
+      icon: Lightbulb,
+      getText: () => buildSolutionsBrainstormerPrompt(entities, productLine, entity.id),
     });
   }
 

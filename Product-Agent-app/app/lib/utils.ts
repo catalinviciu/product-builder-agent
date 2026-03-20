@@ -154,6 +154,27 @@ export function buildOpportunityWriterPrompt(
   return sections.join("\n\n---\n\n");
 }
 
+// ── Solutions brainstormer prompt for AI agents ─────────────────────────
+
+export function buildSolutionsBrainstormerPrompt(
+  store: EntityStore,
+  productLine: ProductLine,
+  entityId: string,
+): string {
+  const entity = store[entityId];
+  if (!entity || entity.level !== "opportunity") return "";
+
+  const sections: string[] = [];
+  sections.push(`Use skill: ProductSkills/solutions-brainstormer/SKILL.md`);
+  sections.push([
+    `Product Line: ${productLine.name}`,
+    `Opportunity ID: ${entity.id}`,
+  ].join("\n"));
+  sections.push(`Data: Product-Agent-app/data/store.json`);
+
+  return sections.join("\n\n---\n\n");
+}
+
 // ── Solution planning prompt for AI agents ──────────────────────────────
 
 export function buildSolutionPlanningPrompt(

@@ -428,6 +428,12 @@
             { "action": "Copy an AI writing prompt from a Product Outcome to launch the opportunity writer skill for a new opportunity", "components": ["AIActionsMenu", "EntityView", "buildOpportunityWriterPrompt"] },
             { "action": "Copy an AI writing prompt from an existing Opportunity to launch the opportunity writer skill for editing", "components": ["AIActionsMenu", "EntityView", "buildOpportunityWriterPrompt"] }
           ]
+        },
+        {
+          "title": "Brainstorm solutions for an opportunity",
+          "stories": [
+            { "action": "Copy an AI prompt from an Opportunity to launch the solutions brainstormer skill and generate 5 distinct solution approaches", "components": ["AIActionsMenu", "EntityView", "buildSolutionsBrainstormerPrompt"] }
+          ]
         }
       ]
     }

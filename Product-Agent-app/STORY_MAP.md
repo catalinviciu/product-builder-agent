@@ -200,6 +200,7 @@
 | **Generate solution planning prompt** | Copy a full planning prompt from a Solution entity that includes Opportunity context, Solution details, persona, codebase path, and skill instructions | `AIActionsMenu` · `EntityView` · `buildSolutionPlanningPrompt` |
 | **Generate opportunity writing prompt** | Copy an AI writing prompt from a Product Outcome to launch the opportunity writer skill for a new opportunity | `AIActionsMenu` · `EntityView` · `buildOpportunityWriterPrompt` |
 |  | Copy an AI writing prompt from an existing Opportunity to launch the opportunity writer skill for editing | `AIActionsMenu` · `EntityView` · `buildOpportunityWriterPrompt` |
+| **Brainstorm solutions for an opportunity** | Copy an AI prompt from an Opportunity to launch the solutions brainstormer skill and generate 5 distinct solution approaches | `AIActionsMenu` · `EntityView` · `buildSolutionsBrainstormerPrompt` |
 
 
 ---
