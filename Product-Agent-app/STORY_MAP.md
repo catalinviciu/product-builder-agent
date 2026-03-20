@@ -57,7 +57,7 @@
 |  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
-|  | Copy the context anchor for AI reference | `EntityView` · `Copy Anchor` |
+|  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |
 |  | Delete the entity (only when it has no children) | `EntityView` |
 |  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
 | **Add Product Outcome children** | Add a child Product Outcome from the children section | `EntityView` · `Add Child Button` |
@@ -78,7 +78,7 @@
 |  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
-|  | Copy the context anchor for AI reference | `EntityView` · `Copy Anchor` |
+|  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |
 |  | Delete the entity (only when it has no children) | `EntityView` |
 |  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
 | **Assign Personas** | Assign a primary persona via the Persona Picker | `EntityView` · `PersonaPicker` |
@@ -100,10 +100,10 @@
 |  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
-|  | Copy the context anchor for AI reference | `EntityView` · `Copy Anchor` |
+|  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |
 |  | Delete the entity (only when it has no children) | `EntityView` |
 |  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
-|  | Copy an opportunity writing prompt to capture or refine the opportunity via the AI skill | `EntityView` · `CopyAnchorButton` |
+|  | Copy an opportunity writing prompt to capture or refine the opportunity via the AI skill | `EntityView` · `AIActionsMenu` |
 | **Add Solution children** | Add a child Solution from the children section | `EntityView` · `Add Child Button` |
 
 
@@ -119,7 +119,7 @@
 |  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
-|  | Copy the context anchor for AI reference | `EntityView` · `Copy Anchor` |
+|  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |
 |  | Delete the entity (only when it has no children) | `EntityView` |
 |  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
 | **Add Assumption children** | Add a child Assumption from the children section | `EntityView` · `Add Child Button` |
@@ -139,7 +139,7 @@
 |  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
-|  | Copy the context anchor for AI reference | `EntityView` · `Copy Anchor` |
+|  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |
 |  | Delete the entity (only when it has no children) | `EntityView` |
 |  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
 | **Add Test children** | Create a new Test under the assumption (auto-generates Define Test and Pass/Fail Criteria blocks) | `EntityView` · `Add Child Button` |
@@ -150,7 +150,7 @@
 |  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
-|  | Copy the context anchor for AI reference | `EntityView` · `Copy Anchor` |
+|  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |
 |  | Delete the entity (only when it has no children) | `EntityView` |
 |  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
 
@@ -196,10 +196,10 @@
 
 | Step | Story | Components |
 |:-----|:------|:-----------|
-| **Copy entity anchor** | Copy a context anchor for any entity to reference it in an AI agent | `CopyAnchorButton` · `EntityView` |
-| **Generate solution planning prompt** | Copy a full planning prompt from a Solution entity that includes Opportunity context, Solution details, persona, codebase path, and skill instructions | `CopyAnchorButton` · `EntityView` · `buildSolutionPlanningPrompt` |
-| **Generate opportunity writing prompt** | Copy an AI writing prompt from a Product Outcome to launch the opportunity writer skill for a new opportunity | `CopyAnchorButton` · `EntityView` · `buildOpportunityWriterPrompt` |
-|  | Copy an AI writing prompt from an existing Opportunity to launch the opportunity writer skill for editing | `CopyAnchorButton` · `EntityView` · `buildOpportunityWriterPrompt` |
+| **Copy entity anchor** | Copy a context anchor for any entity to reference it in an AI agent | `AIActionsMenu` · `EntityView` |
+| **Generate solution planning prompt** | Copy a full planning prompt from a Solution entity that includes Opportunity context, Solution details, persona, codebase path, and skill instructions | `AIActionsMenu` · `EntityView` · `buildSolutionPlanningPrompt` |
+| **Generate opportunity writing prompt** | Copy an AI writing prompt from a Product Outcome to launch the opportunity writer skill for a new opportunity | `AIActionsMenu` · `EntityView` · `buildOpportunityWriterPrompt` |
+|  | Copy an AI writing prompt from an existing Opportunity to launch the opportunity writer skill for editing | `AIActionsMenu` · `EntityView` · `buildOpportunityWriterPrompt` |
 
 
 ---

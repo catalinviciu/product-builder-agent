@@ -92,7 +92,7 @@
             { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
             { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
             { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["EntityView", "Copy Anchor"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
             { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
             { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
           ]
@@ -130,7 +130,7 @@
             { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
             { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
             { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["EntityView", "Copy Anchor"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
             { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
             { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
           ]
@@ -187,10 +187,10 @@
             { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
             { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
             { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["EntityView", "Copy Anchor"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
             { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
             { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] },
-            { "action": "Copy an opportunity writing prompt to capture or refine the opportunity via the AI skill", "components": ["EntityView", "CopyAnchorButton"] }
+            { "action": "Copy an opportunity writing prompt to capture or refine the opportunity via the AI skill", "components": ["EntityView", "AIActionsMenu"] }
           ]
         },
         {
@@ -226,7 +226,7 @@
             { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
             { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
             { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["EntityView", "Copy Anchor"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
             { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
             { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
           ]
@@ -271,7 +271,7 @@
             { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
             { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
             { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["EntityView", "Copy Anchor"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
             { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
             { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
           ]
@@ -297,7 +297,7 @@
             { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
             { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
             { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["EntityView", "Copy Anchor"] },
+            { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
             { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
             { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
           ]
@@ -413,20 +413,20 @@
         {
           "title": "Copy entity anchor",
           "stories": [
-            { "action": "Copy a context anchor for any entity to reference it in an AI agent", "components": ["CopyAnchorButton", "EntityView"] }
+            { "action": "Copy a context anchor for any entity to reference it in an AI agent", "components": ["AIActionsMenu", "EntityView"] }
           ]
         },
         {
           "title": "Generate solution planning prompt",
           "stories": [
-            { "action": "Copy a full planning prompt from a Solution entity that includes Opportunity context, Solution details, persona, codebase path, and skill instructions", "components": ["CopyAnchorButton", "EntityView", "buildSolutionPlanningPrompt"] }
+            { "action": "Copy a full planning prompt from a Solution entity that includes Opportunity context, Solution details, persona, codebase path, and skill instructions", "components": ["AIActionsMenu", "EntityView", "buildSolutionPlanningPrompt"] }
           ]
         },
         {
           "title": "Generate opportunity writing prompt",
           "stories": [
-            { "action": "Copy an AI writing prompt from a Product Outcome to launch the opportunity writer skill for a new opportunity", "components": ["CopyAnchorButton", "EntityView", "buildOpportunityWriterPrompt"] },
-            { "action": "Copy an AI writing prompt from an existing Opportunity to launch the opportunity writer skill for editing", "components": ["CopyAnchorButton", "EntityView", "buildOpportunityWriterPrompt"] }
+            { "action": "Copy an AI writing prompt from a Product Outcome to launch the opportunity writer skill for a new opportunity", "components": ["AIActionsMenu", "EntityView", "buildOpportunityWriterPrompt"] },
+            { "action": "Copy an AI writing prompt from an existing Opportunity to launch the opportunity writer skill for editing", "components": ["AIActionsMenu", "EntityView", "buildOpportunityWriterPrompt"] }
           ]
         }
       ]

@@ -11,12 +11,12 @@ import {
 import type { Entity, EntityStatus } from "@/app/lib/schemas";
 import { LEVEL_META, CHILD_LEVEL, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getIceScoreColor } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
-import { getEntity, getRootEntities, getEntityPreview, cn, buildEntityAnchor, buildRootAnchor, buildSolutionPlanningPrompt, buildOpportunityWriterPrompt } from "@/app/lib/utils";
+import { getEntity, getRootEntities, getEntityPreview, cn, buildRootAnchor } from "@/app/lib/utils";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { EntityBreadcrumb } from "./EntityBreadcrumb";
 
 // Extracted components
-import { CopyAnchorButton } from "./CopyAnchorButton";
+import { AIActionsMenu, RootAIActionsButton } from "./AIActionsMenu";
 import { StatusPicker, PersonaPicker, SecondaryPersonaPicker, AssumptionTypePicker, TestTypePicker } from "./EntityPickers";
 import { EditableText } from "./EditableText";
 import { BlockRenderer, AddBlockButton, BlockList } from "./EntityBlocks";
@@ -168,7 +168,7 @@ function RootView() {
               maxLength={80}
             />
           </h1>
-          <CopyAnchorButton text={buildRootAnchor(productLine.name)} />
+          <RootAIActionsButton text={buildRootAnchor(productLine.name)} />
         </div>
         <div className="text-xs text-muted-foreground">
           <EditableText
@@ -258,21 +258,7 @@ export function EntityView() {
               updateEntity(entity.id, { status: s });
             }
           }} />
-          <CopyAnchorButton
-            text={entity.level === "solution"
-              ? buildSolutionPlanningPrompt(entities, productLine, entity.id)
-              : buildEntityAnchor(entities, productLine.name, entity.id)}
-            tooltip={entity.level === "solution"
-              ? "Copy planning prompt for Claude Code"
-              : undefined}
-          />
-          {(entity.level === "product_outcome" || entity.level === "opportunity") && (
-            <CopyAnchorButton
-              text={buildOpportunityWriterPrompt(entities, productLine, entity.id)}
-              tooltip="Copy opportunity writing prompt for Claude Code"
-              icon="bot"
-            />
-          )}
+          <AIActionsMenu entity={entity} entities={entities} productLine={productLine} />
           {entity.children.length === 0 && (
             confirmDeleteEntity ? (
               <div className="flex items-center gap-1 ml-1">
