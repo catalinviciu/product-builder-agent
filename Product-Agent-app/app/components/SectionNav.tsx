@@ -321,7 +321,7 @@ export function SectionNav() {
               size={13}
               className={cn(
                 "shrink-0 mt-0.5 transition-colors",
-                isActive ? levelMeta.accentColor : "text-muted-foreground/60"
+                isExpanded ? levelMeta.accentColor : "text-muted-foreground/60"
               )}
             />
           )}
