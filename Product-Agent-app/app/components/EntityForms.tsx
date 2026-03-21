@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, X } from "lucide-react";
+import { cn } from "@/app/lib/utils";
 import type { Entity, EntityLevel } from "@/app/lib/schemas";
 import { LEVEL_META, getDescriptionPlaceholder, createBlockTemplate } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
@@ -40,11 +41,18 @@ export function AddChildForm({ parentId, childLevel, onClose }: { parentId: stri
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder={`${childMeta.label} title (required)`}
-        maxLength={80}
+        maxLength={120}
         className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus"
         autoFocus
         onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
       />
+      <div className={cn("text-right text-[10px]",
+        title.length >= 120 ? "text-red-500 dark:text-red-400" :
+        title.length >= 102 ? "text-amber-500 dark:text-amber-400" :
+        "text-muted-foreground/40"
+      )}>
+        {title.length}/120
+      </div>
       <div className="flex gap-2">
         <button onClick={handleSubmit} disabled={!title.trim()} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
           <Check size={12} /> Create
@@ -89,11 +97,18 @@ export function AddRootEntityForm({ onClose }: { onClose: () => void }) {
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Business Outcome title (required)"
-        maxLength={80}
+        maxLength={120}
         className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus"
         autoFocus
         onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
       />
+      <div className={cn("text-right text-[10px]",
+        title.length >= 120 ? "text-red-500 dark:text-red-400" :
+        title.length >= 102 ? "text-amber-500 dark:text-amber-400" :
+        "text-muted-foreground/40"
+      )}>
+        {title.length}/120
+      </div>
       <div className="flex gap-2">
         <button onClick={handleSubmit} disabled={!title.trim()} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
           <Check size={12} /> Create

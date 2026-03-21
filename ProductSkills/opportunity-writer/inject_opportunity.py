@@ -60,9 +60,9 @@ STORE_PATH = Path("Product-Agent-app/data/store.json")
 
 LIMITS = {
     "title": 120,
-    "description": 500,
+    "description": 800,
     "block_label": 40,
-    "block_content": 800,
+    "block_content": 3000,
 }
 
 

@@ -430,7 +430,7 @@ export function EntityView() {
                             onSave={(v) => updateEntity(entity.id, { description: v })}
                             as="textarea"
                             placeholder="Add a description..."
-                            maxLength={500}
+                            maxLength={800}
                           />
                         </div>
                         <IceScorePanel entityId={entity.id} iceScore={entity.iceScore} />

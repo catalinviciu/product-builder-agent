@@ -175,7 +175,7 @@ export function BlockRenderer({ block, entityId }: { block: Block; entityId: str
 
   if (editing) {
     switch (block.type) {
-      case "accordion": return <AccordionBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} labelMaxLength={40} contentMaxLength={800} />;
+      case "accordion": return <AccordionBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} labelMaxLength={40} contentMaxLength={3000} />;
       case "pills": return <PillsBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
       case "quote": return <QuoteBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
       case "metric": return <MetricBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
@@ -271,7 +271,7 @@ export function BlockList({ entity }: { entity: Entity }) {
           onSave={(v) => updateEntity(entity.id, { description: v })}
           as="textarea"
           placeholder="Add a description..."
-          maxLength={500}
+          maxLength={800}
         />
       </div>
       {entity.blocks.map((block) => (

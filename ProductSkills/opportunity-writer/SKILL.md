@@ -30,7 +30,7 @@ interface Entity {
   level: "opportunity";                // always "opportunity"
   title: string;                       // one sentence, user-pain-first, no solution language
   icon: string;                        // always "Lightbulb" for opportunities
-  description: string;                 // markdown, ≤500 chars — full context of the unmet need
+  description: string;                 // markdown, ≤800 chars — full context of the unmet need
   status: EntityStatus;                // set to "draft" for new entries
   parentId?: string;                   // ID of the parent Product Outcome
   personaId?: string;                  // optional — ID of a persona from the product line
@@ -58,7 +58,7 @@ interface AccordionBlock {
   id: string;           // pattern: "{entityId}-b{incrementing-number}"
   type: "accordion";
   label: string;        // ≤40 chars — accordion header
-  content: string;      // markdown, ≤800 chars per block
+  content: string;      // markdown, ≤3000 chars per block
   defaultOpen?: boolean; // omit or set false
 }
 ```
@@ -80,14 +80,14 @@ These are practical maximums to keep the UI readable. The app's `getEntityPrevie
 | Field | Max length | Rationale |
 |:------|:-----------|:----------|
 | `title` | 120 characters | Shows in sidebar tree and breadcrumb — must be scannable. |
-| `description` | 500 characters (~3–4 sentences) | Shown inline in the entity view as a lead paragraph. |
+| `description` | 800 characters (~4–6 sentences) | Shown inline in the entity view as a lead paragraph. |
 | Block `label` | 40 characters | Rendered as an accordion header — must fit on one line. |
-| Block `content` | 800 characters per block | Beyond this, content becomes a wall of text. Use multiple blocks instead. |
+| Block `content` | 3000 characters per block | Split blocks by topic, not by length — one block per distinct aspect of the opportunity. |
 
 **Rules:**
 - If raw input from the builder is longer than the title limit, distill it to the core pain in ≤120 chars and move the detail into the description or Trigger block
 - Never truncate mid-sentence — always rewrite to fit
-- If a block's content would exceed 800 chars, split into two blocks with distinct labels
+- Split blocks by topic, not by length — use multiple blocks when content covers distinct aspects, not just because it's long
 
 ---
 
@@ -185,7 +185,7 @@ Create `_opportunity_input.json` in the repo root. If the builder requested chan
   "parentId": "<parent-entity-uuid>",
   "opportunity": {
     "title": "Pain statement (≤120 chars)",
-    "description": "Full context (≤500 chars)",
+    "description": "Full context (≤800 chars)",
     "personaId": "persona-id-or-omit",
     "iceScore": { "i": 8, "c": 7, "e": 6 },
     "blocks": [
@@ -206,7 +206,7 @@ Create `_opportunity_input.json` in the repo root. If the builder requested chan
   "entityId": "<existing-opportunity-uuid>",
   "opportunity": {
     "title": "Updated title (≤120 chars)",
-    "description": "Updated description (≤500 chars)",
+    "description": "Updated description (≤800 chars)",
     "blocks": [
       { "label": "Trigger", "content": "..." },
       { "label": "Current Workaround", "content": "..." },

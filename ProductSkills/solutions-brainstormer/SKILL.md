@@ -32,7 +32,7 @@ interface Entity {
   level: "solution";                   // always "solution"
   title: string;                       // concise name for the approach (≤120 chars)
   icon: string;                        // always "Puzzle" for solutions
-  description: string;                 // markdown, ≤500 chars — what this solution is and how it addresses the opportunity
+  description: string;                 // markdown, ≤800 chars — what this solution is and how it addresses the opportunity
   status: EntityStatus;                // set to "explore" for brainstormed options
   parentId?: string;                   // ID of the parent Opportunity
   personaId?: string;                  // not typically set on solutions — omit
@@ -49,7 +49,7 @@ interface AccordionBlock {
   id: string;           // pattern: "{entityId}-b{incrementing-number}"
   type: "accordion";
   label: string;        // ≤40 chars — accordion header
-  content: string;      // markdown, ≤800 chars per block
+  content: string;      // markdown, ≤3000 chars per block
   defaultOpen?: boolean; // omit or set false
 }
 ```
@@ -68,9 +68,9 @@ Custom blocks are allowed when needed (e.g., `Research Source` for lateral insig
 | Field | Max length | Rationale |
 |:------|:-----------|:----------|
 | `title` | 120 characters | Shows in sidebar tree and breadcrumb — must be scannable. |
-| `description` | 500 characters (~3–4 sentences) | Shown inline in the entity view as a lead paragraph. |
+| `description` | 800 characters (~4–6 sentences) | Shown inline in the entity view as a lead paragraph. |
 | Block `label` | 40 characters | Rendered as an accordion header — must fit on one line. |
-| Block `content` | 800 characters per block | Beyond this, content becomes a wall of text. Use multiple blocks instead. |
+| Block `content` | 3000 characters per block | Split blocks by topic, not by length — one block per distinct aspect of the solution. |
 
 ---
 
@@ -144,7 +144,7 @@ Each solution must be **widely distinct** — vary the mechanism, not just the s
 
 For each solution, present:
 - **Title** (≤120 chars)
-- **Description** (≤500 chars) — what it is and how it addresses the opportunity
+- **Description** (≤800 chars) — what it is and how it addresses the opportunity
 - **Why It Works** — how it connects to the user pain
 - **Trade-offs** — what you're giving up with this approach
 - **High-Level User Journey** — step-by-step how the builder would use it
@@ -194,7 +194,7 @@ Create `_solutions_input.json` in the repo root. **Only include the solutions th
   "solutions": [
     {
       "title": "Solution Title (≤120 chars)",
-      "description": "What this solution does (≤500 chars)",
+      "description": "What this solution does (≤800 chars)",
       "blocks": [
         { "label": "Why It Works", "content": "..." },
         { "label": "Trade-offs", "content": "..." },
@@ -261,6 +261,6 @@ Each solution's **Why It Works** block must explicitly connect back to the paren
 4. **All text content must be Markdown-formatted.** Use `**bold**`, bullet lists (`-`), and line breaks.
 5. **Always read current store.json before writing** — never work from stale data.
 6. **Use targeted edits only.** Never rewrite the entire store.json file.
-7. **Respect field length limits.** Titles ≤120 chars, descriptions ≤500 chars, block labels ≤40 chars, block content ≤800 chars.
+7. **Respect field length limits.** Titles ≤120 chars, descriptions ≤800 chars, block labels ≤40 chars, block content ≤3000 chars.
 8. **Connect every solution to the opportunity.** If a solution doesn't clearly address the parent opportunity's pain, it doesn't belong.
 9. **Never duplicate existing solutions.** Always read existing children before brainstorming. If a similar approach was already explored or dropped, propose something genuinely different — don't rehash.
