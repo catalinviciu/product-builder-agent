@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strategy Map — FreshCart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    /* ── Tokens ────────────────────────────────────────── */
+    :root {
+      --bg: oklch(0.985 0 0);
+      --fg: oklch(0.145 0 0);
+      --muted: oklch(0.556 0 0);
+      --s1: oklch(0 0 0 / 2%);
+      --s2: oklch(0 0 0 / 4%);
+      --s3: oklch(0 0 0 / 7%);
+      --sh: oklch(0 0 0 / 5%);
+      --sa: oklch(0 0 0 / 8%);
+      --bd: oklch(0 0 0 / 6%);
+      --bdd: oklch(0 0 0 / 12%);
+      --bds: oklch(0 0 0 / 18%);
+      --bdf: oklch(0 0 0 / 28%);
+      --shadow: oklch(0 0 0 / 8%);
+      --bo: oklch(0.47 0.18 258);
+      --bo-s: oklch(0.59 0.18 258 / 15%);
+      --bo-b: oklch(0.59 0.18 258 / 28%);
+      --po: oklch(0.49 0.22 290);
+      --po-s: oklch(0.62 0.22 290 / 15%);
+      --po-b: oklch(0.62 0.22 290 / 28%);
+      --wx: oklch(0.58 0.21 28);
+      --wx-s: oklch(0.65 0.21 28 / 12%);
+      --wx-b: oklch(0.65 0.21 28 / 35%);
+      --green: oklch(0.62 0.17 145);
+      --blue:  oklch(0.56 0.18 258);
+    }
+    .dark {
+      --bg: oklch(0.145 0 0);
+      --fg: oklch(0.985 0 0);
+      --muted: oklch(0.708 0 0);
+      --s1: oklch(1 0 0 / 3%);
+      --s2: oklch(1 0 0 / 6%);
+      --s3: oklch(1 0 0 / 10%);
+      --sh: oklch(1 0 0 / 8%);
+      --sa: oklch(1 0 0 / 12%);
+      --bd: oklch(1 0 0 / 6%);
+      --bdd: oklch(1 0 0 / 10%);
+      --bds: oklch(1 0 0 / 18%);
+      --bdf: oklch(1 0 0 / 30%);
+      --shadow: oklch(1 0 0 / 4%);
+      --bo: oklch(0.72 0.14 258);
+      --bo-s: oklch(0.59 0.18 258 / 12%);
+      --bo-b: oklch(0.59 0.18 258 / 22%);
+      --po: oklch(0.74 0.16 290);
+      --po-s: oklch(0.62 0.22 290 / 12%);
+      --po-b: oklch(0.62 0.22 290 / 22%);
+      --wx: oklch(0.78 0.18 28);
+      --wx-s: oklch(0.65 0.21 28 / 12%);
+      --wx-b: oklch(0.65 0.21 28 / 35%);
+      --green: oklch(0.72 0.15 145);
+      --blue:  oklch(0.72 0.14 258);
+    }
+
+    /* ── Reset ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'DM Sans', system-ui, sans-serif; font-size: 13px; line-height: 1.6; background: var(--bg); color: var(--fg); -webkit-font-smoothing: antialiased; transition: background .2s, color .2s; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--bdd); border-radius: 2px; }
+
+    /* ── Top bar ───────────────────────────────────────── */
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; height: 48px; border-bottom: 1px solid var(--bd); position: sticky; top: 0; z-index: 20; background: var(--bg); }
+    .plname { display: flex; align-items: center; gap: .4rem; font-size: .75rem; font-weight: 500; }
+    .gdot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+    .iconbtn { width: 30px; height: 30px; border-radius: 7px; border: none; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted); transition: background .15s, color .15s; }
+    .iconbtn:hover { background: var(--sh); color: var(--fg); }
+
+    /* ── Breadcrumb ────────────────────────────────────── */
+    .bc { display: flex; align-items: center; gap: .25rem; padding: .5rem 1.5rem; border-bottom: 1px solid var(--bd); font-size: .6875rem; color: var(--muted); flex-wrap: wrap; }
+    .bc button { background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; font-size: inherit; color: var(--muted); transition: color .15s; }
+    .bc button:hover { color: var(--fg); }
+    .bcsep { opacity: .4; }
+    .bccur { color: var(--fg); font-weight: 500; }
+
+    /* ── Screens ───────────────────────────────────────── */
+    .screen { display: none; flex-direction: column; min-height: calc(100vh - 48px); }
+    .screen.active { display: flex; }
+
+    /* ── Buttons ───────────────────────────────────────── */
+    .btng { display: inline-flex; align-items: center; gap: .3rem; padding: .3rem .6rem; border-radius: 7px; border: none; background: none; cursor: pointer; font-family: inherit; font-size: .75rem; font-weight: 500; color: var(--muted); transition: background .15s, color .15s; }
+    .btng:hover { background: var(--sh); color: var(--fg); }
+    .btno { display: inline-flex; align-items: center; gap: .3rem; padding: .3rem .7rem; border-radius: 7px; border: 1px solid var(--bdd); background: var(--s2); cursor: pointer; font-family: inherit; font-size: .75rem; font-weight: 500; color: var(--fg); transition: background .15s, border-color .15s; }
+    .btno:hover { background: var(--sh); border-color: var(--bds); }
+    .btnp { display: inline-flex; align-items: center; gap: .3rem; padding: .35rem .85rem; border-radius: 7px; border: none; background: var(--fg); cursor: pointer; font-family: inherit; font-size: .75rem; font-weight: 500; color: var(--bg); transition: opacity .15s; }
+    .btnp:hover { opacity: .85; }
+    .btnp:disabled { opacity: .35; cursor: not-allowed; }
+
+    /* ═══════════════════════════════════════════════════
+       SCREEN 1 — Strategy Tree
+    ═══════════════════════════════════════════════════ */
+    #screen-tree .page { flex: 1; padding: 2rem 2rem 4rem; overflow-x: auto; }
+    .tree-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2rem; }
+    .tree-title { font-size: 1rem; font-weight: 600; }
+    .tree-sub { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+
+    /* Column-group tree — each root keeps its subtree self-contained */
+    .tree-canvas { position: relative; min-width: max-content; margin: 0 auto; }
+
+    /* Top-level row: one column per BO root, separated by a visible divider */
+    .tree-root-row { display: flex; gap: 0; justify-content: center; align-items: flex-start; }
+
+    /* Each node + its children stacked, children centered under the node */
+    .tree-node-col { display: flex; flex-direction: column; align-items: center; padding: 0 1.25rem; }
+
+    /* Row of children — appears only when populated */
+    .tree-children-row { display: flex; gap: 1rem; margin-top: 56px; }
+    .tree-children-row.empty { display: none; }
+
+    /* Vertical divider between BO groups */
+    .tree-group-sep-vert { width: 1px; background: var(--bdd); align-self: stretch; flex-shrink: 0; opacity: .6; margin: 4px 0; }
+
+    /* SVG connector layer */
+    #tree-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+
+    /* Node cards */
+    .node {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .5rem .75rem; border-radius: 10px;
+      border: 1px solid; cursor: pointer;
+      transition: box-shadow .15s, border-color .15s, background .15s;
+      white-space: nowrap; position: relative;
+      min-width: 0;
+    }
+    .node:hover { box-shadow: 0 0 0 3px var(--nh-ring); }
+
+    .node.bo { border-color: var(--bo-b); background: var(--bo-s); --nh-ring: oklch(0.59 0.18 258 / 12%); }
+    .node.po { border-color: var(--po-b); background: var(--s2); --nh-ring: oklch(0.62 0.22 290 / 12%); }
+    .node.wrong { border-color: var(--wx-b); background: var(--wx-s); --nh-ring: oklch(0.65 0.21 28 / 12%); }
+
+    .nicon { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .nicon.bo { background: oklch(0.59 0.18 258 / 20%); color: var(--bo); }
+    .nicon.po { background: oklch(0.62 0.22 290 / 20%); color: var(--po); }
+    .nicon.wx { background: oklch(0.65 0.21 28 / 20%); color: var(--wx); }
+
+    .nmeta { display: flex; flex-direction: column; gap: 0; }
+    .ntag { font-size: .5625rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; opacity: .6; }
+    .ntag.bo { color: var(--bo); }
+    .ntag.po { color: var(--po); }
+    .ntag.wx { color: var(--wx); }
+    .ntitle { font-size: .75rem; font-weight: 500; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .ndot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-left: .25rem; }
+    .dc { background: var(--green); }
+    .de { background: var(--blue); }
+
+    .wbadge { display: inline-flex; align-items: center; gap: .2rem; padding: .1rem .35rem; border-radius: 4px; background: oklch(0.65 0.21 28 / 12%); border: 1px solid oklch(0.65 0.21 28 / 25%); font-size: .5625rem; font-weight: 600; color: var(--wx); white-space: nowrap; margin-left: .25rem; }
+
+    /* Facilitator note */
+    .facnote { margin-top: 2rem; padding: .875rem 1rem; border-radius: 10px; border: 1px dashed var(--bds); background: var(--s1); max-width: 640px; margin-left: auto; margin-right: auto; }
+    .facnote-label { font-size: .5625rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: .35rem; }
+    .facnote-body { font-size: .75rem; color: var(--muted); line-height: 1.55; }
+    .facnote-body strong { color: var(--fg); font-weight: 500; }
+
+    /* ═══════════════════════════════════════════════════
+       SCREEN 2 — Entity Detail
+    ═══════════════════════════════════════════════════ */
+    .detail-page { flex: 1; padding: 1.5rem; max-width: 660px; margin: 0 auto; width: 100%; }
+
+    .etab { display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .75rem; border: 1px solid; border-bottom: none; border-radius: 8px 8px 0 0; font-size: .5625rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+    .etab.po { border-color: var(--po-b); background: var(--po-s); color: var(--po); }
+    .etab.bo { border-color: var(--bo-b); background: var(--bo-s); color: var(--bo); }
+
+    .ebody { border: 1px solid var(--bdd); border-radius: 0 10px 10px 10px; background: var(--bg); overflow: hidden; }
+
+    .eheader { display: flex; align-items: center; gap: .75rem; padding: .875rem 1rem; border-bottom: 1px solid var(--bd); }
+    .eicon { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .eicon.bo { background: oklch(0.59 0.18 258 / 20%); color: var(--bo); }
+    .eicon.po { background: oklch(0.62 0.22 290 / 20%); color: var(--po); }
+    .etitle { font-size: .9375rem; font-weight: 600; flex: 1; }
+    .echip { display: inline-flex; align-items: center; gap: .3rem; padding: .175rem .5rem; border-radius: 5px; font-size: .6875rem; font-weight: 500; flex-shrink: 0; }
+    .chip-c { border: 1px solid oklch(0.62 0.17 145 / 30%); background: oklch(0.62 0.17 145 / 10%); color: oklch(0.42 0.17 145); }
+    .dark .chip-c { color: var(--green); }
+    .chip-e { border: 1px solid oklch(0.56 0.18 258 / 30%); background: oklch(0.56 0.18 258 / 10%); color: oklch(0.40 0.18 258); }
+    .dark .chip-e { color: var(--blue); }
+    .chipdot { width: 5px; height: 5px; border-radius: 50%; }
+
+    .efields { padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+    .flabel { font-size: .6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: .35rem; }
+    .fvalue { padding: .5rem .75rem; border-radius: 8px; border: 1px solid var(--bdd); background: var(--s1); font-size: 13px; color: var(--fg); }
+    .fvalue.empty { color: var(--muted); font-style: italic; }
+
+    /* Driven-by list */
+    .driven-list { display: flex; flex-direction: column; gap: .375rem; }
+    .driven-item { display: flex; align-items: center; gap: .5rem; padding: .4rem .75rem; border-radius: 8px; border: 1px solid var(--po-b); background: var(--po-s); font-size: 13px; cursor: pointer; transition: background .15s, border-color .15s; }
+    .driven-item:hover { border-color: var(--po); background: oklch(0.62 0.22 290 / 20%); }
+    .driven-item .nicon { width: 20px; height: 20px; border-radius: 5px; }
+
+    /* Editable drives dropdown */
+    .dsel { border: 1.5px solid var(--bdf); border-radius: 8px; background: var(--s1); overflow: hidden; }
+    .dsel-top { display: flex; align-items: center; gap: .5rem; padding: .5rem .75rem; }
+    .dsel-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dsel-text { font-size: 13px; flex: 1; }
+    .dsel-hint { font-size: .6875rem; font-weight: 500; }
+    .dsel-chevron { color: var(--muted); flex-shrink: 0; }
+    .dsel-opts { border-top: 1px solid var(--bd); max-height: 240px; overflow-y: auto; }
+    .dopt { display: flex; align-items: center; gap: .5rem; padding: .4375rem .75rem; cursor: pointer; font-size: 13px; transition: background .1s; }
+    .dopt:hover { background: var(--sh); }
+    .dopt.sel { background: var(--sa); font-weight: 500; }
+    .dopt-tag { margin-left: auto; font-size: .5625rem; color: var(--muted); }
+    .dopt-level { font-size: .5625rem; text-transform: uppercase; font-weight: 600; letter-spacing: .04em; color: var(--muted); opacity: .7; margin-right: .2rem; }
+
+    /* Section divider inside dropdown */
+    .dopt-divider { padding: .25rem .75rem; font-size: .5625rem; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); background: var(--s2); border-top: 1px solid var(--bd); }
+
+    .efooter { display: flex; align-items: center; justify-content: space-between; padding: .75rem 1rem; border-top: 1px solid var(--bd); }
+    .efooter-note { font-size: .6875rem; color: var(--muted); }
+    .efooter-actions { display: flex; gap: .5rem; }
+
+    /* ── Toast ─────────────────────────────────────────── */
+    .toast { position: fixed; bottom: 3rem; left: 50%; transform: translateX(-50%); padding: .45rem .95rem; border-radius: 8px; background: var(--fg); color: var(--bg); font-size: .75rem; font-weight: 500; box-shadow: 0 4px 20px var(--shadow); z-index: 999; white-space: nowrap; animation: tf 3.5s forwards; }
+    @keyframes tf { 0%{opacity:0;transform:translateX(-50%) translateY(6px)} 12%{opacity:1;transform:translateX(-50%) translateY(0)} 75%{opacity:1} 100%{opacity:0} }
+
+    /* ── Proto badge ───────────────────────────────────── */
+    .proto { position: fixed; bottom: 1rem; right: 1rem; padding: .2rem .55rem; border-radius: 5px; background: var(--s3); border: 1px solid var(--bdd); font-size: .5625rem; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); pointer-events: none; }
+  </style>
+</head>
+<body>
+
+<!-- Top bar -->
+<header class="topbar">
+  <div class="plname">
+    <span class="gdot"></span>
+    FreshCart
+  </div>
+  <button class="iconbtn" onclick="toggleDark()" title="Toggle dark mode">
+    <i data-lucide="sun"  id="isun"  style="width:14px;height:14px;"></i>
+    <i data-lucide="moon" id="imoon" style="width:14px;height:14px;display:none;"></i>
+  </button>
+</header>
+
+
+<!-- ════════════════════════════════════════════
+     SCREEN — Strategy Tree
+════════════════════════════════════════════ -->
+<div class="screen active" id="screen-tree">
+  <nav class="bc">
+    <i data-lucide="layout-dashboard" style="width:11px;height:11px;"></i>
+    <span style="margin-left:3px;">FreshCart</span>
+    <span class="bcsep">›</span>
+    <span class="bccur">Strategy Map</span>
+  </nav>
+
+  <div class="page" style="flex:1; padding:2rem 2rem 4rem; overflow-x:auto;">
+    <div class="tree-header">
+      <div>
+        <div class="tree-title">Strategy Map</div>
+        <div class="tree-sub">Outcome relationships — click any node to view or edit</div>
+      </div>
+      <button class="btno">
+        <i data-lucide="share-2" style="width:12px;height:12px;"></i>
+        Share
+      </button>
+    </div>
+
+    <!-- Tree canvas -->
+    <div class="tree-canvas" id="tree-canvas">
+      <svg id="tree-svg" aria-hidden="true"></svg>
+
+      <div class="tree-root-row">
+
+        <!-- ── BO1 subtree ── -->
+        <div class="tree-node-col" id="col-bo1">
+          <div class="node bo" id="n-bo1" onclick="nav('screen-bo1')">
+            <div class="nicon bo"><i data-lucide="target" style="width:12px;height:12px;"></i></div>
+            <div class="nmeta">
+              <span class="ntag bo">Business Outcome</span>
+              <span class="ntitle">Increase Monthly Revenue</span>
+            </div>
+            <span class="ndot dc"></span>
+          </div>
+          <div class="tree-children-row" id="children-of-bo1">
+            <div class="tree-node-col" id="col-po1">
+              <div class="node po" id="n-po1" onclick="nav('screen-po1')">
+                <div class="nicon po"><i data-lucide="trending-up" style="width:11px;height:11px;"></i></div>
+                <div class="nmeta"><span class="ntag po">Product Outcome</span><span class="ntitle">Increase Average Order Value</span></div>
+                <span class="ndot dc"></span>
+              </div>
+              <div class="tree-children-row empty" id="children-of-po1"></div>
+            </div>
+            <div class="tree-node-col" id="col-po2">
+              <div class="node po" id="n-po2" onclick="nav('screen-po2')">
+                <div class="nicon po"><i data-lucide="trending-up" style="width:11px;height:11px;"></i></div>
+                <div class="nmeta"><span class="ntag po">Product Outcome</span><span class="ntitle">Reduce Cart Abandonment Rate</span></div>
+                <span class="ndot dc"></span>
+              </div>
+              <div class="tree-children-row empty" id="children-of-po2"></div>
+            </div>
+            <div class="tree-node-col" id="col-po3">
+              <div class="node po" id="n-po3" onclick="nav('screen-po3')">
+                <div class="nicon po"><i data-lucide="trending-up" style="width:11px;height:11px;"></i></div>
+                <div class="nmeta"><span class="ntag po">Product Outcome</span><span class="ntitle">Grow Repeat Purchase Rate</span></div>
+                <span class="ndot de"></span>
+              </div>
+              <div class="tree-children-row empty" id="children-of-po3"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tree-group-sep-vert"></div>
+
+        <!-- ── BO2 subtree ── -->
+        <div class="tree-node-col" id="col-bo2">
+          <div class="node bo" id="n-bo2" onclick="nav('screen-bo2')">
+            <div class="nicon bo"><i data-lucide="target" style="width:12px;height:12px;"></i></div>
+            <div class="nmeta">
+              <span class="ntag bo">Business Outcome</span>
+              <span class="ntitle">Reduce Operational Costs</span>
+            </div>
+            <span class="ndot de"></span>
+          </div>
+          <div class="tree-children-row" id="children-of-bo2">
+            <div class="tree-node-col" id="col-po4">
+              <div class="node po" id="n-po4" onclick="nav('screen-po4')">
+                <div class="nicon po"><i data-lucide="trending-up" style="width:11px;height:11px;"></i></div>
+                <div class="nmeta"><span class="ntag po">Product Outcome</span><span class="ntitle">Optimize Delivery Route Efficiency</span></div>
+                <span class="ndot dc"></span>
+              </div>
+              <div class="tree-children-row empty" id="children-of-po4"></div>
+            </div>
+            <div class="tree-node-col" id="col-po5">
+              <div class="node wrong" id="n-po5" onclick="nav('screen-po5')">
+                <div class="nicon wx"><i data-lucide="trending-up" style="width:11px;height:11px;"></i></div>
+                <div class="nmeta">
+                  <span class="ntag wx">Product Outcome</span>
+                  <span class="ntitle">Reduce Customer Support Tickets</span>
+                </div>
+                <span class="wbadge"><i data-lucide="alert-triangle" style="width:8px;height:8px;"></i> Wrong parent</span>
+              </div>
+              <div class="tree-children-row empty" id="children-of-po5"></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /tree-root-row -->
+    </div><!-- /tree-canvas -->
+
+    <!-- Facilitator note -->
+    <div class="facnote" style="margin-top:2.5rem;">
+      <div class="facnote-label">Facilitator note — not shown to participant</div>
+      <div class="facnote-body">
+        Point to <strong>"Reduce Customer Support Tickets"</strong> (bottom-right, marked "Wrong parent") and ask:<br>
+        <em>"This outcome is connected to the wrong parent. How would you fix it?"</em><br><br>
+        <strong>Observe:</strong> Do they try to drag the node? Click the connector line? Or click the node card?<br>
+        If they click the node, the prototype opens the edit view — note their reaction to the "Drives" dropdown.
+      </div>
+    </div>
+
+  </div>
+</div><!-- /screen-tree -->
+
+
+<!-- ════════════════════════════════════════════
+     SCREEN — BO1 Detail
+════════════════════════════════════════════ -->
+<div class="screen" id="screen-bo1">
+  <nav class="bc">
+    <i data-lucide="layout-dashboard" style="width:11px;height:11px;"></i>
+    <span style="margin-left:3px;"><button onclick="goTree()">FreshCart</button></span>
+    <span class="bcsep">›</span>
+    <span class="bccur">Increase Monthly Revenue</span>
+  </nav>
+  <div class="detail-page">
+    <div class="etab bo"><i data-lucide="target" style="width:10px;height:10px;"></i> Business Outcome</div>
+    <div class="ebody">
+      <div class="eheader">
+        <div class="eicon bo"><i data-lucide="target" style="width:14px;height:14px;"></i></div>
+        <div class="etitle">Increase Monthly Revenue</div>
+        <div class="echip chip-c"><span class="chipdot" style="background:var(--green);"></span> Commit</div>
+      </div>
+      <div class="efields">
+        <div>
+          <div class="flabel">Description</div>
+          <div class="fvalue">Drive 15% month-over-month revenue growth by increasing the value and frequency of customer orders.</div>
+        </div>
+        <div>
+          <div class="flabel">Drives (Parent)</div>
+          <div class="fvalue empty">Top-level — no parent outcome</div>
+        </div>
+        <div>
+          <div class="flabel">Driven by (Children)</div>
+          <div class="driven-list" id="driven-list-bo1">
+            <div class="driven-item" onclick="nav('screen-po1')">
+              <div class="nicon po" style="width:20px;height:20px;border-radius:5px;"><i data-lucide="trending-up" style="width:11px;height:11px;"></i></div>
+              <span style="font-size:13px;">Increase Average Order Value</span>
+              <span class="ndot dc" style="margin-left:auto;"></span>
+            </div>
+            <div class="driven-item" onclick="nav('screen-po2')">
+              <div class="nicon po" style="width:20px;height:20px;border-radius:5px;"><i data-lucide="trending-up" style="width:11px;height:11px;"></i></div>
+              <span style="font-size:13px;">Reduce Cart Abandonment Rate</span>
+              <span class="ndot dc" style="margin-left:auto;"></span>
+            </div>
+            <div class="driven-item" onclick="nav('screen-po3')">
+              <div class="nicon po" style="width:20px;height:20px;border-radius:5px;"><i data-lucide="trending-up" style="width:11px;height:11px;"></i></div>
+              <span style="font-size:13px;">Grow Repeat Purchase Rate</span>
+              <span class="ndot de" style="margin-left:auto;"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="efooter">
+        <span class="efooter-note"></span>
+        <div class="efooter-actions"><button class="btng" onclick="goTree()">← Back to map</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     SCREEN — BO2 Detail
+════════════════════════════════════════════ -->
+<div class="screen" id="screen-bo2">
+  <nav class="bc">
+    <i data-lucide="layout-dashboard" style="width:11px;height:11px;"></i>
+    <span style="margin-left:3px;"><button onclick="goTree()">FreshCart</button></span>
+    <span class="bcsep">›</span>
+    <span class="bccur">Reduce Operational Costs</span>
+  </nav>
+  <div class="detail-page">
+    <div class="etab bo"><i data-lucide="target" style="width:10px;height:10px;"></i> Business Outcome</div>
+    <div class="ebody">
+      <div class="eheader">
+        <div class="eicon bo"><i data-lucide="target" style="width:14px;height:14px;"></i></div>
+        <div class="etitle">Reduce Operational Costs</div>
+        <div class="echip chip-e"><span class="chipdot" style="background:var(--blue);"></span> Explore</div>
+      </div>
+      <div class="efields">
+        <div>
+          <div class="flabel">Description</div>
+          <div class="fvalue">Lower fulfilment and support overhead by 20% through operational improvements.</div>
+        </div>
+        <div>
+          <div class="flabel">Drives (Parent)</div>
+          <div class="fvalue empty">Top-level — no parent outcome</div>
+        </div>
+        <div>
+          <div class="flabel">Driven by (Children)</div>
+          <div class="driven-list" id="driven-list-bo2">
+            <div class="driven-item" onclick="nav('screen-po4')">
+              <div class="nicon po" style="width:20px;height:20px;border-radius:5px;"><i data-lucide="trending-up" style="width:11px;height:11px;"></i></div>
+              <span style="font-size:13px;">Optimize Delivery Route Efficiency</span>
+              <span class="ndot dc" style="margin-left:auto;"></span>
+            </div>
+            <div class="driven-item" id="bo2-po5-child" onclick="nav('screen-po5')">
+              <div class="nicon wx" style="width:20px;height:20px;border-radius:5px;"><i data-lucide="trending-up" style="width:11px;height:11px;"></i></div>
+              <span style="font-size:13px;">Reduce Customer Support Tickets</span>
+              <span class="wbadge" style="margin-left:auto;"><i data-lucide="alert-triangle" style="width:8px;height:8px;"></i> Wrong</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="efooter">
+        <span class="efooter-note"></span>
+        <div class="efooter-actions"><button class="btng" onclick="goTree()">← Back to map</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     SCREEN — PO1 Detail
+════════════════════════════════════════════ -->
+<div class="screen" id="screen-po1">
+  <nav class="bc">
+    <i data-lucide="layout-dashboard" style="width:11px;height:11px;"></i>
+    <span style="margin-left:3px;"><button onclick="goTree()">FreshCart</button></span>
+    <span class="bcsep">›</span>
+    <button onclick="nav('screen-bo1')">Increase Monthly Revenue</button>
+    <span class="bcsep">›</span>
+    <span class="bccur">Increase Average Order Value</span>
+  </nav>
+  <div class="detail-page">
+    <div class="etab po"><i data-lucide="trending-up" style="width:10px;height:10px;"></i> Product Outcome</div>
+    <div class="ebody">
+      <div class="eheader">
+        <div class="eicon po"><i data-lucide="trending-up" style="width:14px;height:14px;"></i></div>
+        <div class="etitle">Increase Average Order Value</div>
+        <div class="echip chip-c"><span class="chipdot" style="background:var(--green);"></span> Commit</div>
+      </div>
+      <div class="efields">
+        <div>
+          <div class="flabel">Drives (Parent)</div>
+          <div class="fvalue">Increase Monthly Revenue</div>
+        </div>
+        <div>
+          <div class="flabel">Driven by (Children)</div>
+          <div class="driven-list" id="driven-list-po1" style="display:none; flex-direction:column; gap:.375rem;"></div>
+          <div id="driven-empty-po1" class="fvalue empty">No sub-outcomes driving this yet</div>
+        </div>
+      </div>
+      <div class="efooter"><span></span><div class="efooter-actions"><button class="btng" onclick="goTree()">← Back to map</button></div></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     SCREEN — PO2 Detail
+════════════════════════════════════════════ -->
+<div class="screen" id="screen-po2">
+  <nav class="bc">
+    <i data-lucide="layout-dashboard" style="width:11px;height:11px;"></i>
+    <span style="margin-left:3px;"><button onclick="goTree()">FreshCart</button></span>
+    <span class="bcsep">›</span>
+    <button onclick="nav('screen-bo1')">Increase Monthly Revenue</button>
+    <span class="bcsep">›</span>
+    <span class="bccur">Reduce Cart Abandonment Rate</span>
+  </nav>
+  <div class="detail-page">
+    <div class="etab po"><i data-lucide="trending-up" style="width:10px;height:10px;"></i> Product Outcome</div>
+    <div class="ebody">
+      <div class="eheader">
+        <div class="eicon po"><i data-lucide="trending-up" style="width:14px;height:14px;"></i></div>
+        <div class="etitle">Reduce Cart Abandonment Rate</div>
+        <div class="echip chip-c"><span class="chipdot" style="background:var(--green);"></span> Commit</div>
+      </div>
+      <div class="efields">
+        <div><div class="flabel">Drives (Parent)</div><div class="fvalue">Increase Monthly Revenue</div></div>
+        <div>
+          <div class="flabel">Driven by (Children)</div>
+          <div class="driven-list" id="driven-list-po2" style="display:none; flex-direction:column; gap:.375rem;"></div>
+          <div id="driven-empty-po2" class="fvalue empty">No sub-outcomes driving this yet</div>
+        </div>
+      </div>
+      <div class="efooter"><span></span><div class="efooter-actions"><button class="btng" onclick="goTree()">← Back to map</button></div></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     SCREEN — PO3 Detail
+════════════════════════════════════════════ -->
+<div class="screen" id="screen-po3">
+  <nav class="bc">
+    <i data-lucide="layout-dashboard" style="width:11px;height:11px;"></i>
+    <span style="margin-left:3px;"><button onclick="goTree()">FreshCart</button></span>
+    <span class="bcsep">›</span>
+    <button onclick="nav('screen-bo1')">Increase Monthly Revenue</button>
+    <span class="bcsep">›</span>
+    <span class="bccur">Grow Repeat Purchase Rate</span>
+  </nav>
+  <div class="detail-page">
+    <div class="etab po"><i data-lucide="trending-up" style="width:10px;height:10px;"></i> Product Outcome</div>
+    <div class="ebody">
+      <div class="eheader">
+        <div class="eicon po"><i data-lucide="trending-up" style="width:14px;height:14px;"></i></div>
+        <div class="etitle">Grow Repeat Purchase Rate</div>
+        <div class="echip chip-e"><span class="chipdot" style="background:var(--blue);"></span> Explore</div>
+      </div>
+      <div class="efields">
+        <div><div class="flabel">Drives (Parent)</div><div class="fvalue">Increase Monthly Revenue</div></div>
+        <div>
+          <div class="flabel">Driven by (Children)</div>
+          <div class="driven-list" id="driven-list-po3" style="display:none; flex-direction:column; gap:.375rem;"></div>
+          <div id="driven-empty-po3" class="fvalue empty">No sub-outcomes driving this yet</div>
+        </div>
+      </div>
+      <div class="efooter"><span></span><div class="efooter-actions"><button class="btng" onclick="goTree()">← Back to map</button></div></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     SCREEN — PO4 Detail
+════════════════════════════════════════════ -->
+<div class="screen" id="screen-po4">
+  <nav class="bc">
+    <i data-lucide="layout-dashboard" style="width:11px;height:11px;"></i>
+    <span style="margin-left:3px;"><button onclick="goTree()">FreshCart</button></span>
+    <span class="bcsep">›</span>
+    <button onclick="nav('screen-bo2')">Reduce Operational Costs</button>
+    <span class="bcsep">›</span>
+    <span class="bccur">Optimize Delivery Route Efficiency</span>
+  </nav>
+  <div class="detail-page">
+    <div class="etab po"><i data-lucide="trending-up" style="width:10px;height:10px;"></i> Product Outcome</div>
+    <div class="ebody">
+      <div class="eheader">
+        <div class="eicon po"><i data-lucide="trending-up" style="width:14px;height:14px;"></i></div>
+        <div class="etitle">Optimize Delivery Route Efficiency</div>
+        <div class="echip chip-c"><span class="chipdot" style="background:var(--green);"></span> Commit</div>
+      </div>
+      <div class="efields">
+        <div><div class="flabel">Drives (Parent)</div><div class="fvalue">Reduce Operational Costs</div></div>
+        <div>
+          <div class="flabel">Driven by (Children)</div>
+          <div class="driven-list" id="driven-list-po4" style="display:none; flex-direction:column; gap:.375rem;"></div>
+          <div id="driven-empty-po4" class="fvalue empty">No sub-outcomes driving this yet</div>
+        </div>
+      </div>
+      <div class="efooter"><span></span><div class="efooter-actions"><button class="btng" onclick="goTree()">← Back to map</button></div></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     SCREEN — PO5 Detail (THE WRONG NODE)
+════════════════════════════════════════════ -->
+<div class="screen" id="screen-po5">
+  <nav class="bc" id="po5-bc">
+    <i data-lucide="layout-dashboard" style="width:11px;height:11px;"></i>
+    <span style="margin-left:3px;"><button onclick="goTree()">FreshCart</button></span>
+    <span class="bcsep">›</span>
+    <button onclick="nav('screen-bo2')" id="po5-parent-bc">Reduce Operational Costs</button>
+    <span class="bcsep">›</span>
+    <span class="bccur">Reduce Customer Support Tickets</span>
+  </nav>
+  <div class="detail-page">
+    <div class="etab po"><i data-lucide="trending-up" style="width:10px;height:10px;"></i> Product Outcome</div>
+    <div class="ebody">
+      <div class="eheader">
+        <div class="eicon po"><i data-lucide="trending-up" style="width:14px;height:14px;"></i></div>
+        <div class="etitle">Reduce Customer Support Tickets</div>
+        <div class="echip chip-e"><span class="chipdot" style="background:var(--blue);"></span> Explore</div>
+      </div>
+      <div class="efields">
+        <div>
+          <div class="flabel">Description</div>
+          <div class="fvalue">Lower the volume of inbound support tickets by improving product clarity and self-service resolution rates.</div>
+        </div>
+
+        <!-- Editable "Drives" dropdown -->
+        <div>
+          <div class="flabel">Drives (Parent Outcome)</div>
+          <div class="dsel">
+            <div class="dsel-top">
+              <span class="dsel-dot" id="po5-dot" style="background:var(--wx);"></span>
+              <span class="dsel-text" id="po5-sel-text">Reduce Operational Costs</span>
+              <span class="dsel-hint" id="po5-sel-hint" style="color:var(--wx);">← needs updating</span>
+              <i data-lucide="chevrons-up-down" class="dsel-chevron" style="width:13px;height:13px;"></i>
+            </div>
+            <div class="dsel-opts">
+              <!-- Business Outcomes -->
+              <div class="dopt-divider">Business Outcomes</div>
+              <div class="dopt" id="opt-bo1" onclick="selectParent('bo1', 'Increase Monthly Revenue', 'bo')">
+                <span class="dopt-level">BO</span>
+                <span class="dsel-dot" style="background:var(--blue);"></span>
+                Increase Monthly Revenue
+                <span class="dopt-tag" id="opt-bo1-tag" style="color:var(--green);">← correct</span>
+              </div>
+              <div class="dopt sel" id="opt-bo2" onclick="selectParent('bo2', 'Reduce Operational Costs', 'bo')">
+                <span class="dopt-level">BO</span>
+                <span class="dsel-dot" style="background:var(--wx);"></span>
+                Reduce Operational Costs
+                <span class="dopt-tag" id="opt-bo2-tag">current</span>
+              </div>
+              <!-- Product Outcomes -->
+              <div class="dopt-divider">Product Outcomes</div>
+              <div class="dopt" id="opt-po1" onclick="selectParent('po1', 'Increase Average Order Value', 'po')">
+                <span class="dopt-level">PO</span>
+                <span class="dsel-dot" style="background:var(--po);"></span>
+                Increase Average Order Value
+              </div>
+              <div class="dopt" id="opt-po2" onclick="selectParent('po2', 'Reduce Cart Abandonment Rate', 'po')">
+                <span class="dopt-level">PO</span>
+                <span class="dsel-dot" style="background:var(--po);"></span>
+                Reduce Cart Abandonment Rate
+              </div>
+              <div class="dopt" id="opt-po3" onclick="selectParent('po3', 'Grow Repeat Purchase Rate', 'po')">
+                <span class="dopt-level">PO</span>
+                <span class="dsel-dot" style="background:var(--po);"></span>
+                Grow Repeat Purchase Rate
+              </div>
+              <div class="dopt" id="opt-po4" onclick="selectParent('po4', 'Optimize Delivery Route Efficiency', 'po')">
+                <span class="dopt-level">PO</span>
+                <span class="dsel-dot" style="background:var(--po);"></span>
+                Optimize Delivery Route Efficiency
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Driven by (empty) -->
+        <div>
+          <div class="flabel">Driven by (Children)</div>
+          <div class="fvalue empty">No sub-outcomes driving this yet</div>
+        </div>
+      </div>
+      <div class="efooter">
+        <span class="efooter-note" id="po5-footer-note">Select the correct parent outcome above</span>
+        <div class="efooter-actions">
+          <button class="btng" onclick="goTree()">Cancel</button>
+          <button class="btnp" id="po5-save" onclick="saveParent()" disabled>
+            <i data-lucide="check" style="width:12px;height:12px;"></i>
+            Save changes
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Facilitator note -->
+    <div class="facnote" style="margin-top:1.5rem;">
+      <div class="facnote-label">Facilitator note — not shown to participant</div>
+      <div class="facnote-body">
+        <strong>Observe:</strong> Does the builder immediately understand the "Drives" dropdown? Do they look for a drag handle or back-button to fix it another way?<br><br>
+        Let them select a new parent and save. Then ask: <em>"Was it clear how to fix it from here? Is this the experience you expected?"</em>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="proto">Prototype · Not production</div>
+
+<script>
+  lucide.createIcons();
+
+  // ── Dark mode ────────────────────────────────────────
+  let isDark = false;
+  function toggleDark() {
+    isDark = !isDark;
+    document.body.classList.toggle('dark', isDark);
+    document.getElementById('isun').style.display  = isDark ? 'none'  : 'block';
+    document.getElementById('imoon').style.display = isDark ? 'block' : 'none';
+    lucide.createIcons();
+    drawLines();
+  }
+
+  // ── Navigation ───────────────────────────────────────
+  function nav(id) {
+    document.querySelector('.screen.active').classList.remove('active');
+    document.getElementById(id).classList.add('active');
+    lucide.createIcons();
+    window.scrollTo(0, 0);
+  }
+  function goTree() { nav('screen-tree'); }
+
+  // ── SVG tree connector lines ─────────────────────────
+  // parent-child map: po node id → bo node id (current state, mutable)
+  const parentOf = {
+    'n-po1': 'n-bo1',
+    'n-po2': 'n-bo1',
+    'n-po3': 'n-bo1',
+    'n-po4': 'n-bo2',
+    'n-po5': 'n-bo2',
+  };
+
+  function getCenter(el) {
+    const canvas = document.getElementById('tree-canvas');
+    const cr = canvas.getBoundingClientRect();
+    const r  = el.getBoundingClientRect();
+    return {
+      x: r.left - cr.left + r.width  / 2,
+      y: r.top  - cr.top  + r.height / 2,
+      top:    r.top  - cr.top,
+      bottom: r.top  - cr.top + r.height,
+      left:   r.left - cr.left,
+      right:  r.left - cr.left + r.width,
+    };
+  }
+
+  function makeLine(svg, x1, y1, x2, y2, color) {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    line.setAttribute('stroke', color);
+    line.setAttribute('stroke-width', '1.5');
+    line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('opacity', '0.55');
+    svg.appendChild(line);
+  }
+
+  function drawLines() {
+    const svg = document.getElementById('tree-svg');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    const canvas = document.getElementById('tree-canvas');
+    const cr = canvas.getBoundingClientRect();
+    svg.setAttribute('width',  cr.width);
+    svg.setAttribute('height', cr.height);
+
+    const lineColor = isDark ? 'oklch(1 0 0 / 22%)' : 'oklch(0 0 0 / 18%)';
+
+    for (const [poId, boId] of Object.entries(parentOf)) {
+      const poEl = document.getElementById(poId);
+      const boEl = document.getElementById(boId);
+      if (!poEl || !boEl) continue;
+
+      const po = getCenter(poEl);
+      const bo = getCenter(boEl);
+
+      const x1 = bo.x, y1 = bo.bottom;
+      const x2 = po.x, y2 = po.top;
+      const my = y1 + (y2 - y1) * 0.5;
+
+      // Elbow: vertical from BO, horizontal, vertical to PO
+      makeLine(svg, x1, y1, x1, my, lineColor);
+      makeLine(svg, x1, my, x2, my, lineColor);
+      makeLine(svg, x2, my, x2, y2, lineColor);
+    }
+  }
+
+  // ── Tree re-render: move each col-poX into its current parent's children-row ──
+  function rerenderTree() {
+    for (const [nodeId, parentId] of Object.entries(parentOf)) {
+      const col       = document.getElementById('col-' + nodeId.replace('n-', ''));
+      const targetRow = document.getElementById('children-of-' + parentId.replace('n-', ''));
+      if (col && targetRow && col.parentNode !== targetRow) {
+        targetRow.appendChild(col);
+      }
+    }
+
+    // Show/hide each children-row based on whether it has content
+    document.querySelectorAll('.tree-children-row').forEach(row => {
+      row.classList.toggle('empty', row.children.length === 0);
+    });
+
+    // Wait two frames: first for DOM to settle, second for layout to be computed
+    requestAnimationFrame(() => {
+      lucide.createIcons();
+      requestAnimationFrame(() => drawLines());
+    });
+  }
+
+  window.addEventListener('load', () => { rerenderTree(); });
+  window.addEventListener('resize', () => { drawLines(); });
+
+  // ── Driven-by children sync ──────────────────────────
+  let currentSavedParentKey = 'bo2';
+  let po5DynamicItem = null; // ref to dynamically added driven-item
+
+  function updateDrivenBy(fromKey, toKey) {
+    // 1. Remove PO5 from old parent's list
+    if (fromKey === 'bo2') {
+      const old = document.getElementById('bo2-po5-child');
+      if (old) old.style.display = 'none';
+    } else if (po5DynamicItem && po5DynamicItem.parentNode) {
+      const oldList  = po5DynamicItem.parentNode;
+      const oldEmpty = document.getElementById('driven-empty-' + fromKey);
+      oldList.removeChild(po5DynamicItem);
+      po5DynamicItem = null;
+      if (oldList.children.length === 0) {
+        oldList.style.display = 'none';
+        if (oldEmpty) oldEmpty.style.display = '';
+      }
+    }
+
+    // 2. Add PO5 to new parent's list
+    const newList  = document.getElementById('driven-list-' + toKey);
+    const newEmpty = document.getElementById('driven-empty-' + toKey);
+    if (!newList) return;
+
+    const item = document.createElement('div');
+    item.className = 'driven-item';
+    item.setAttribute('onclick', "nav('screen-po5')");
+    item.innerHTML = `
+      <div class="nicon po" style="width:20px;height:20px;border-radius:5px;"><i data-lucide="trending-up" style="width:11px;height:11px;"></i></div>
+      <span style="font-size:13px;">Reduce Customer Support Tickets</span>
+      <span class="ndot de" style="margin-left:auto;"></span>
+    `;
+    po5DynamicItem = item;
+    newList.style.display = 'flex';
+    newList.appendChild(item);
+    if (newEmpty) newEmpty.style.display = 'none';
+  }
+
+  // ── PO5 parent reassignment ──────────────────────────
+  let selectedParentId   = 'bo2';
+  let selectedParentName = 'Reduce Operational Costs';
+  let selectedParentType = 'bo';
+  const originalParentId = 'bo2';
+
+  function selectParent(id, name, type) {
+    selectedParentId   = id;
+    selectedParentName = name;
+    selectedParentType = type;
+
+    // Update selected display dot and text
+    const dot  = document.getElementById('po5-dot');
+    const text = document.getElementById('po5-sel-text');
+    const hint = document.getElementById('po5-sel-hint');
+
+    text.textContent = name;
+
+    if (id === originalParentId) {
+      dot.style.background = 'var(--wx)';
+      hint.textContent = '← needs updating';
+      hint.style.color = 'var(--wx)';
+    } else {
+      dot.style.background = 'var(--green)';
+      hint.textContent = '✓ updated';
+      hint.style.color = 'var(--green)';
+    }
+
+    // Update option highlight
+    const allOpts = document.querySelectorAll('#screen-po5 .dopt');
+    allOpts.forEach(o => o.classList.remove('sel'));
+
+    const selOpt = document.getElementById('opt-' + id);
+    if (selOpt) selOpt.classList.add('sel');
+
+    // Clear all option tags first
+    ['opt-bo1-tag','opt-bo2-tag'].forEach(tid => {
+      const el = document.getElementById(tid);
+      if (el) { el.textContent = ''; el.style.color = 'var(--muted)'; }
+    });
+    const bo2tag = document.getElementById('opt-bo2-tag');
+    if (id !== 'bo2') {
+      if (bo2tag) { bo2tag.textContent = 'was current'; bo2tag.style.color = ''; }
+    } else {
+      if (bo2tag) { bo2tag.textContent = 'current'; bo2tag.style.color = ''; }
+    }
+
+    // Enable/disable save button
+    const saveBtn = document.getElementById('po5-save');
+    const note    = document.getElementById('po5-footer-note');
+    if (id !== originalParentId) {
+      saveBtn.disabled = false;
+      note.textContent = 'Changing parent to "' + name + '"';
+    } else {
+      saveBtn.disabled = true;
+      note.textContent = 'Select a different parent to reassign';
+    }
+
+    lucide.createIcons();
+  }
+
+  function saveParent() {
+    if (selectedParentId === originalParentId) return;
+
+    // 1. Update tree node styling
+    const po5node = document.getElementById('n-po5');
+    po5node.classList.remove('wrong');
+    po5node.classList.add('po');
+    po5node.querySelector('.nicon').className = 'nicon po';
+    const badge = po5node.querySelector('.wbadge');
+    if (badge) badge.remove();
+    const ntag = po5node.querySelector('.ntag');
+    ntag.className = 'ntag po';
+
+    // 2. Update connector line
+    parentOf['n-po5'] = 'n-' + selectedParentId;
+
+    // 3. Update driven-by lists on old and new parent screens
+    updateDrivenBy(currentSavedParentKey, selectedParentId);
+    currentSavedParentKey = selectedParentId;
+
+    // 4. Update PO5 breadcrumb
+    const parentBc = document.getElementById('po5-parent-bc');
+    parentBc.textContent = selectedParentName;
+
+    // 5. Navigate back to tree + redraw with updated layout
+    nav('screen-tree');
+    rerenderTree();
+
+    // 6. Show toast
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = '"Drives" updated — strategy map refreshed';
+    document.body.appendChild(toast);
+    setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3600);
+  }
+</script>
+</body>
+</html>

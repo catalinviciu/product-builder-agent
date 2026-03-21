@@ -26,7 +26,15 @@ export function MarkdownBlock({ content }: { content: string }) {
       [&_blockquote]:text-muted-foreground/70 [&_blockquote]:border-l-2 [&_blockquote]:border-border-strong
       [&_blockquote]:pl-4 [&_blockquote]:text-[13px] [&_blockquote]:italic [&_blockquote]:my-2"
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          a: ({ href, children }) => {
+            const isExternal = href && /^(https?|file):\/\//.test(href);
+            return <a href={href} {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{children}</a>;
+          }
+        }}
+      >{content}</ReactMarkdown>
     </article>
   );
 }

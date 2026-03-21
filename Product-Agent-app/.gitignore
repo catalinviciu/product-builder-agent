@@ -36,6 +36,9 @@ yarn-error.log*
 # local data persistence
 /data/store.json
 
+# prototypes
+/Prototypes
+
 # vercel
 .vercel
 

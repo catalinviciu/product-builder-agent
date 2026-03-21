@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, ChevronDown, Copy, FileText, PenLine, Clipboard, Check, Lightbulb, FlaskConical, type LucideIcon } from "lucide-react";
+import { Sparkles, ChevronDown, Copy, FileText, PenLine, Clipboard, Check, Lightbulb, FlaskConical, LayoutTemplate, type LucideIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import type { Entity, EntityStore, ProductLine } from "@/app/lib/schemas";
-import { buildEntityAnchor, buildOpportunityWriterPrompt, buildSolutionPlanningPrompt, buildSolutionsBrainstormerPrompt, buildAssumptionTesterPrompt } from "@/app/lib/utils";
+import { buildEntityAnchor, buildOpportunityWriterPrompt, buildSolutionPlanningPrompt, buildSolutionsBrainstormerPrompt, buildAssumptionTesterPrompt, buildPrototypeBuilderPrompt } from "@/app/lib/utils";
 
 interface AIAction {
   id: string;
@@ -38,6 +38,17 @@ function getActions(entity: Entity, entities: EntityStore, productLine: ProductL
     getText: () => buildEntityAnchor(entities, productLine.name, entity.id),
   });
 
+  // Test (prototype type) gets a build action
+  if (entity.level === "test" && entity.testType === "prototype") {
+    actions.push({
+      id: "build-prototype",
+      label: "Build this prototype",
+      description: "Turn this test definition into a lightweight HTML prototype ready to run with real users",
+      icon: LayoutTemplate,
+      getText: () => buildPrototypeBuilderPrompt(entities, productLine, entity.id),
+    });
+  }
+
   // Solution also gets planning prompt and assumption tester
   if (entity.level === "solution") {
     actions.push({
@@ -53,6 +64,13 @@ function getActions(entity: Entity, entities: EntityStore, productLine: ProductL
       description: "Use AI to surface critical assumptions and design lightweight tests before building",
       icon: FlaskConical,
       getText: () => buildAssumptionTesterPrompt(entities, productLine, entity.id),
+    });
+    actions.push({
+      id: "build-prototype",
+      label: "Build a prototype",
+      description: "Design and build a lightweight HTML prototype to test a key assumption before writing production code",
+      icon: LayoutTemplate,
+      getText: () => buildPrototypeBuilderPrompt(entities, productLine, entity.id),
     });
   }
 
