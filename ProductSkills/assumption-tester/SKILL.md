@@ -91,7 +91,7 @@ interface Entity {
 |:---------|:--------------------|
 | **Desirability** | Will customers want this? Will they do what we need them to do to get value? |
 | **Usability** | Can customers find what they need, understand it, and use it easily? |
-| **Feasibility** | Can we build this? (Technical, legal, compliance, organizational hurdles) |
+| **Feasibility** | Can we **technically** build this? (Technical architecture, APIs, performance, infrastructure — not UX or value questions) |
 | **Viability** | Is this good for our business? Does it support our metrics and model? |
 | **Ethical** | Should we build this? (Privacy, transparency, potential social harm) |
 
