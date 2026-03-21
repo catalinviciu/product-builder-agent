@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, ChevronDown, Copy, FileText, PenLine, Clipboard, Check, Lightbulb, type LucideIcon } from "lucide-react";
+import { Sparkles, ChevronDown, Copy, FileText, PenLine, Clipboard, Check, Lightbulb, FlaskConical, type LucideIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import type { Entity, EntityStore, ProductLine } from "@/app/lib/schemas";
-import { buildEntityAnchor, buildOpportunityWriterPrompt, buildSolutionPlanningPrompt, buildSolutionsBrainstormerPrompt } from "@/app/lib/utils";
+import { buildEntityAnchor, buildOpportunityWriterPrompt, buildSolutionPlanningPrompt, buildSolutionsBrainstormerPrompt, buildAssumptionTesterPrompt } from "@/app/lib/utils";
 
 interface AIAction {
   id: string;
@@ -29,18 +29,16 @@ interface AIActionsMenuProps {
 function getActions(entity: Entity, entities: EntityStore, productLine: ProductLine): AIAction[] {
   const actions: AIAction[] = [];
 
-  // Context anchor — available for all levels except solution (which gets planning prompt instead)
-  if (entity.level !== "solution") {
-    actions.push({
-      id: "copy-anchor",
-      label: "Copy AI context anchor",
-      description: "Reference this entity in an AI conversation",
-      icon: Copy,
-      getText: () => buildEntityAnchor(entities, productLine.name, entity.id),
-    });
-  }
+  // Context anchor — available for all levels
+  actions.push({
+    id: "copy-anchor",
+    label: "Copy AI context anchor",
+    description: "Reference this entity in an AI conversation",
+    icon: Copy,
+    getText: () => buildEntityAnchor(entities, productLine.name, entity.id),
+  });
 
-  // Solution gets planning prompt instead of context anchor
+  // Solution also gets planning prompt and assumption tester
   if (entity.level === "solution") {
     actions.push({
       id: "copy-planning",
@@ -48,6 +46,13 @@ function getActions(entity: Entity, entities: EntityStore, productLine: ProductL
       description: "Full prompt to plan and build this feature — includes opportunity context, solution details, and codebase path",
       icon: Clipboard,
       getText: () => buildSolutionPlanningPrompt(entities, productLine, entity.id),
+    });
+    actions.push({
+      id: "identify-assumptions",
+      label: "Identify assumptions & tests",
+      description: "Use AI to surface critical assumptions and design lightweight tests before building",
+      icon: FlaskConical,
+      getText: () => buildAssumptionTesterPrompt(entities, productLine, entity.id),
     });
   }
 
@@ -114,10 +119,12 @@ export function RootAIActionsButton({ text }: { text: string }) {
           </div>
           <div className="flex flex-col gap-0.5 min-w-0">
             <span className={copied ? "text-emerald-600 dark:text-emerald-400 font-medium text-xs" : "font-medium text-xs"}>
-              {copied ? "Copied!" : "Copy AI context anchor"}
+              {copied ? "Prompt copied!" : "Copy AI context anchor"}
             </span>
             <span className="text-[11px] text-muted-foreground/60 leading-tight">
-              Reference this product line in an AI conversation
+              {copied
+                ? "Paste it in Claude Code (or your AI tool) in plan mode to get started"
+                : "Reference this product line in an AI conversation"}
             </span>
           </div>
         </DropdownMenuItem>
@@ -181,10 +188,12 @@ export function AIActionsMenu({ entity, entities, productLine }: AIActionsMenuPr
                 </div>
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <span className={copiedId === action.id ? "text-emerald-600 dark:text-emerald-400 font-medium text-xs" : "font-medium text-xs"}>
-                    {copiedId === action.id ? "Copied!" : action.label}
+                    {copiedId === action.id ? "Prompt copied!" : action.label}
                   </span>
                   <span className="text-[11px] text-muted-foreground/60 leading-tight">
-                    {action.description}
+                    {copiedId === action.id
+                      ? "Paste it in Claude Code (or your AI tool) in plan mode to get started"
+                      : action.description}
                   </span>
                 </div>
               </DropdownMenuItem>

@@ -257,3 +257,22 @@ export function buildSolutionPlanningPrompt(
 
   return sections.join("\n\n---\n\n");
 }
+
+export function buildAssumptionTesterPrompt(
+  store: EntityStore,
+  productLine: ProductLine,
+  entityId: string,
+): string {
+  const entity = store[entityId];
+  if (!entity || entity.level !== "solution") return "";
+
+  const sections: string[] = [];
+  sections.push(`Use skill: ProductSkills/assumption-tester/SKILL.md`);
+  sections.push([
+    `Product Line: ${productLine.name}`,
+    `Solution ID: ${entity.id}`,
+  ].join("\n"));
+  sections.push(`Data: Product-Agent-app/data/store.json`);
+
+  return sections.join("\n\n---\n\n");
+}
