@@ -70,7 +70,7 @@ function TodayMarker({ todayIso, chartData, color }: {
   if (todayX === null && chartData.find(d => d.date === todayIso)) {
     todayX = (xFn(todayIso) as number) + bw / 2;
   }
-  if (todayX === null) return null;
+  if (todayX === null || isNaN(todayX)) return null;
 
   return (
     <g>
@@ -164,7 +164,7 @@ function SolutionMarkers({ markers, chartData, onHover }: {
         if (markerX === null && chartData.find(d => d.date === marker.date)) {
           markerX = (xFn(marker.date) as number) + bw / 2;
         }
-        if (markerX === null) return null;
+        if (markerX === null || isNaN(markerX)) return null;
 
         const count = marker.titles.length;
         const badgeY = plotArea.y + plotArea.height - 9;
