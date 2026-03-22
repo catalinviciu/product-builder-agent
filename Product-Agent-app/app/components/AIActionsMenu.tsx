@@ -12,7 +12,7 @@ import {
 import type { Entity, EntityStore, ProductLine } from "@/app/lib/schemas";
 import { buildEntityAnchor, buildOpportunityWriterPrompt, buildSolutionPlanningPrompt, buildSolutionsBrainstormerPrompt, buildAssumptionTesterPrompt, buildPrototypeBuilderPrompt } from "@/app/lib/utils";
 
-interface AIAction {
+export interface AIAction {
   id: string;
   label: string;
   description: string;
@@ -107,17 +107,17 @@ function getActions(entity: Entity, entities: EntityStore, productLine: ProductL
 
 // ── Root-level AI Actions button (overview page) ──────────────────────────
 
-export function RootAIActionsButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
+export function RootAIActionsButton({ actions }: { actions: AIAction[] }) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = (action: AIAction) => {
+    navigator.clipboard.writeText(action.getText());
+    setCopiedId(action.id);
+    setTimeout(() => setCopiedId((prev) => (prev === action.id ? null : prev)), 2000);
   };
 
   return (
-    <DropdownMenu onOpenChange={(open) => { if (!open) setCopied(false); }}>
+    <DropdownMenu onOpenChange={(open) => { if (!open) setCopiedId(null); }}>
       <DropdownMenuTrigger asChild>
         <button className="cursor-pointer inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-muted-foreground/60 hover:text-foreground text-xs transition-colors">
           <Sparkles size={12} />
@@ -126,26 +126,36 @@ export function RootAIActionsButton({ text }: { text: string }) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-72">
-        <DropdownMenuItem
-          onSelect={(e) => { e.preventDefault(); handleCopy(); }}
-          className="flex items-start gap-3 py-2.5 cursor-pointer"
-        >
-          <div className="shrink-0 mt-0.5">
-            {copied
-              ? <Check size={14} className="text-emerald-600 dark:text-emerald-400" />
-              : <Copy size={14} className="text-muted-foreground" />}
+        {actions.map((action, i) => (
+          <div key={action.id}>
+            {i > 0 && <DropdownMenuSeparator />}
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                handleCopy(action);
+              }}
+              className="flex items-start gap-3 py-2.5 cursor-pointer"
+            >
+              <div className="shrink-0 mt-0.5">
+                {copiedId === action.id ? (
+                  <Check size={14} className="text-emerald-600 dark:text-emerald-400" />
+                ) : (
+                  <action.icon size={14} className="text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span className={copiedId === action.id ? "text-emerald-600 dark:text-emerald-400 font-medium text-xs" : "font-medium text-xs"}>
+                  {copiedId === action.id ? "Prompt copied!" : action.label}
+                </span>
+                <span className="text-[11px] text-muted-foreground/60 leading-tight">
+                  {copiedId === action.id
+                    ? "Paste it in Claude Code (or your AI tool) in plan mode to get started"
+                    : action.description}
+                </span>
+              </div>
+            </DropdownMenuItem>
           </div>
-          <div className="flex flex-col gap-0.5 min-w-0">
-            <span className={copied ? "text-emerald-600 dark:text-emerald-400 font-medium text-xs" : "font-medium text-xs"}>
-              {copied ? "Prompt copied!" : "Copy AI context anchor"}
-            </span>
-            <span className="text-[11px] text-muted-foreground/60 leading-tight">
-              {copied
-                ? "Paste it in Claude Code (or your AI tool) in plan mode to get started"
-                : "Reference this product line in an AI conversation"}
-            </span>
-          </div>
-        </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

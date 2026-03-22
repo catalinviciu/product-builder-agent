@@ -439,6 +439,12 @@
           "stories": [
             { "action": "Copy an AI prompt from an Opportunity to launch the solutions brainstormer skill and generate 5 distinct solution approaches", "components": ["AIActionsMenu", "EntityView", "buildSolutionsBrainstormerPrompt"] }
           ]
+        },
+        {
+          "title": "Generate WIP briefing",
+          "stories": [
+            { "action": "Copy an AI prompt from the Product Line overview to generate a WIP briefing covering metric health, management signals, and insights per product outcome", "components": ["RootAIActionsButton", "RootView", "buildWipBriefingPrompt"] }
+          ]
         }
       ]
     }

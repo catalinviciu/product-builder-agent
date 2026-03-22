@@ -4,18 +4,18 @@ import { useState, useRef, useEffect } from "react";
 import { MarkdownBlock } from "./MarkdownToolbar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronRight, Pencil, Trash2, Plus,
+  ChevronRight, Pencil, Trash2, Plus, Copy, FileBarChart,
 } from "lucide-react";
 import type { Entity, EntityStatus } from "@/app/lib/schemas";
 import { LEVEL_META, CHILD_LEVEL, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getIceScoreColor, formatMetricValue } from "@/app/lib/schemas";
 import { LEVEL_ICON_MAP } from "@/app/lib/icons";
 import { useAppStore } from "@/app/lib/store";
-import { getEntity, getRootEntities, getEntityPreview, cn, buildRootAnchor } from "@/app/lib/utils";
+import { getEntity, getRootEntities, getEntityPreview, cn, buildRootAnchor, buildWipBriefingPrompt } from "@/app/lib/utils";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { EntityBreadcrumb } from "./EntityBreadcrumb";
 
 // Extracted components
-import { AIActionsMenu, RootAIActionsButton } from "./AIActionsMenu";
+import { AIActionsMenu, RootAIActionsButton, type AIAction } from "./AIActionsMenu";
 import { StatusPicker, PersonaPicker, SecondaryPersonaPicker, AssumptionTypePicker, TestTypePicker } from "./EntityPickers";
 import { EditableText } from "./EditableText";
 import { BlockRenderer, AddBlockButton, BlockList } from "./EntityBlocks";
@@ -177,7 +177,22 @@ function RootView() {
               maxLength={80}
             />
           </h1>
-          <RootAIActionsButton text={buildRootAnchor(productLine.name)} />
+          <RootAIActionsButton actions={[
+            {
+              id: "copy-anchor",
+              label: "Copy AI context anchor",
+              description: "Reference this product line in an AI conversation",
+              icon: Copy,
+              getText: () => buildRootAnchor(productLine.name),
+            },
+            {
+              id: "wip-briefing",
+              label: "Product line WIP briefing",
+              description: "AI reads your tree and generates a WIP briefing per product outcome",
+              icon: FileBarChart,
+              getText: () => buildWipBriefingPrompt(productLine.name),
+            },
+          ]} />
         </div>
         <div className="text-xs text-muted-foreground">
           <EditableText

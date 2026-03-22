@@ -206,6 +206,7 @@
 | **Generate opportunity writing prompt** | Copy an AI writing prompt from a Product Outcome to launch the opportunity writer skill for a new opportunity | `AIActionsMenu` · `EntityView` · `buildOpportunityWriterPrompt` |
 |  | Copy an AI writing prompt from an existing Opportunity to launch the opportunity writer skill for editing | `AIActionsMenu` · `EntityView` · `buildOpportunityWriterPrompt` |
 | **Brainstorm solutions for an opportunity** | Copy an AI prompt from an Opportunity to launch the solutions brainstormer skill and generate 5 distinct solution approaches | `AIActionsMenu` · `EntityView` · `buildSolutionsBrainstormerPrompt` |
+| **Generate WIP briefing** | Copy an AI prompt from the Product Line overview to generate a WIP briefing covering metric health, management signals, and insights per product outcome | `RootAIActionsButton` · `RootView` · `buildWipBriefingPrompt` |
 
 
 ---

@@ -296,3 +296,13 @@ export function buildPrototypeBuilderPrompt(
 
   return sections.join("\n\n---\n\n");
 }
+
+// ── WIP briefing prompt for AI agents ────────────────────────────────────
+
+export function buildWipBriefingPrompt(productLineName: string): string {
+  const sections: string[] = [];
+  sections.push(`Use skill: ProductSkills/wip-briefing/SKILL.md`);
+  sections.push(`Product Line: ${productLineName}`);
+  sections.push(`Data: Product-Agent-app/data/store.json`);
+  return sections.join("\n\n---\n\n");
+}
