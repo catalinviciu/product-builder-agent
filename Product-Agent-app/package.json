@@ -16,6 +16,7 @@
     "chokidar": "^5.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.34.3",
     "immer": "^11.1.4",
     "lucide-react": "^0.576.0",
@@ -23,8 +24,10 @@
     "next-themes": "^0.4.6",
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
+    "react-day-picker": "^9.14.0",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
+    "recharts": "^3.8.0",
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.5.0",
     "zustand": "^5.0.11"

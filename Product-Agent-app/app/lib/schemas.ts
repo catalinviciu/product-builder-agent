@@ -359,14 +359,14 @@ export function createBlockTemplate(level: EntityLevel, entityId: string): Block
   switch (level) {
     case "business_outcome":
       return [
-        { id: `${entityId}-b${ts}`, type: "metric", metric: "Key Metric", currentValue: "", targetValue: "", timeframe: "" },
+        { id: `${entityId}-b${ts}`, type: "metric", metric: "Key Metric", currentValue: "", targetValue: "", frequency: "weekly", initialValue: 0, numericTarget: 0, startDate: "", endDate: "" },
         { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Strategic Alignment", content: "*How does this outcome connect to the company's strategy or OKRs?*" },
         { id: `${entityId}-b${ts + 2}`, type: "accordion", label: "Why Now", content: "*What makes this outcome urgent or timely?*" },
         { id: `${entityId}-b${ts + 3}`, type: "accordion", label: "Risk of Inaction", content: "*What happens if we don't pursue this outcome?*" },
       ];
     case "product_outcome":
       return [
-        { id: `${entityId}-b${ts}`, type: "metric", metric: "Key Metric", currentValue: "", targetValue: "", timeframe: "" },
+        { id: `${entityId}-b${ts}`, type: "metric", metric: "Key Metric", currentValue: "", targetValue: "", frequency: "weekly", initialValue: 0, numericTarget: 0, startDate: "", endDate: "" },
         { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Strategic Alignment", content: "*How does this product outcome map to the business outcome above?*" },
         { id: `${entityId}-b${ts + 2}`, type: "accordion", label: "Constraints", content: "*What technical, business, or resource constraints shape this outcome?*" },
         { id: `${entityId}-b${ts + 3}`, type: "accordion", label: "Trade-offs", content: "*What are we choosing not to do? What trade-offs are we accepting?*" },

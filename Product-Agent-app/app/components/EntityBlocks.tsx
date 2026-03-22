@@ -143,7 +143,7 @@ export function MetricBlockEditor({ block, onSave, onCancel, entityLevel }: { bl
   const [timeframe, setTimeframe] = useState(block.timeframe || "");
   // Structured fields
   const isOutcome = entityLevel === "business_outcome" || entityLevel === "product_outcome";
-  const [frequency, setFrequency] = useState<MetricFrequency | "">(block.frequency ?? "");
+  const [frequency, setFrequency] = useState<MetricFrequency | "">(block.frequency ?? (isOutcome ? "weekly" : ""));
   const [initialValue, setInitialValue] = useState(block.initialValue !== undefined ? String(block.initialValue) : "");
   const [numericTarget, setNumericTarget] = useState(block.numericTarget !== undefined ? String(block.numericTarget) : "");
   const [startDate, setStartDate] = useState(block.startDate ?? "");
@@ -152,21 +152,21 @@ export function MetricBlockEditor({ block, onSave, onCancel, entityLevel }: { bl
   const inputCls = "bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus transition-colors";
 
   const handleSave = () => {
-    const base: Partial<MetricBlock> = { metric, currentValue, targetValue, timeframe: timeframe || undefined };
-    if (isOutcome && frequency) {
-      base.frequency = frequency as MetricFrequency;
+    const base: Partial<MetricBlock> = { metric };
+    if (isOutcome) {
+      // BO/PO always save structured fields
+      base.frequency = (frequency || "weekly") as MetricFrequency;
       base.initialValue = initialValue ? parseFloat(initialValue) : undefined;
       base.numericTarget = numericTarget ? parseFloat(numericTarget) : undefined;
       base.startDate = startDate || undefined;
       base.endDate = endDate || undefined;
-    } else if (isOutcome && !frequency) {
-      // Clear structured fields
-      base.frequency = undefined;
-      base.initialValue = undefined;
-      base.numericTarget = undefined;
-      base.startDate = undefined;
-      base.endDate = undefined;
-      base.dataSeries = undefined;
+      // Keep legacy fields for data compatibility but they're not shown
+      base.currentValue = currentValue;
+      base.targetValue = targetValue;
+    } else {
+      base.currentValue = currentValue;
+      base.targetValue = targetValue;
+      base.timeframe = timeframe || undefined;
     }
     onSave(base);
   };
@@ -174,41 +174,43 @@ export function MetricBlockEditor({ block, onSave, onCancel, entityLevel }: { bl
   return (
     <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
       <input value={metric} onChange={(e) => setMetric(e.target.value)} placeholder="Metric name" className={inputCls} />
-      <div className="flex gap-2">
-        <input value={currentValue} onChange={(e) => setCurrentValue(e.target.value)} placeholder="Current" className={cn(inputCls, "flex-1")} />
-        <input value={targetValue} onChange={(e) => setTargetValue(e.target.value)} placeholder="Target" className={cn(inputCls, "flex-1")} />
-      </div>
-      <input value={timeframe} onChange={(e) => setTimeframe(e.target.value)} placeholder="Timeframe (optional)" className={cn(inputCls, "text-xs")} />
 
+      {/* Legacy fields — only for non-outcome levels */}
+      {!isOutcome && (
+        <>
+          <div className="flex gap-2">
+            <input value={currentValue} onChange={(e) => setCurrentValue(e.target.value)} placeholder="Current" className={cn(inputCls, "flex-1")} />
+            <input value={targetValue} onChange={(e) => setTargetValue(e.target.value)} placeholder="Target" className={cn(inputCls, "flex-1")} />
+          </div>
+          <input value={timeframe} onChange={(e) => setTimeframe(e.target.value)} placeholder="Timeframe (optional)" className={cn(inputCls, "text-xs")} />
+        </>
+      )}
+
+      {/* Structured tracking — always shown for outcomes, no "No tracking" option */}
       {isOutcome && (
         <>
           <div className="border-t border-border-subtle pt-3 mt-1">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">Structured Tracking</span>
           </div>
-          <select value={frequency} onChange={(e) => setFrequency(e.target.value as MetricFrequency | "")} className={cn(inputCls, "text-xs")}>
-            <option value="">No tracking</option>
+          <select value={frequency || "weekly"} onChange={(e) => setFrequency(e.target.value as MetricFrequency)} className={cn(inputCls, "text-xs")}>
             <option value="daily">Daily</option>
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>
           </select>
-          {frequency && (
-            <>
-              <div className="flex gap-2">
-                <input type="number" value={initialValue} onChange={(e) => setInitialValue(e.target.value)} placeholder="Initial value" className={cn(inputCls, "flex-1 text-xs")} />
-                <input type="number" value={numericTarget} onChange={(e) => setNumericTarget(e.target.value)} placeholder="Numeric target" className={cn(inputCls, "flex-1 text-xs")} />
-              </div>
-              <div className="flex gap-2">
-                <div className="flex flex-col gap-1 flex-1">
-                  <label className="text-[10px] text-muted-foreground/50">Start date</label>
-                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={cn(inputCls, "text-xs")} />
-                </div>
-                <div className="flex flex-col gap-1 flex-1">
-                  <label className="text-[10px] text-muted-foreground/50">End date</label>
-                  <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={cn(inputCls, "text-xs")} />
-                </div>
-              </div>
-            </>
-          )}
+          <div className="flex gap-2">
+            <input type="number" value={initialValue} onChange={(e) => setInitialValue(e.target.value)} placeholder="Initial value" className={cn(inputCls, "flex-1 text-xs")} />
+            <input type="number" value={numericTarget} onChange={(e) => setNumericTarget(e.target.value)} placeholder="Numeric target" className={cn(inputCls, "flex-1 text-xs")} />
+          </div>
+          <div className="flex gap-2">
+            <div className="flex flex-col gap-1 flex-1">
+              <label className="text-[10px] text-muted-foreground/50">Start date</label>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={cn(inputCls, "text-xs")} />
+            </div>
+            <div className="flex flex-col gap-1 flex-1">
+              <label className="text-[10px] text-muted-foreground/50">End date</label>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={cn(inputCls, "text-xs")} />
+            </div>
+          </div>
         </>
       )}
 
@@ -224,10 +226,24 @@ export function MetricBlockEditor({ block, onSave, onCancel, entityLevel }: { bl
 
 export function BlockRenderer({ block, entityId, entityLevel }: { block: Block; entityId: string; entityLevel?: EntityLevel }) {
   const [editing, setEditing] = useState(false);
-  const { updateBlock, removeBlock } = useAppStore();
+  const { updateBlock, removeBlock, recordMetricValue } = useAppStore();
 
   const handleSave = (updates: Partial<Block>) => {
     updateBlock(entityId, block.id, updates);
+
+    // Auto-seed: when structured tracking is first enabled, seed the start date with initial value
+    if (
+      block.type === "metric" &&
+      "frequency" in updates && updates.frequency &&
+      "startDate" in updates && updates.startDate &&
+      "initialValue" in updates && updates.initialValue !== undefined
+    ) {
+      const currentSeries = (block as MetricBlock).dataSeries ?? [];
+      if (currentSeries.length === 0) {
+        recordMetricValue(entityId, block.id, updates.startDate as string, updates.initialValue as number);
+      }
+    }
+
     setEditing(false);
   };
   const handleDelete = () => removeBlock(entityId, block.id);

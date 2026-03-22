@@ -267,6 +267,20 @@
   }
 }
 
+/* ── Metric calendar recorded-date dot ── */
+.metric-calendar-recorded .rdp-day_button::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--color-primary, #3b82f6);
+  opacity: 0.7;
+}
+
 /* ── Scrollbar styling ── */
 @layer base {
   ::-webkit-scrollbar {
