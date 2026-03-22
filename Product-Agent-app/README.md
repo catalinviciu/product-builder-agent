@@ -1,8 +1,19 @@
 # Product Builder Agent
 
-A discovery tree dashboard for product builders, based on Teresa Torres's Opportunity Solution Tree framework. Built with Next.js 16, React 19, and Zustand.
+An open-source agentic product builder that helps you structure your product thinking using Teresa Torres's Opportunity Solution Tree framework — powered by AI skills that understand your full context.
 
-Manage your product thinking — from business outcomes down to assumptions and tests — in a single interactive tree. Then use the built-in AI workflow to generate planning prompts for Claude Code and other AI agents.
+Built with Next.js 16, React 19, and Zustand. Runs entirely on your machine. Your data stays local.
+
+## What It Does
+
+- **Discovery Tree Dashboard** — manage your product thinking from business outcomes down to assumptions and tests in a single interactive tree
+- **AI Actions** — context-aware AI skill invocations at every entity level. One click copies a prompt, paste it into Claude Code, and the AI works with your full product context
+- **Metric Tracking** — track outcome metrics with time-series data, targets, runway dates, and trend indicators
+- **Personas** — define and assign user personas to opportunities and product outcomes
+- **WIP Briefing** — AI reads your entire discovery tree and generates a structured health report per product outcome: metric health, management signals, critical proposals, shipped solution impact analysis
+- **Solutions Brainstorming** — AI researches your opportunity and generates 5 distinct solution approaches using first-principles thinking
+- **Assumption Testing** — AI surfaces critical assumptions behind your solutions and designs lightweight tests
+- **Planning Prompts** — generate rich implementation prompts for Claude Code that include opportunity context, solution details, persona, and codebase path
 
 ## Prerequisites
 
@@ -34,7 +45,7 @@ git --version
 
 ### 3. Claude Code (for AI workflow)
 
-Install from [docs.anthropic.com](https://docs.anthropic.com/en/docs/claude-code). This is optional but required for the planning prompt workflow.
+Install from [docs.anthropic.com](https://docs.anthropic.com/en/docs/claude-code). This is optional but required for the AI skills workflow.
 
 ## Getting Started
 
@@ -94,9 +105,9 @@ Place your codebase in the same parent folder as Product Agent:
 ```
 your-workspace/
 ├── Product-Agent-app/      # This app
-├── ProductSkills/          # Agent skills (story-map-updater, etc.)
-├── your-app/                # Your application code
-└── CLAUDE.md / .agent/      # Agent context (created during setup)
+├── ProductSkills/          # Agent skills (AI capabilities)
+├── your-app/               # Your application code
+└── CLAUDE.md / .agent/     # Agent context (created during setup)
 ```
 
 If you don't have a codebase yet, just create an empty folder — you can start building your product thinking first and add code later.
@@ -111,7 +122,7 @@ Open your AI agent in the workspace root folder (the parent that contains both `
 These guides will help you:
 
 - Create a project context file that teaches your AI agent about both Product Agent and your codebase
-- Set up the story-map-updater skill
+- Set up the ProductSkills
 - Bootstrap a User Story Map for your project (skip this if your codebase is empty)
 - Set the code path in Product Agent's UI
 
@@ -121,70 +132,56 @@ In the Product Agent UI:
 
 1. **Create a Product Line** — this is the top-level container for your product
 2. **Set the code path** — edit the product line and fill in your codebase folder name (e.g. `your-app/`)
-3. **Build your discovery tree** — work top-down:
+3. **Define Personas** — add the user/buyer personas for your product line
+4. **Build your discovery tree** — work top-down:
    - **Business Outcome** — the measurable business result you're driving
-   - **Product Outcome** — the user behavior change that creates business value
+   - **Product Outcome** — the user behavior change that creates business value (with metric tracking)
    - **Opportunity** — unmet needs or pain points (assign a Persona here)
    - **Solution** — concrete ways to address the opportunity
+   - **Assumption** — what must be true for a solution to work
+   - **Test** — lightweight experiments to validate assumptions
 
-### 4. Generate a planning prompt
+### 4. Use AI Actions
 
-When you're ready to implement a Solution:
+Every entity in the tree has an **AI Actions** dropdown menu with context-aware actions. Click an action, and a prompt is copied to your clipboard — paste it into Claude Code.
 
-1. Navigate to the **Solution** entity in Product Agent
-2. Click the **Copy** button in the entity header (tooltip: "Copy planning prompt for Claude Code")
-3. This copies a rich prompt that includes:
-   - The parent Opportunity (why you're building this)
-   - The Solution details (what you're building)
-   - The assigned Persona
-   - Your codebase path
-   - Instructions to use the story-map-updater skill
+**At the product line level:**
+- **Copy AI context anchor** — reference the product line in any AI conversation
+- **Product line WIP briefing** — AI generates a full health report per product outcome
 
-### 5. Paste into Claude Code
+**At the entity level (varies by level):**
+- **Write/update opportunity** — AI writes a structured opportunity from your input (product outcome and opportunity levels)
+- **Brainstorm solutions** — AI researches the problem and proposes 5 distinct approaches (opportunity level)
+- **Test assumptions** — AI surfaces critical assumptions and designs tests (solution level)
+- **Build prototype** — AI builds a working prototype from your solution context
+- **Plan implementation** — AI generates a full implementation plan with codebase context (solution level)
 
-Open Claude Code and paste the prompt. Claude Code will:
-
-- Understand the full product context behind the feature
-- Plan the implementation using your codebase's patterns and conventions
-- Include story map updates as part of the plan
-- Ask clarifying questions if anything is unclear
-
-### 6. Iterate
+### 5. Iterate
 
 As you ship features and learn, come back to Product Agent to:
 
-- Update Solution status (draft → explore → commit → done)
+- Update entity status (draft → explore → commit → done)
+- Track outcome metrics over time
+- Run a WIP Briefing to see the health of your product line at a glance
 - Add Assumptions and Tests to validate your decisions
 - Refine Opportunities based on what you've learned
 - Start the next Solution's planning prompt
 
-## AI Agent Workflow (Context Anchors)
-
-Every entity in the tree has a copy button in its header. What it copies depends on the entity level:
-
-**Solution entities** copy a full **planning prompt** — a rich, structured prompt with Opportunity context, Solution details, persona, codebase path, and instructions for Claude Code.
-
-**All other entities** copy a simple **context anchor** like:
-
-```
-[Product Agent Context]
-Product Line: FreshCart Grocery
-Path: Business Outcome > Product Outcome > Opportunity
-Entity: "Cart abandonment from poor substitution suggestions" (opp-1)
-Data: Product-Agent-app/data/store.json
-```
-
-Both can be pasted into any code-aware AI agent (Claude Code, Cursor, Copilot, etc.) that has access to the project files.
-
 ## Product Skills
 
-The `ProductSkills/` folder contains Claude agent skills — behavioral instructions that extend what Claude Code can do:
+The `ProductSkills/` folder contains AI agent skills — behavioral instructions that extend what Claude Code (or other AI agents) can do when working with your product context:
 
 | Skill | What it does |
 |-------|-------------|
+| **opportunity-writer** | Writes structured opportunities from unstructured input, keeping content strictly in problem space |
+| **solutions-brainstormer** | Researches an opportunity and generates 5 distinct solution approaches using first-principles thinking |
+| **assumption-tester** | Surfaces critical assumptions behind solutions and designs lightweight validation tests |
+| **wip-briefing** | Reads your full discovery tree and generates a WIP health report per active product outcome |
 | **story-map-updater** | Keeps a Jeff Patton-style User Story Map in sync as features are planned and shipped |
+| **prototype-builder** | Builds working prototypes from solution context |
+| **linkedin-post-writer** | Generates LinkedIn posts for shipping announcements and build-in-public updates |
 
-These skills are referenced automatically in the planning prompts generated by the Solution Copy Anchor.
+These skills are invoked through the AI Actions menu in the UI — you don't need to reference them manually.
 
 ## Stopping the Server
 
