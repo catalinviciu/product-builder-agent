@@ -1,256 +1,25 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Check, X, TrendingUp, TrendingDown, CalendarDays } from "lucide-react";
+import { Plus, Check, X, CalendarDays } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ResponsiveContainer, AreaChart, Area, Line, ReferenceLine, Customized,
-  Tooltip as RechartsTooltip, XAxis, YAxis, CartesianGrid,
-  useXAxisScale, useYAxisScale, usePlotArea,
-} from "recharts";
-import type { MetricBlock, MetricDataPoint, MetricFrequency, EntityLevel } from "../lib/schemas";
+import type { MetricBlock, MetricFrequency, EntityLevel } from "../lib/schemas";
 import { METRIC_FREQUENCY_LABELS, getPeriodDate } from "../lib/schemas";
 import { useAppStore } from "../lib/store";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { MetricChart, DEFAULT_CHART_COLOR, type ChartColorConfig } from "@/components/ui/metric-chart";
+import { TrendIndicator } from "@/components/ui/trend-indicator";
 
-// ── Chart colors per entity level ──────────────────────────────────────
+// ── Chart color mapping (app-specific: EntityLevel → color) ────────────
 
-const CHART_COLORS: Partial<Record<EntityLevel, { stroke: string; fill: string }>> = {
+const CHART_COLORS: Partial<Record<EntityLevel, ChartColorConfig>> = {
   business_outcome: { stroke: "#3b82f6", fill: "#3b82f6" },
   product_outcome:  { stroke: "#8b5cf6", fill: "#8b5cf6" },
 };
-const DEFAULT_CHART_COLOR = { stroke: "#3b82f6", fill: "#3b82f6" };
 
-function getChartColor(entityLevel?: EntityLevel) {
+function getChartColor(entityLevel?: EntityLevel): ChartColorConfig {
   return (entityLevel && CHART_COLORS[entityLevel]) || DEFAULT_CHART_COLOR;
-}
-
-// ── Chart overlay components (use Recharts 3 hooks) ───────────────────
-
-function TodayMarker({ todayIso, chartData, color }: {
-  todayIso: string;
-  chartData: { date: string }[];
-  color: { stroke: string };
-}) {
-  const xScale = useXAxisScale();
-  const plotArea = usePlotArea();
-  if (!xScale || !plotArea) return null;
-
-  // Cast scale to callable — Recharts ScaleFunction is callable but typed oddly
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const xFn = xScale as any;
-  const bw = typeof xFn.bandwidth === "function" ? (xFn.bandwidth() as number) : 0;
-
-  // Interpolate today's x position between surrounding data points
-  let todayX: number | null = null;
-  for (let i = 0; i < chartData.length - 1; i++) {
-    if (chartData[i].date <= todayIso && chartData[i + 1].date >= todayIso) {
-      const x0 = (xFn(chartData[i].date) as number) + bw / 2;
-      const x1 = (xFn(chartData[i + 1].date) as number) + bw / 2;
-      const t0 = new Date(chartData[i].date).getTime();
-      const t1 = new Date(chartData[i + 1].date).getTime();
-      const tNow = new Date(todayIso).getTime();
-      const ratio = t1 > t0 ? (tNow - t0) / (t1 - t0) : 0;
-      todayX = x0 + ratio * (x1 - x0);
-      break;
-    }
-  }
-  // If today matches a data point exactly
-  if (todayX === null && chartData.find(d => d.date === todayIso)) {
-    todayX = (xFn(todayIso) as number) + bw / 2;
-  }
-  if (todayX === null) return null;
-
-  return (
-    <g>
-      <line x1={todayX} x2={todayX} y1={plotArea.y} y2={plotArea.y + plotArea.height} stroke={color.stroke} strokeOpacity={0.35} strokeWidth={1} />
-      <text x={todayX + 3} y={plotArea.y + 10} fontSize={9} fill={color.stroke} fillOpacity={0.5}>Today</text>
-    </g>
-  );
-}
-
-function TargetPathLabel({ chartData, color }: {
-  chartData: { date: string; projection?: number }[];
-  color: { stroke: string };
-}) {
-  const xScale = useXAxisScale();
-  const yScale = useYAxisScale();
-  if (!xScale || !yScale) return null;
-
-  const projStart = chartData.find(d => d.projection !== undefined);
-  const projEnd = [...chartData].reverse().find(d => d.projection !== undefined);
-  if (!projStart || !projEnd || projStart === projEnd) return null;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const xFn = xScale as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const yFn = yScale as any;
-  const bw = typeof xFn.bandwidth === "function" ? (xFn.bandwidth() as number) : 0;
-  const x0 = (xFn(projStart.date) as number) + bw / 2;
-  const x1 = (xFn(projEnd.date) as number) + bw / 2;
-  const y0 = yFn(projStart.projection!) as number;
-  const y1 = yFn(projEnd.projection!) as number;
-  const midX = (x0 + x1) / 2;
-  const midY = (y0 + y1) / 2;
-
-  return (
-    <text x={midX} y={midY - 6} textAnchor="middle" fontSize={8} fill={color.stroke} fillOpacity={0.45}>
-      Gap to target
-    </text>
-  );
-}
-
-// ── Custom tooltip ─────────────────────────────────────────────────────
-
-function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-popover border border-border-default rounded-lg shadow-md px-2.5 py-1.5 text-xs">
-      <div className="text-muted-foreground/60">{label}</div>
-      <div className="font-semibold text-foreground">{payload[0].value}</div>
-    </div>
-  );
-}
-
-// ── Recharts area chart ────────────────────────────────────────────────
-
-function MetricChart({ dataSeries, target, entityLevel, endDate, height = 110 }: {
-  dataSeries: MetricDataPoint[];
-  target?: number;
-  entityLevel?: EntityLevel;
-  endDate?: string;
-  height?: number;
-}) {
-  const color = getChartColor(entityLevel);
-  const gradientId = `metricGrad-${entityLevel || "default"}`;
-
-  if (dataSeries.length === 0 && target === undefined) return null;
-
-  // For empty data with only a target, show a minimal placeholder
-  if (dataSeries.length === 0) {
-    return (
-      <div className="flex items-center justify-center rounded-lg bg-surface-1 border border-border-subtle" style={{ height }}>
-        <span className="text-[10px] text-muted-foreground/40">No data yet</span>
-      </div>
-    );
-  }
-
-  // Build chart data with optional target projection
-  const lastPoint = dataSeries[dataSeries.length - 1];
-  const hasProjection = target !== undefined && endDate && endDate > lastPoint.date;
-
-  // Merge actual data + projection point into one dataset
-  // "value" = actual data, "projection" = dashed line from last point to target
-  const chartData = dataSeries.map((dp) => ({
-    date: dp.date,
-    value: dp.value,
-    projection: dp.date === lastPoint.date ? dp.value : undefined as number | undefined,
-  }));
-
-  // Today position — calculated as a ratio for drawing a pure visual marker (no data point)
-  const todayIso = new Date().toISOString().slice(0, 10);
-
-  if (hasProjection) {
-    chartData.push({
-      date: endDate,
-      value: undefined as unknown as number,
-      projection: target,
-    });
-  }
-
-  // Sort by date to ensure correct order
-  chartData.sort((a, b) => a.date.localeCompare(b.date));
-
-  // Y domain needs to include the target if projection exists
-  const allValues = dataSeries.map((dp) => dp.value);
-  if (target !== undefined) allValues.push(target);
-  const yMin = Math.min(...allValues) - 1;
-  const yMax = Math.max(...allValues) + 1;
-
-  // Today marker — is today within the chart's date range?
-  const firstDate = chartData[0].date;
-  const lastDate = chartData[chartData.length - 1].date;
-  const showToday = todayIso >= firstDate && todayIso <= lastDate;
-
-  return (
-    <ResponsiveContainer width="100%" height={height}>
-      <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 4, left: 8 }}>
-        <defs>
-          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color.fill} stopOpacity={0.25} />
-            <stop offset="100%" stopColor={color.fill} stopOpacity={0.02} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.06} vertical={false} />
-        <XAxis dataKey="date" hide />
-        <YAxis hide domain={[yMin, yMax]} />
-        <RechartsTooltip content={<ChartTooltip />} cursor={{ stroke: color.stroke, strokeOpacity: 0.2 }} />
-        {target !== undefined && (
-          <ReferenceLine
-            y={target}
-            stroke="#888"
-            strokeDasharray="4 3"
-            strokeWidth={1}
-            label={{ value: `Target: ${target}`, position: "insideBottomRight", fontSize: 9, fill: "#888" }}
-          />
-        )}
-        {showToday && (
-          <Customized component={<TodayMarker todayIso={todayIso} chartData={chartData} color={color} />} />
-        )}
-        <Area
-          type="monotone"
-          dataKey="value"
-          stroke={color.stroke}
-          strokeWidth={2}
-          fill={`url(#${gradientId})`}
-          dot={{ r: 2.5, fill: color.stroke, strokeWidth: 0 }}
-          activeDot={{ r: 4, fill: color.stroke, strokeWidth: 2, stroke: "var(--surface-2)" }}
-          connectNulls
-        />
-        {hasProjection && (
-          <>
-            <Line
-              type="monotone"
-              dataKey="projection"
-              stroke={color.stroke}
-              strokeWidth={1.5}
-              strokeDasharray="6 4"
-              strokeOpacity={0.25}
-              dot={false}
-              activeDot={false}
-              connectNulls
-            />
-            <Customized component={<TargetPathLabel chartData={chartData} color={color} />} />
-          </>
-        )}
-      </AreaChart>
-    </ResponsiveContainer>
-  );
-}
-
-// ── Trend indicator ────────────────────────────────────────────────────
-
-function TrendIndicator({ dataSeries }: { dataSeries: MetricDataPoint[] }) {
-  if (dataSeries.length < 2) return null;
-  const latest = dataSeries[dataSeries.length - 1].value;
-  const prev = dataSeries[dataSeries.length - 2].value;
-  const diff = latest - prev;
-  const pct = prev !== 0 ? Math.round(Math.abs(diff / prev) * 100) : null;
-  const pctLabel = pct !== null ? `${pct}%` : "";
-  if (diff > 0) return (
-    <span className="inline-flex items-center gap-0.5 text-emerald-500 dark:text-emerald-400">
-      <TrendingUp size={14} />
-      <span className="text-[10px] font-medium">+{pctLabel || String(diff)}</span>
-    </span>
-  );
-  if (diff < 0) return (
-    <span className="inline-flex items-center gap-0.5 text-rose-500 dark:text-rose-400">
-      <TrendingDown size={14} />
-      <span className="text-[10px] font-medium">-{pctLabel || String(Math.abs(diff))}</span>
-    </span>
-  );
-  return <span className="text-[10px] text-muted-foreground/40 font-medium">no change</span>;
 }
 
 // ── Period label helpers ──────────────────────────────────────────────
@@ -305,7 +74,6 @@ function RecordValueForm({ block, entityId, onClose }: {
 
   const recordMetricValue = useAppStore((s) => s.recordMetricValue);
 
-  // Convert recorded date strings to Date objects for the calendar modifier
   const recordedDateObjects = useMemo(
     () => (block.dataSeries ?? []).map((dp) => new Date(dp.date + "T00:00:00")),
     [block.dataSeries]
@@ -319,7 +87,6 @@ function RecordValueForm({ block, entityId, onClose }: {
 
   const handleCalendarSelect = (day: Date | undefined) => {
     if (!day) return;
-    // Snap to period start — user clicks any day, we map to period boundary
     handleDateChange(getPeriodDate(day, frequency));
     setCalendarOpen(false);
   };
@@ -340,7 +107,6 @@ function RecordValueForm({ block, entityId, onClose }: {
       className="overflow-hidden"
     >
       <div className="pt-3 border-t border-border-subtle mt-3 flex flex-col gap-2">
-        {/* Input row */}
         <div className="flex items-end gap-2">
           <div className="flex flex-col gap-1 flex-1">
             <label className="text-[10px] text-muted-foreground/50 uppercase tracking-wide">Period</label>
@@ -404,7 +170,7 @@ export function MetricCard({ block, entityLevel, entityId }: {
   const [recording, setRecording] = useState(false);
   const isStructured = block.frequency !== undefined;
 
-  // Legacy display — unchanged from original
+  // Legacy display
   if (!isStructured) {
     return (
       <div className="flex items-center gap-4 p-4 rounded-xl bg-surface-2 border border-border-default">
@@ -421,12 +187,13 @@ export function MetricCard({ block, entityLevel, entityId }: {
     );
   }
 
-  // Structured display — side-by-side layout
+  // Structured display
   const series = block.dataSeries ?? [];
   const startingValue = block.initialValue ?? 0;
   const currentValue = series.length > 0 ? series[series.length - 1].value : startingValue;
   const target = block.numericTarget;
   const lastRecordedDate = series.length > 0 ? series[series.length - 1].date : undefined;
+  const color = getChartColor(entityLevel);
 
   const formatShortDate = (dateStr: string) => {
     const d = new Date(dateStr + "T00:00:00");
@@ -435,7 +202,7 @@ export function MetricCard({ block, entityLevel, entityId }: {
 
   return (
     <div className="p-3 rounded-xl bg-surface-2 border border-border-default">
-      {/* Header: metric name + frequency badge — full width */}
+      {/* Header: metric name + frequency badge */}
       <div className="flex items-center justify-between gap-2 mb-1.5">
         <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">{block.metric}</span>
         <span className="text-[10px] px-2 py-0.5 rounded-full bg-surface-3 text-muted-foreground/60 font-medium">
@@ -447,30 +214,35 @@ export function MetricCard({ block, entityLevel, entityId }: {
       <div className="flex flex-col md:flex-row gap-2">
         {/* Left: metric summary panel */}
         <div className="md:w-[35%] min-w-0 bg-surface-1 rounded-lg border border-border-subtle px-4 py-3">
-          {/* Current | vertical divider | Start & Target */}
           <div className="flex items-center gap-4">
-            {/* Current — hero, big */}
+            {/* Current — hero */}
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="text-5xl font-bold text-foreground leading-none">{currentValue}</span>
                 <TrendIndicator dataSeries={series} />
               </div>
-              <span className="text-[10px] text-muted-foreground/60 mt-1">Current{lastRecordedDate ? ` · ${formatShortDate(lastRecordedDate)}` : ""}</span>
+              <span className="text-[10px] text-muted-foreground/60 mt-1">
+                Current{lastRecordedDate ? ` · ${formatShortDate(lastRecordedDate)}` : ""}
+              </span>
             </div>
 
             {/* Vertical divider */}
             <div className="w-px self-stretch bg-border-subtle" />
 
-            {/* Starting → Target horizontal */}
+            {/* Start → Target */}
             <div className="flex items-center gap-2 min-w-0">
               <div className="flex flex-col">
                 <span className="text-lg font-semibold text-foreground/35 leading-none">{startingValue}</span>
-                <span className="text-[10px] text-muted-foreground/60 mt-0.5">Start{block.startDate ? ` · ${formatShortDate(block.startDate)}` : ""}</span>
+                <span className="text-[10px] text-muted-foreground/60 mt-0.5">
+                  Start{block.startDate ? ` · ${formatShortDate(block.startDate)}` : ""}
+                </span>
               </div>
               <span className="text-muted-foreground/30 text-sm">→</span>
               <div className="flex flex-col">
                 <span className="text-lg font-semibold text-foreground/35 leading-none">{target ?? block.targetValue}</span>
-                <span className="text-[10px] text-muted-foreground/60 mt-0.5">Target{block.endDate ? ` · ${formatShortDate(block.endDate)}` : ""}</span>
+                <span className="text-[10px] text-muted-foreground/60 mt-0.5">
+                  Target{block.endDate ? ` · ${formatShortDate(block.endDate)}` : ""}
+                </span>
               </div>
             </div>
           </div>
@@ -495,9 +267,14 @@ export function MetricCard({ block, entityLevel, entityId }: {
           )}
         </div>
 
-        {/* Right: Recharts area chart */}
+        {/* Right: chart */}
         <div className="md:w-[65%] min-w-0 bg-surface-1 rounded-lg border border-border-subtle p-1.5">
-          <MetricChart dataSeries={series} target={target} entityLevel={entityLevel} endDate={block.endDate} />
+          <MetricChart
+            dataSeries={series}
+            target={target}
+            endDate={block.endDate}
+            color={color}
+          />
         </div>
       </div>
     </div>
