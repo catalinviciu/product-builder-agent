@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { DEFAULT_PRODUCT_LINE_ID } from "./schemas";
-import type { Entity, Block, ProductLine, DiscoveryTree, Persona, AssumptionType, TestType, IceScore } from "./schemas";
+import type { Entity, Block, ProductLine, DiscoveryTree, Persona, AssumptionType, TestType, IceScore, EntityStatus } from "./schemas";
 
 export interface AppStore {
   // Data
@@ -44,6 +44,7 @@ export interface AppStore {
   addChildEntity: (parentId: string, entity: Entity) => void;
   deleteEntity: (id: string) => void;
   dropEntityCascade: (id: string) => void;
+  setEntityStatus: (id: string, status: EntityStatus) => void;
 
   // Block CRUD
   addBlock: (entityId: string, block: Block) => void;
@@ -109,6 +110,15 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set) 
           const savedPlId = typeof window !== "undefined" ? localStorage.getItem("pa-current-pl") : null;
           const currentProductLineId = savedPlId && data[savedPlId] ? savedPlId : Object.keys(data)[0] || DEFAULT_PRODUCT_LINE_ID;
           if (json.mtime) lastSavedAt = json.mtime;
+          // Backfill statusHistory for existing entities that predate this field
+          const todayIso = new Date().toISOString().slice(0, 10);
+          for (const pl of Object.values(data)) {
+            for (const entity of Object.values(pl.entities)) {
+              if (!entity.statusHistory) {
+                entity.statusHistory = [{ status: entity.status, date: todayIso }];
+              }
+            }
+          }
           set({ productLines: data, currentProductLineId, isHydrated: true });
           return;
         }
@@ -241,13 +251,32 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set) 
     set((draft) => {
       const pl = draft.productLines[draft.currentProductLineId];
       if (!pl || !pl.entities[id]) return;
+      const todayIso = new Date().toISOString().slice(0, 10);
       const cascade = (eid: string) => {
         const e = pl.entities[eid];
         if (!e) return;
-        e.status = "dropped";
+        if (e.status !== "dropped") {
+          e.status = "dropped";
+          if (!e.statusHistory) e.statusHistory = [];
+          e.statusHistory.push({ status: "dropped", date: todayIso });
+        }
         e.children.forEach(cascade);
       };
       cascade(id);
+    }),
+
+  setEntityStatus: (id, status) =>
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[id]) return;
+      const entity = pl.entities[id];
+      if (entity.status === status) return;
+      entity.status = status;
+      if (!entity.statusHistory) entity.statusHistory = [];
+      entity.statusHistory.push({
+        status,
+        date: new Date().toISOString().slice(0, 10),
+      });
     }),
 
   addBlock: (entityId, block) =>

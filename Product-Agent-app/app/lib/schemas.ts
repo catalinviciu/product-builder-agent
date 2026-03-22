@@ -86,6 +86,11 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
 // ── Status system ─────────────────────────────────────────────────────────
 
 export type EntityStatus = "commit" | "explore" | "draft" | "done" | "archived" | "dropped";
+
+export interface StatusHistoryEntry {
+  status: EntityStatus;
+  date: string;  // ISO YYYY-MM-DD
+}
 export type ProductLineStatus = "active" | "closed" | "archived";
 
 export const ENTITY_STATUS_META: Record<EntityStatus, { label: string; color: string; dotColor: string }> = {
@@ -267,6 +272,7 @@ export interface Entity {
   icon: string;
   description: string;
   status: EntityStatus;
+  statusHistory?: StatusHistoryEntry[];
   parentId?: string;
   personaId?: string;
   secondaryPersonaIds?: string[];

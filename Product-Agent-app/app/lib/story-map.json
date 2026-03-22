@@ -133,6 +133,7 @@
             { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
             { "action": "Configure structured metric tracking with frequency, numeric targets, and date range", "components": ["EntityBlocks", "MetricBlockEditor", "BlockRenderer"] },
             { "action": "Record a metric data point and view progress in the interactive area chart with hover tooltips", "components": ["MetricCard", "MetricChart", "RecordValueForm"] },
+            { "action": "View solution completion markers on the metric chart showing when child solutions were marked done", "components": ["MetricCard", "MetricChart"] },
             { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
             { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
             { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },

@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { MetricBlock, MetricFrequency, EntityLevel } from "../lib/schemas";
 import { METRIC_FREQUENCY_LABELS, getPeriodDate, formatMetricValue } from "../lib/schemas";
 import { useAppStore } from "../lib/store";
+import { useProductLine } from "../lib/hooks/useProductLine";
+import { selectDoneSolutionsForProductOutcome } from "../lib/selectors";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { MetricChart, DEFAULT_CHART_COLOR, type ChartColorConfig } from "@/components/ui/metric-chart";
@@ -196,6 +198,12 @@ export function MetricCard({ block, entityLevel, entityId }: {
   const color = getChartColor(entityLevel);
   const fmt = (v: number) => formatMetricValue(v, block.valueFormat);
 
+  const productLine = useProductLine();
+  const solutionMarkers = useMemo(() => {
+    if (entityLevel !== "product_outcome" || !entityId) return undefined;
+    return selectDoneSolutionsForProductOutcome(productLine.entities, entityId);
+  }, [entityLevel, entityId, productLine.entities]);
+
   const formatShortDate = (dateStr: string) => {
     const d = new Date(dateStr + "T00:00:00");
     return d.toLocaleString("en", { month: "short", day: "numeric" });
@@ -276,6 +284,7 @@ export function MetricCard({ block, entityLevel, entityId }: {
             endDate={block.endDate}
             color={color}
             formatValue={fmt}
+            solutionMarkers={solutionMarkers}
           />
         </div>
       </div>

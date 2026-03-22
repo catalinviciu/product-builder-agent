@@ -22,6 +22,11 @@ export interface ChartDataPoint {
 
 export const DEFAULT_CHART_COLOR: ChartColorConfig = { stroke: "#3b82f6", fill: "#3b82f6" };
 
+export interface SolutionMarkerEntry {
+  date: string;      // ISO YYYY-MM-DD
+  titles: string[];  // one or more solution names on this date
+}
+
 export interface MetricChartProps {
   dataSeries: ChartDataPoint[];
   target?: number;
@@ -29,6 +34,7 @@ export interface MetricChartProps {
   height?: number;
   color?: ChartColorConfig;
   formatValue?: (value: number) => string;
+  solutionMarkers?: SolutionMarkerEntry[];
   className?: string;
 }
 
@@ -105,6 +111,183 @@ function TargetPathLabel({ chartData, color }: {
   );
 }
 
+// ── Solution completion markers ──────────────────────────────────────────
+
+const SOLUTION_MARKER_COLOR = "#10b981"; // emerald-500
+
+/** Info passed from SVG markers up to the HTML tooltip overlay */
+interface MarkerHoverInfo {
+  marker: SolutionMarkerEntry;
+  /** x position in SVG coordinates (px from left of the SVG) */
+  svgX: number;
+  /** y position of the badge in SVG coordinates */
+  badgeY: number;
+}
+
+function SolutionMarkers({ markers, chartData, onHover }: {
+  markers: SolutionMarkerEntry[];
+  chartData: { date: string }[];
+  onHover: (info: MarkerHoverInfo | null) => void;
+}) {
+  const xScale = useXAxisScale();
+  const plotArea = usePlotArea();
+
+  if (!xScale || !plotArea || markers.length === 0) return null;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const xFn = xScale as any;
+  const bw = typeof xFn.bandwidth === "function" ? (xFn.bandwidth() as number) : 0;
+
+  const firstDate = chartData[0]?.date;
+  const lastDate = chartData[chartData.length - 1]?.date;
+
+  return (
+    <g>
+      {markers.map((marker) => {
+        // Skip markers outside chart range
+        if (!firstDate || !lastDate || marker.date < firstDate || marker.date > lastDate) return null;
+
+        // Interpolate x position
+        let markerX: number | null = null;
+        for (let i = 0; i < chartData.length - 1; i++) {
+          if (chartData[i].date <= marker.date && chartData[i + 1].date >= marker.date) {
+            const x0 = (xFn(chartData[i].date) as number) + bw / 2;
+            const x1 = (xFn(chartData[i + 1].date) as number) + bw / 2;
+            const t0 = new Date(chartData[i].date).getTime();
+            const t1 = new Date(chartData[i + 1].date).getTime();
+            const tM = new Date(marker.date).getTime();
+            const ratio = t1 > t0 ? (tM - t0) / (t1 - t0) : 0;
+            markerX = x0 + ratio * (x1 - x0);
+            break;
+          }
+        }
+        if (markerX === null && chartData.find(d => d.date === marker.date)) {
+          markerX = (xFn(marker.date) as number) + bw / 2;
+        }
+        if (markerX === null) return null;
+
+        const count = marker.titles.length;
+        const badgeY = plotArea.y + plotArea.height - 9;
+
+        return (
+          <g
+            key={marker.date}
+            onMouseEnter={() => onHover({ marker, svgX: markerX!, badgeY })}
+            onMouseLeave={() => onHover(null)}
+          >
+            {/* Dashed vertical line */}
+            <line
+              x1={markerX} x2={markerX}
+              y1={plotArea.y} y2={plotArea.y + plotArea.height}
+              stroke={SOLUTION_MARKER_COLOR}
+              strokeOpacity={0.45}
+              strokeWidth={1.5}
+              strokeDasharray="3 3"
+            />
+
+            {/* Count badge (on x-axis) or dot (single) */}
+            {count > 1 ? (
+              <>
+                <circle cx={markerX} cy={badgeY} r={7}
+                  fill={SOLUTION_MARKER_COLOR} fillOpacity={0.9} />
+                <text x={markerX} y={badgeY + 3.5}
+                  textAnchor="middle" fontSize={8} fontWeight="bold"
+                  fill="white">
+                  {count}
+                </text>
+              </>
+            ) : (
+              <circle cx={markerX} cy={badgeY} r={3.5}
+                fill={SOLUTION_MARKER_COLOR} fillOpacity={0.8} />
+            )}
+
+            {/* Invisible wider hit area for easier hover */}
+            <rect
+              x={markerX - 8} y={plotArea.y}
+              width={16} height={plotArea.height}
+              fill="transparent"
+              style={{ cursor: "default" }}
+            />
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+// ── Solution marker HTML tooltip (rendered outside SVG) ──────────────────
+
+function SolutionTooltip({ hoverInfo, containerRef }: {
+  hoverInfo: MarkerHoverInfo;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const tooltipRef = React.useRef<HTMLDivElement>(null);
+  const [pos, setPos] = React.useState<{ left: number; bottom: number } | null>(null);
+  const { marker, svgX, badgeY } = hoverInfo;
+  const count = marker.titles.length;
+
+  React.useLayoutEffect(() => {
+    const container = containerRef.current;
+    const svgEl = container?.querySelector("svg");
+    if (!container || !svgEl) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const svgRect = svgEl.getBoundingClientRect();
+
+    // Convert SVG coordinates to container-relative pixel coordinates
+    const pxX = svgRect.left - containerRect.left + svgX;
+    const pxBadgeY = svgRect.top - containerRect.top + badgeY;
+
+    // Position: centered horizontally on marker, above the badge
+    setPos({
+      left: pxX,
+      bottom: containerRect.height - pxBadgeY + 12,
+    });
+  }, [svgX, badgeY, containerRef]);
+
+  if (!pos) return null;
+
+  return (
+    <div
+      ref={tooltipRef}
+      style={{
+        position: "absolute",
+        left: pos.left,
+        bottom: pos.bottom,
+        transform: "translateX(-50%)",
+        zIndex: 50,
+        pointerEvents: "none",
+        background: "var(--popover)",
+        border: "1px solid color-mix(in srgb, currentColor 15%, transparent)",
+        borderRadius: 8,
+        padding: "6px 10px",
+        fontSize: 10,
+        lineHeight: "16px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <div style={{ color: SOLUTION_MARKER_COLOR, fontWeight: 600, marginBottom: 3, fontSize: 9 }}>
+        {marker.date}
+      </div>
+      {marker.titles.map((title, i) => (
+        <div key={i} style={{
+          color: "var(--foreground)",
+          fontWeight: 500,
+          display: "flex",
+          alignItems: "baseline",
+          gap: 4,
+        }}>
+          {count > 1 && <span style={{ color: SOLUTION_MARKER_COLOR, flexShrink: 0, fontSize: 8 }}>•</span>}
+          <span>{title}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── ChartTooltip ─────────────────────────────────────────────────────────
+
 function ChartTooltip({ active, payload, label, formatValue }: {
   active?: boolean;
   payload?: Array<{ value: number }>;
@@ -130,10 +313,13 @@ function MetricChart({
   height = 110,
   color = DEFAULT_CHART_COLOR,
   formatValue,
+  solutionMarkers,
   className,
 }: MetricChartProps) {
   const uid = React.useId();
   const gradientId = `metricGrad-${uid.replace(/:/g, "")}`;
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [markerHover, setMarkerHover] = React.useState<MarkerHoverInfo | null>(null);
 
   if (dataSeries.length === 0 && target === undefined) return null;
 
@@ -178,9 +364,12 @@ function MetricChart({
   const firstDate = chartData[0].date;
   const lastDate = chartData[chartData.length - 1].date;
   const showToday = todayIso >= firstDate && todayIso <= lastDate;
+  const visibleMarkers = solutionMarkers?.filter(
+    (m) => m.date >= firstDate && m.date <= lastDate
+  );
 
   return (
-    <div data-slot="metric-chart" className={cn("w-full", className)}>
+    <div ref={containerRef} data-slot="metric-chart" className={cn("w-full relative", className)}>
       <ResponsiveContainer width="100%" height={height}>
         <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 4, left: 8 }}>
           <defs>
@@ -231,8 +420,15 @@ function MetricChart({
               <Customized component={<TargetPathLabel chartData={chartData} color={color} />} />
             </>
           )}
+          {visibleMarkers && visibleMarkers.length > 0 && (
+            <Customized component={<SolutionMarkers markers={visibleMarkers} chartData={chartData} onHover={setMarkerHover} />} />
+          )}
         </AreaChart>
       </ResponsiveContainer>
+      {/* HTML tooltip rendered outside SVG so it can overflow freely */}
+      {markerHover && (
+        <SolutionTooltip hoverInfo={markerHover} containerRef={containerRef} />
+      )}
     </div>
   );
 }

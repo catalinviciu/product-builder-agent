@@ -81,6 +81,7 @@
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
 |  | Configure structured metric tracking with frequency, numeric targets, and date range | `EntityBlocks` · `MetricBlockEditor` · `BlockRenderer` |
 |  | Record a metric data point and view progress in the interactive area chart with hover tooltips | `MetricCard` · `MetricChart` · `RecordValueForm` |
+|  | View solution completion markers on the metric chart showing when child solutions were marked done | `MetricCard` · `MetricChart` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |
 |  | Delete the entity (only when it has no children) | `EntityView` |

@@ -7,7 +7,7 @@ import {
   ChevronRight, Pencil, Trash2, Plus,
 } from "lucide-react";
 import type { Entity, EntityStatus } from "@/app/lib/schemas";
-import { LEVEL_META, CHILD_LEVEL, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getIceScoreColor } from "@/app/lib/schemas";
+import { LEVEL_META, CHILD_LEVEL, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getIceScoreColor, formatMetricValue } from "@/app/lib/schemas";
 import { LEVEL_ICON_MAP } from "@/app/lib/icons";
 import { useAppStore } from "@/app/lib/store";
 import { getEntity, getRootEntities, getEntityPreview, cn, buildRootAnchor } from "@/app/lib/utils";
@@ -30,7 +30,7 @@ import { EntityGridView, type CardDisplayProps } from "./EntityGridView";
 function ChildrenGrid({ entity }: { entity: Entity }) {
   const productLine = useProductLine();
   const { entities } = productLine;
-  const { updateEntity } = useAppStore();
+  const { updateEntity, setEntityStatus } = useAppStore();
   const personas = productLine.personas ?? [];
   const [showAddForm, setShowAddForm] = useState(false);
   const childLevel = CHILD_LEVEL[entity.level];
@@ -54,8 +54,9 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
       const childCount = child.children?.length ?? 0;
       if (metricBlock && metricBlock.type === "metric") {
         if (metricBlock.frequency && metricBlock.numericTarget !== undefined) {
-          const latest = metricBlock.dataSeries?.length ? metricBlock.dataSeries[metricBlock.dataSeries.length - 1].value : metricBlock.initialValue ?? 0;
-          preview = `${latest} → ${metricBlock.numericTarget}`;
+          const fmt = (v: number) => formatMetricValue(v, metricBlock.valueFormat);
+          const current = metricBlock.dataSeries?.length ? metricBlock.dataSeries[metricBlock.dataSeries.length - 1].value : metricBlock.initialValue ?? 0;
+          preview = `${fmt(current)} current · ${fmt(metricBlock.initialValue ?? 0)} → ${fmt(metricBlock.numericTarget)}`;
         } else {
           preview = `${metricBlock.currentValue} → ${metricBlock.targetValue}${metricBlock.timeframe ? ` · ${metricBlock.timeframe}` : ""}`;
         }
@@ -127,7 +128,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
       items={children}
       orderedIds={entity.children}
       onReorder={(newIds) => updateEntity(entity.id, { children: newIds })}
-      onStatusChange={(id, status) => updateEntity(id, { status })}
+      onStatusChange={(id, status) => setEntityStatus(id, status)}
       headerLabel={levelMeta.childrenLabel}
       headerDescription={childLevel ? LEVEL_META[childLevel].description : undefined}
       getCardProps={getChildCardProps}
@@ -142,7 +143,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
 function RootView() {
   const productLine = useProductLine();
   const { tree, entities, id: plId } = productLine;
-  const { updateTree, updateEntity } = useAppStore();
+  const { updateTree, updateEntity, setEntityStatus } = useAppStore();
   const roots = getRootEntities(entities, tree);
   const [showAddForm, setShowAddForm] = useState(false);
   const boMeta = LEVEL_META.business_outcome;
@@ -154,8 +155,9 @@ function RootView() {
     let badge = "";
     if (entity.level === "business_outcome" && metricBlock && metricBlock.type === "metric") {
       if (metricBlock.frequency && metricBlock.numericTarget !== undefined) {
-        const latest = metricBlock.dataSeries?.length ? metricBlock.dataSeries[metricBlock.dataSeries.length - 1].value : metricBlock.initialValue ?? 0;
-        preview = `${latest} → ${metricBlock.numericTarget}`;
+        const fmt = (v: number) => formatMetricValue(v, metricBlock.valueFormat);
+        const current = metricBlock.dataSeries?.length ? metricBlock.dataSeries[metricBlock.dataSeries.length - 1].value : metricBlock.initialValue ?? 0;
+        preview = `${fmt(current)} current · ${fmt(metricBlock.initialValue ?? 0)} → ${fmt(metricBlock.numericTarget)}`;
       } else {
         preview = `${metricBlock.currentValue} → ${metricBlock.targetValue}${metricBlock.timeframe ? ` · ${metricBlock.timeframe}` : ""}`;
       }
@@ -190,7 +192,7 @@ function RootView() {
         items={roots}
         orderedIds={tree.rootChildren}
         onReorder={(newIds) => updateTree(plId, { rootChildren: newIds })}
-        onStatusChange={(id, status) => updateEntity(id, { status })}
+        onStatusChange={(id, status) => setEntityStatus(id, status)}
         headerLabel="Business Outcomes"
         headerDescription={boMeta.description}
         getCardProps={getRootCardProps}
@@ -215,7 +217,7 @@ function RootView() {
 // ── Main component ───────────────────────────────────────────────────────
 
 export function EntityView() {
-  const { currentEntityId, updateEntity, deleteEntity, dropEntityCascade } = useAppStore();
+  const { currentEntityId, updateEntity, deleteEntity, dropEntityCascade, setEntityStatus } = useAppStore();
   const productLine = useProductLine();
   const { entities } = productLine;
   const [expanded, setExpanded] = useState(false);
@@ -262,7 +264,7 @@ export function EntityView() {
             if (s === 'dropped' && entity.children.length > 0) {
               setConfirmDrop(true);
             } else {
-              updateEntity(entity.id, { status: s });
+              setEntityStatus(entity.id, s);
             }
           }} />
           <AIActionsMenu entity={entity} entities={entities} productLine={productLine} />
@@ -413,7 +415,7 @@ export function EntityView() {
               const metricBlock = entity.blocks.find(b => b.type === "metric") as MetricBlock | undefined;
               return metricBlock ? (
                 <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                  <MetricCard block={metricBlock} entityLevel={entity.level} />
+                  <MetricCard block={metricBlock} entityLevel={entity.level} entityId={entity.id} />
                 </div>
               ) : null;
             })()}
