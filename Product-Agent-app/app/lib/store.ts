@@ -49,6 +49,7 @@ export interface AppStore {
   addBlock: (entityId: string, block: Block) => void;
   updateBlock: (entityId: string, blockId: string, updates: Partial<Block>) => void;
   removeBlock: (entityId: string, blockId: string) => void;
+  recordMetricValue: (entityId: string, blockId: string, date: string, value: number) => void;
 
   // Persona CRUD
   addPersona: (persona: Persona) => void;
@@ -269,6 +270,22 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set) 
       const pl = draft.productLines[draft.currentProductLineId];
       if (!pl || !pl.entities[entityId]) return;
       pl.entities[entityId].blocks = pl.entities[entityId].blocks.filter((b) => b.id !== blockId);
+    }),
+
+  recordMetricValue: (entityId, blockId, date, value) =>
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return;
+      const block = pl.entities[entityId].blocks.find((b) => b.id === blockId);
+      if (!block || block.type !== "metric") return;
+      if (!block.dataSeries) block.dataSeries = [];
+      const existing = block.dataSeries.find((dp) => dp.date === date);
+      if (existing) {
+        existing.value = value;
+      } else {
+        block.dataSeries.push({ date, value });
+        block.dataSeries.sort((a, b) => a.date.localeCompare(b.date));
+      }
     }),
 
   addPersona: (persona) =>

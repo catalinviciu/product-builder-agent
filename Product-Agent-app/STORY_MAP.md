@@ -56,6 +56,8 @@
 |  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
 |  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
+|  | Configure structured metric tracking with frequency, numeric targets, and date range | `EntityBlocks` · `MetricBlockEditor` |
+|  | Record a metric data point for the current or a past period and track outcome progress over time | `MetricCard` · `RecordValueForm` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |
 |  | Delete the entity (only when it has no children) | `EntityView` |
@@ -77,6 +79,8 @@
 |  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
 |  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
+|  | Configure structured metric tracking with frequency, numeric targets, and date range | `EntityBlocks` · `MetricBlockEditor` |
+|  | Record a metric data point for the current or a past period and track outcome progress over time | `MetricCard` · `RecordValueForm` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |
 |  | Delete the entity (only when it has no children) | `EntityView` |

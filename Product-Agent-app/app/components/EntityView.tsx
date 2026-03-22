@@ -51,7 +51,12 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
       const metricBlock = child.blocks.find((b) => b.type === "metric");
       const childCount = child.children?.length ?? 0;
       if (metricBlock && metricBlock.type === "metric") {
-        preview = `${metricBlock.currentValue} → ${metricBlock.targetValue}${metricBlock.timeframe ? ` · ${metricBlock.timeframe}` : ""}`;
+        if (metricBlock.frequency && metricBlock.numericTarget !== undefined) {
+          const latest = metricBlock.dataSeries?.length ? metricBlock.dataSeries[metricBlock.dataSeries.length - 1].value : metricBlock.initialValue ?? 0;
+          preview = `${latest} → ${metricBlock.numericTarget}`;
+        } else {
+          preview = `${metricBlock.currentValue} → ${metricBlock.targetValue}${metricBlock.timeframe ? ` · ${metricBlock.timeframe}` : ""}`;
+        }
       }
       badge = `${childCount} opportunit${childCount !== 1 ? "ies" : "y"}`;
     }
@@ -146,7 +151,12 @@ function RootView() {
     let preview = "";
     let badge = "";
     if (entity.level === "business_outcome" && metricBlock && metricBlock.type === "metric") {
-      preview = `${metricBlock.currentValue} → ${metricBlock.targetValue}${metricBlock.timeframe ? ` · ${metricBlock.timeframe}` : ""}`;
+      if (metricBlock.frequency && metricBlock.numericTarget !== undefined) {
+        const latest = metricBlock.dataSeries?.length ? metricBlock.dataSeries[metricBlock.dataSeries.length - 1].value : metricBlock.initialValue ?? 0;
+        preview = `${latest} → ${metricBlock.numericTarget}`;
+      } else {
+        preview = `${metricBlock.currentValue} → ${metricBlock.targetValue}${metricBlock.timeframe ? ` · ${metricBlock.timeframe}` : ""}`;
+      }
       badge = `${childCount} product outcome${childCount !== 1 ? "s" : ""}`;
     }
     return { preview: preview || getEntityPreview(entity), badge };
@@ -432,7 +442,7 @@ export function EntityView() {
                       </div>
                       {/* Blocks (without description, already shown above) */}
                       {entity.blocks.map((block) => (
-                        <BlockRenderer key={block.id} block={block} entityId={entity.id} />
+                        <BlockRenderer key={block.id} block={block} entityId={entity.id} entityLevel={entity.level} />
                       ))}
                       <AddBlockButton entityId={entity.id} />
                     </>

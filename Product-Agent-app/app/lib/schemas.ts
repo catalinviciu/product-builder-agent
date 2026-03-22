@@ -133,12 +133,59 @@ export interface QuoteBlock extends BlockBase {
   attribution?: string;
 }
 
+// ── Metric tracking ─────────────────────────────────────────────────────
+
+export type MetricFrequency = "daily" | "weekly" | "monthly";
+
+export interface MetricDataPoint {
+  date: string;   // ISO date YYYY-MM-DD
+  value: number;
+}
+
+export const METRIC_FREQUENCY_LABELS: Record<MetricFrequency, string> = {
+  daily: "Daily",
+  weekly: "Weekly",
+  monthly: "Monthly",
+};
+
+/** Snaps a date to its period boundary based on frequency */
+export function getPeriodDate(date: Date, frequency: MetricFrequency): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  switch (frequency) {
+    case "daily":
+      return `${y}-${m}-${d}`;
+    case "weekly": {
+      // Snap to Monday of the current week
+      const day = date.getDay(); // 0=Sun, 1=Mon, ...
+      const diff = day === 0 ? 6 : day - 1; // days since Monday
+      const monday = new Date(date);
+      monday.setDate(date.getDate() - diff);
+      const wy = monday.getFullYear();
+      const wm = String(monday.getMonth() + 1).padStart(2, "0");
+      const wd = String(monday.getDate()).padStart(2, "0");
+      return `${wy}-${wm}-${wd}`;
+    }
+    case "monthly":
+      return `${y}-${m}-01`;
+  }
+}
+
 export interface MetricBlock extends BlockBase {
   type: "metric";
+  // Legacy fields (kept for backward compat)
   metric: string;
   currentValue: string;
   targetValue: string;
   timeframe?: string;
+  // Structured tracking fields (optional — absent on legacy metrics)
+  frequency?: MetricFrequency;
+  initialValue?: number;
+  numericTarget?: number;
+  startDate?: string;     // ISO date YYYY-MM-DD
+  endDate?: string;       // ISO date YYYY-MM-DD
+  dataSeries?: MetricDataPoint[];
 }
 
 export type Block = AccordionBlock | PillsBlock | QuoteBlock | MetricBlock;

@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { useClickOutside } from "@/app/lib/hooks/useClickOutside";
 import { Pencil, Trash2, Plus, X, Check } from "lucide-react";
 import { cn } from "@/app/lib/utils";
-import type { Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock } from "@/app/lib/schemas";
+import type { Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock, EntityLevel, MetricFrequency } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
 import { MarkdownBlock, MarkdownToolbar } from "./MarkdownToolbar";
 import { AccordionSection } from "./AccordionSection";
@@ -136,25 +136,84 @@ export function QuoteBlockEditor({ block, onSave, onCancel }: { block: QuoteBloc
   );
 }
 
-export function MetricBlockEditor({ block, onSave, onCancel }: { block: MetricBlock; onSave: (b: Partial<MetricBlock>) => void; onCancel: () => void }) {
+export function MetricBlockEditor({ block, onSave, onCancel, entityLevel }: { block: MetricBlock; onSave: (b: Partial<MetricBlock>) => void; onCancel: () => void; entityLevel?: EntityLevel }) {
   const [metric, setMetric] = useState(block.metric);
   const [currentValue, setCurrentValue] = useState(block.currentValue);
   const [targetValue, setTargetValue] = useState(block.targetValue);
   const [timeframe, setTimeframe] = useState(block.timeframe || "");
+  // Structured fields
+  const isOutcome = entityLevel === "business_outcome" || entityLevel === "product_outcome";
+  const [frequency, setFrequency] = useState<MetricFrequency | "">(block.frequency ?? "");
+  const [initialValue, setInitialValue] = useState(block.initialValue !== undefined ? String(block.initialValue) : "");
+  const [numericTarget, setNumericTarget] = useState(block.numericTarget !== undefined ? String(block.numericTarget) : "");
+  const [startDate, setStartDate] = useState(block.startDate ?? "");
+  const [endDate, setEndDate] = useState(block.endDate ?? "");
+
+  const inputCls = "bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus transition-colors";
+
+  const handleSave = () => {
+    const base: Partial<MetricBlock> = { metric, currentValue, targetValue, timeframe: timeframe || undefined };
+    if (isOutcome && frequency) {
+      base.frequency = frequency as MetricFrequency;
+      base.initialValue = initialValue ? parseFloat(initialValue) : undefined;
+      base.numericTarget = numericTarget ? parseFloat(numericTarget) : undefined;
+      base.startDate = startDate || undefined;
+      base.endDate = endDate || undefined;
+    } else if (isOutcome && !frequency) {
+      // Clear structured fields
+      base.frequency = undefined;
+      base.initialValue = undefined;
+      base.numericTarget = undefined;
+      base.startDate = undefined;
+      base.endDate = undefined;
+      base.dataSeries = undefined;
+    }
+    onSave(base);
+  };
+
   return (
     <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
-      <input value={metric} onChange={(e) => setMetric(e.target.value)} placeholder="Metric name"
-        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none" />
+      <input value={metric} onChange={(e) => setMetric(e.target.value)} placeholder="Metric name" className={inputCls} />
       <div className="flex gap-2">
-        <input value={currentValue} onChange={(e) => setCurrentValue(e.target.value)} placeholder="Current"
-          className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none flex-1" />
-        <input value={targetValue} onChange={(e) => setTargetValue(e.target.value)} placeholder="Target"
-          className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none flex-1" />
+        <input value={currentValue} onChange={(e) => setCurrentValue(e.target.value)} placeholder="Current" className={cn(inputCls, "flex-1")} />
+        <input value={targetValue} onChange={(e) => setTargetValue(e.target.value)} placeholder="Target" className={cn(inputCls, "flex-1")} />
       </div>
-      <input value={timeframe} onChange={(e) => setTimeframe(e.target.value)} placeholder="Timeframe (optional)"
-        className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none" />
+      <input value={timeframe} onChange={(e) => setTimeframe(e.target.value)} placeholder="Timeframe (optional)" className={cn(inputCls, "text-xs")} />
+
+      {isOutcome && (
+        <>
+          <div className="border-t border-border-subtle pt-3 mt-1">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">Structured Tracking</span>
+          </div>
+          <select value={frequency} onChange={(e) => setFrequency(e.target.value as MetricFrequency | "")} className={cn(inputCls, "text-xs")}>
+            <option value="">No tracking</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+          {frequency && (
+            <>
+              <div className="flex gap-2">
+                <input type="number" value={initialValue} onChange={(e) => setInitialValue(e.target.value)} placeholder="Initial value" className={cn(inputCls, "flex-1 text-xs")} />
+                <input type="number" value={numericTarget} onChange={(e) => setNumericTarget(e.target.value)} placeholder="Numeric target" className={cn(inputCls, "flex-1 text-xs")} />
+              </div>
+              <div className="flex gap-2">
+                <div className="flex flex-col gap-1 flex-1">
+                  <label className="text-[10px] text-muted-foreground/50">Start date</label>
+                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={cn(inputCls, "text-xs")} />
+                </div>
+                <div className="flex flex-col gap-1 flex-1">
+                  <label className="text-[10px] text-muted-foreground/50">End date</label>
+                  <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={cn(inputCls, "text-xs")} />
+                </div>
+              </div>
+            </>
+          )}
+        </>
+      )}
+
       <div className="flex gap-2">
-        <button onClick={() => onSave({ metric, currentValue, targetValue, timeframe: timeframe || undefined })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
+        <button onClick={handleSave} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
         <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
       </div>
     </div>
@@ -163,7 +222,7 @@ export function MetricBlockEditor({ block, onSave, onCancel }: { block: MetricBl
 
 // ── Block renderer ────────────────────────────────────────────────────────
 
-export function BlockRenderer({ block, entityId }: { block: Block; entityId: string }) {
+export function BlockRenderer({ block, entityId, entityLevel }: { block: Block; entityId: string; entityLevel?: EntityLevel }) {
   const [editing, setEditing] = useState(false);
   const { updateBlock, removeBlock } = useAppStore();
 
@@ -178,7 +237,7 @@ export function BlockRenderer({ block, entityId }: { block: Block; entityId: str
       case "accordion": return <AccordionBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} labelMaxLength={40} contentMaxLength={3000} />;
       case "pills": return <PillsBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
       case "quote": return <QuoteBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
-      case "metric": return <MetricBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
+      case "metric": return <MetricBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} entityLevel={entityLevel} />;
     }
   }
 
@@ -198,7 +257,7 @@ export function BlockRenderer({ block, entityId }: { block: Block; entityId: str
         </blockquote>
       )}
       {block.type === "metric" && (
-        <MetricCard metric={block.metric} currentValue={block.currentValue} targetValue={block.targetValue} timeframe={block.timeframe} />
+        <MetricCard block={block} entityLevel={entityLevel} entityId={entityId} />
       )}
     </div>
   );
@@ -275,7 +334,7 @@ export function BlockList({ entity }: { entity: Entity }) {
         />
       </div>
       {entity.blocks.map((block) => (
-        <BlockRenderer key={block.id} block={block} entityId={entity.id} />
+        <BlockRenderer key={block.id} block={block} entityId={entity.id} entityLevel={entity.level} />
       ))}
       <AddBlockButton entityId={entity.id} />
     </div>
