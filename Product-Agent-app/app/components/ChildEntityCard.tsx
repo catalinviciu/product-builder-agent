@@ -1,21 +1,15 @@
 "use client";
 
-import {
-  Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical, User,
-  type LucideIcon,
-} from "lucide-react";
+import { User } from "lucide-react";
 import type { EntityLevel, EntityStatus } from "@/app/lib/schemas";
 import { LEVEL_META, ENTITY_STATUS_META } from "@/app/lib/schemas";
+import { LEVEL_ICON_MAP } from "@/app/lib/icons";
 import { useAppStore } from "@/app/lib/store";
 import { cn } from "@/app/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { MarkdownBlock } from "./MarkdownToolbar";
-
-const LEVEL_ICON_MAP: Record<string, LucideIcon> = {
-  Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
-};
 
 interface ChildEntityCardProps {
   id: string;

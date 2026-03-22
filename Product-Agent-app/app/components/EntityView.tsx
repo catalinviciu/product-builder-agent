@@ -4,12 +4,11 @@ import { useState, useRef, useEffect } from "react";
 import { MarkdownBlock } from "./MarkdownToolbar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
   ChevronRight, Pencil, Trash2, Plus,
-  type LucideIcon,
 } from "lucide-react";
 import type { Entity, EntityStatus } from "@/app/lib/schemas";
 import { LEVEL_META, CHILD_LEVEL, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getIceScoreColor } from "@/app/lib/schemas";
+import { LEVEL_ICON_MAP } from "@/app/lib/icons";
 import { useAppStore } from "@/app/lib/store";
 import { getEntity, getRootEntities, getEntityPreview, cn, buildRootAnchor } from "@/app/lib/utils";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
@@ -23,10 +22,6 @@ import { BlockRenderer, AddBlockButton, BlockList } from "./EntityBlocks";
 import { IceScorePanel } from "./IceScorePanel";
 import { AddChildForm, AddRootEntityForm } from "./EntityForms";
 import { EntityGridView, type CardDisplayProps } from "./EntityGridView";
-
-const LEVEL_ICON_MAP: Record<string, LucideIcon> = {
-  Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical,
-};
 
 // ── Children grid (now delegates to EntityGridView) ───────────────────────
 

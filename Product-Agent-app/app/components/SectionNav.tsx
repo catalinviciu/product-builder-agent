@@ -3,20 +3,15 @@
 import React, { useState, useRef, useCallback } from "react";
 import { useClickOutside } from "@/app/lib/hooks/useClickOutside";
 import {
-  Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical, LayoutGrid,
-  ChevronDown, Check, Plus, Pencil, X, Trash2,
-  type LucideIcon,
+  LayoutGrid, ChevronDown, Check, Plus, Pencil, X, Trash2,
 } from "lucide-react";
 import type { Entity, ProductLineStatus } from "@/app/lib/schemas";
 import { LEVEL_META, PRODUCT_LINE_STATUS_META, PRODUCT_LINE_STATUSES, ENTITY_STATUS_META } from "@/app/lib/schemas";
+import { LEVEL_ICON_MAP } from "@/app/lib/icons";
 import { cn } from "@/app/lib/utils";
 import { useAppStore } from "@/app/lib/store";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { PersonaManager } from "./PersonaManager";
-
-const LEVEL_ICON_MAP: Record<string, LucideIcon> = {
-  Target, TrendingUp, Lightbulb, Puzzle, HelpCircle, FlaskConical, LayoutGrid,
-};
 
 function NewProductLineForm({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
