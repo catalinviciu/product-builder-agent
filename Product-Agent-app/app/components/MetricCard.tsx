@@ -4,8 +4,9 @@ import { useState, useMemo } from "react";
 import { Plus, Check, X, TrendingUp, TrendingDown, CalendarDays } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ResponsiveContainer, AreaChart, Area, Line, ReferenceLine,
+  ResponsiveContainer, AreaChart, Area, Line, ReferenceLine, Customized,
   Tooltip as RechartsTooltip, XAxis, YAxis, CartesianGrid,
+  useXAxisScale, useYAxisScale, usePlotArea,
 } from "recharts";
 import type { MetricBlock, MetricDataPoint, MetricFrequency, EntityLevel } from "../lib/schemas";
 import { METRIC_FREQUENCY_LABELS, getPeriodDate } from "../lib/schemas";
@@ -25,6 +26,81 @@ function getChartColor(entityLevel?: EntityLevel) {
   return (entityLevel && CHART_COLORS[entityLevel]) || DEFAULT_CHART_COLOR;
 }
 
+// ── Chart overlay components (use Recharts 3 hooks) ───────────────────
+
+function TodayMarker({ todayIso, chartData, color }: {
+  todayIso: string;
+  chartData: { date: string }[];
+  color: { stroke: string };
+}) {
+  const xScale = useXAxisScale();
+  const plotArea = usePlotArea();
+  if (!xScale || !plotArea) return null;
+
+  // Cast scale to callable — Recharts ScaleFunction is callable but typed oddly
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const xFn = xScale as any;
+  const bw = typeof xFn.bandwidth === "function" ? (xFn.bandwidth() as number) : 0;
+
+  // Interpolate today's x position between surrounding data points
+  let todayX: number | null = null;
+  for (let i = 0; i < chartData.length - 1; i++) {
+    if (chartData[i].date <= todayIso && chartData[i + 1].date >= todayIso) {
+      const x0 = (xFn(chartData[i].date) as number) + bw / 2;
+      const x1 = (xFn(chartData[i + 1].date) as number) + bw / 2;
+      const t0 = new Date(chartData[i].date).getTime();
+      const t1 = new Date(chartData[i + 1].date).getTime();
+      const tNow = new Date(todayIso).getTime();
+      const ratio = t1 > t0 ? (tNow - t0) / (t1 - t0) : 0;
+      todayX = x0 + ratio * (x1 - x0);
+      break;
+    }
+  }
+  // If today matches a data point exactly
+  if (todayX === null && chartData.find(d => d.date === todayIso)) {
+    todayX = (xFn(todayIso) as number) + bw / 2;
+  }
+  if (todayX === null) return null;
+
+  return (
+    <g>
+      <line x1={todayX} x2={todayX} y1={plotArea.y} y2={plotArea.y + plotArea.height} stroke={color.stroke} strokeOpacity={0.35} strokeWidth={1} />
+      <text x={todayX + 3} y={plotArea.y + 10} fontSize={9} fill={color.stroke} fillOpacity={0.5}>Today</text>
+    </g>
+  );
+}
+
+function TargetPathLabel({ chartData, color }: {
+  chartData: { date: string; projection?: number }[];
+  color: { stroke: string };
+}) {
+  const xScale = useXAxisScale();
+  const yScale = useYAxisScale();
+  if (!xScale || !yScale) return null;
+
+  const projStart = chartData.find(d => d.projection !== undefined);
+  const projEnd = [...chartData].reverse().find(d => d.projection !== undefined);
+  if (!projStart || !projEnd || projStart === projEnd) return null;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const xFn = xScale as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const yFn = yScale as any;
+  const bw = typeof xFn.bandwidth === "function" ? (xFn.bandwidth() as number) : 0;
+  const x0 = (xFn(projStart.date) as number) + bw / 2;
+  const x1 = (xFn(projEnd.date) as number) + bw / 2;
+  const y0 = yFn(projStart.projection!) as number;
+  const y1 = yFn(projEnd.projection!) as number;
+  const midX = (x0 + x1) / 2;
+  const midY = (y0 + y1) / 2;
+
+  return (
+    <text x={midX} y={midY - 6} textAnchor="middle" fontSize={8} fill={color.stroke} fillOpacity={0.45}>
+      Gap to target
+    </text>
+  );
+}
+
 // ── Custom tooltip ─────────────────────────────────────────────────────
 
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
@@ -39,12 +115,11 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 
 // ── Recharts area chart ────────────────────────────────────────────────
 
-function MetricChart({ dataSeries, target, entityLevel, endDate, frequency, height = 110 }: {
+function MetricChart({ dataSeries, target, entityLevel, endDate, height = 110 }: {
   dataSeries: MetricDataPoint[];
   target?: number;
   entityLevel?: EntityLevel;
   endDate?: string;
-  frequency?: MetricFrequency;
   height?: number;
 }) {
   const color = getChartColor(entityLevel);
@@ -73,45 +148,8 @@ function MetricChart({ dataSeries, target, entityLevel, endDate, frequency, heig
     projection: dp.date === lastPoint.date ? dp.value : undefined as number | undefined,
   }));
 
-  // Insert today marker point if it falls within the chart date range
+  // Today position — calculated as a ratio for drawing a pure visual marker (no data point)
   const todayIso = new Date().toISOString().slice(0, 10);
-  const chartEndDate = hasProjection ? endDate : lastPoint.date;
-  if (todayIso >= dataSeries[0].date && todayIso <= chartEndDate && !chartData.find(d => d.date === todayIso)) {
-    let todayValue: number | undefined = undefined;
-    let todayProjection: number | undefined = undefined;
-
-    if (todayIso <= lastPoint.date) {
-      // Today is within the actual data range — interpolate value so the line stays continuous
-      // Find the two surrounding data points
-      let before = dataSeries[0];
-      let after = dataSeries[dataSeries.length - 1];
-      for (let i = 0; i < dataSeries.length - 1; i++) {
-        if (dataSeries[i].date <= todayIso && dataSeries[i + 1].date >= todayIso) {
-          before = dataSeries[i];
-          after = dataSeries[i + 1];
-          break;
-        }
-      }
-      const t0 = new Date(before.date).getTime();
-      const t1 = new Date(after.date).getTime();
-      const tNow = new Date(todayIso).getTime();
-      const ratio = t1 > t0 ? (tNow - t0) / (t1 - t0) : 0;
-      todayValue = before.value + ratio * (after.value - before.value);
-    } else if (hasProjection && todayIso > lastPoint.date && todayIso < endDate) {
-      // Today is within the projection segment — interpolate projection value
-      const projStart = new Date(lastPoint.date).getTime();
-      const projEnd = new Date(endDate).getTime();
-      const todayTime = new Date(todayIso).getTime();
-      const t = (todayTime - projStart) / (projEnd - projStart);
-      todayProjection = lastPoint.value + t * (target! - lastPoint.value);
-    }
-
-    chartData.push({
-      date: todayIso,
-      value: (todayValue ?? undefined) as unknown as number,
-      projection: todayProjection,
-    });
-  }
 
   if (hasProjection) {
     chartData.push({
@@ -130,11 +168,10 @@ function MetricChart({ dataSeries, target, entityLevel, endDate, frequency, heig
   const yMin = Math.min(...allValues) - 1;
   const yMax = Math.max(...allValues) + 1;
 
-  // Today marker — use actual today so it shows at the right position on the timeline
-  const todayStr = new Date().toISOString().slice(0, 10);
+  // Today marker — is today within the chart's date range?
   const firstDate = chartData[0].date;
   const lastDate = chartData[chartData.length - 1].date;
-  const showToday = todayStr >= firstDate && todayStr <= lastDate;
+  const showToday = todayIso >= firstDate && todayIso <= lastDate;
 
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -159,13 +196,7 @@ function MetricChart({ dataSeries, target, entityLevel, endDate, frequency, heig
           />
         )}
         {showToday && (
-          <ReferenceLine
-            x={todayStr}
-            stroke={color.stroke}
-            strokeOpacity={0.35}
-            strokeWidth={1}
-            label={{ value: "Today", position: "insideTopLeft", fontSize: 9, fill: color.stroke, opacity: 0.5 }}
-          />
+          <Customized component={<TodayMarker todayIso={todayIso} chartData={chartData} color={color} />} />
         )}
         <Area
           type="monotone"
@@ -173,61 +204,25 @@ function MetricChart({ dataSeries, target, entityLevel, endDate, frequency, heig
           stroke={color.stroke}
           strokeWidth={2}
           fill={`url(#${gradientId})`}
-          dot={(props: Record<string, unknown>) => {
-            const { cx, cy, index } = props as { cx: number; cy: number; index: number };
-            if (!cx || !cy) return <g key={`dot-${index}`} />;
-            // Hide dot for interpolated today point — it's not a real data point
-            const point = chartData[index];
-            if (point && point.date === todayIso && !dataSeries.find(dp => dp.date === todayIso)) {
-              return <g key={`dot-${index}`} />;
-            }
-            return <circle key={`dot-${index}`} cx={cx} cy={cy} r={2.5} fill={color.stroke} strokeWidth={0} />;
-          }}
+          dot={{ r: 2.5, fill: color.stroke, strokeWidth: 0 }}
           activeDot={{ r: 4, fill: color.stroke, strokeWidth: 2, stroke: "var(--surface-2)" }}
           connectNulls
         />
         {hasProjection && (
-          <Line
-            type="monotone"
-            dataKey="projection"
-            stroke={color.stroke}
-            strokeWidth={1.5}
-            strokeDasharray="6 4"
-            strokeOpacity={0.25}
-            dot={(props: Record<string, unknown>) => {
-              const { cx, cy, index } = props as { cx: number; cy: number; index: number };
-              if (!cx || !cy) return <g key={`proj-${index}`} />;
-              // Place "Projection" label at the true visual midpoint of the dashed line
-              const projPoints = chartData
-                .map((d, i) => d.projection !== undefined ? { i, cx: 0 } : null)
-                .filter((p): p is { i: number; cx: number } => p !== null);
-              if (projPoints.length >= 2) {
-                const firstIdx = projPoints[0].i;
-                const lastIdx = projPoints[projPoints.length - 1].i;
-                // Pick the projection point closest to the visual center
-                const centerIdx = (firstIdx + lastIdx) / 2;
-                let closestProjIdx = projPoints[0].i;
-                let closestDist = Math.abs(projPoints[0].i - centerIdx);
-                for (const p of projPoints) {
-                  const dist = Math.abs(p.i - centerIdx);
-                  if (dist < closestDist) {
-                    closestDist = dist;
-                    closestProjIdx = p.i;
-                  }
-                }
-                if (index === closestProjIdx) {
-                  return (
-                    <text key={`proj-${index}`} x={cx} y={cy - 6} textAnchor="middle" fontSize={8} fill={color.stroke} fillOpacity={0.45}>
-                      Projection
-                    </text>
-                  );
-                }
-              }
-              return <g key={`proj-${index}`} />;
-            }}
-            activeDot={false}
-            connectNulls
-          />
+          <>
+            <Line
+              type="monotone"
+              dataKey="projection"
+              stroke={color.stroke}
+              strokeWidth={1.5}
+              strokeDasharray="6 4"
+              strokeOpacity={0.25}
+              dot={false}
+              activeDot={false}
+              connectNulls
+            />
+            <Customized component={<TargetPathLabel chartData={chartData} color={color} />} />
+          </>
         )}
       </AreaChart>
     </ResponsiveContainer>
@@ -246,13 +241,13 @@ function TrendIndicator({ dataSeries }: { dataSeries: MetricDataPoint[] }) {
   if (diff > 0) return (
     <span className="inline-flex items-center gap-0.5 text-emerald-500 dark:text-emerald-400">
       <TrendingUp size={14} />
-      {pctLabel && <span className="text-[10px] font-medium">+{pctLabel}</span>}
+      <span className="text-[10px] font-medium">+{pctLabel || String(diff)}</span>
     </span>
   );
   if (diff < 0) return (
     <span className="inline-flex items-center gap-0.5 text-rose-500 dark:text-rose-400">
       <TrendingDown size={14} />
-      {pctLabel && <span className="text-[10px] font-medium">-{pctLabel}</span>}
+      <span className="text-[10px] font-medium">-{pctLabel || String(Math.abs(diff))}</span>
     </span>
   );
   return <span className="text-[10px] text-muted-foreground/40 font-medium">no change</span>;
@@ -460,7 +455,7 @@ export function MetricCard({ block, entityLevel, entityId }: {
                 <span className="text-5xl font-bold text-foreground leading-none">{currentValue}</span>
                 <TrendIndicator dataSeries={series} />
               </div>
-              <span className="text-[10px] text-muted-foreground/50 mt-1">Current{lastRecordedDate ? ` · ${formatShortDate(lastRecordedDate)}` : ""}</span>
+              <span className="text-[10px] text-muted-foreground/60 mt-1">Current{lastRecordedDate ? ` · ${formatShortDate(lastRecordedDate)}` : ""}</span>
             </div>
 
             {/* Vertical divider */}
@@ -470,12 +465,12 @@ export function MetricCard({ block, entityLevel, entityId }: {
             <div className="flex items-center gap-2 min-w-0">
               <div className="flex flex-col">
                 <span className="text-lg font-semibold text-foreground/35 leading-none">{startingValue}</span>
-                <span className="text-[9px] text-muted-foreground/40 mt-0.5">Start{block.startDate ? ` · ${formatShortDate(block.startDate)}` : ""}</span>
+                <span className="text-[10px] text-muted-foreground/60 mt-0.5">Start{block.startDate ? ` · ${formatShortDate(block.startDate)}` : ""}</span>
               </div>
               <span className="text-muted-foreground/30 text-sm">→</span>
               <div className="flex flex-col">
                 <span className="text-lg font-semibold text-foreground/35 leading-none">{target ?? block.targetValue}</span>
-                <span className="text-[9px] text-muted-foreground/40 mt-0.5">Target{block.endDate ? ` · ${formatShortDate(block.endDate)}` : ""}</span>
+                <span className="text-[10px] text-muted-foreground/60 mt-0.5">Target{block.endDate ? ` · ${formatShortDate(block.endDate)}` : ""}</span>
               </div>
             </div>
           </div>
@@ -502,7 +497,7 @@ export function MetricCard({ block, entityLevel, entityId }: {
 
         {/* Right: Recharts area chart */}
         <div className="md:w-[65%] min-w-0 bg-surface-1 rounded-lg border border-border-subtle p-1.5">
-          <MetricChart dataSeries={series} target={target} entityLevel={entityLevel} endDate={block.endDate} frequency={block.frequency} />
+          <MetricChart dataSeries={series} target={target} entityLevel={entityLevel} endDate={block.endDate} />
         </div>
       </div>
     </div>
