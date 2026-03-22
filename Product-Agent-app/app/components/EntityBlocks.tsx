@@ -14,7 +14,7 @@ import { EditableText } from "./EditableText";
 
 // ── Block toolbar ─────────────────────────────────────────────────────────
 
-export function BlockToolbar({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
+export function BlockToolbar({ onEdit, onDelete, canDelete = true }: { onEdit: () => void; onDelete: () => void; canDelete?: boolean }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
@@ -22,19 +22,21 @@ export function BlockToolbar({ onEdit, onDelete }: { onEdit: () => void; onDelet
       <button onClick={onEdit} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 hover:text-foreground transition-colors">
         <Pencil size={12} />
       </button>
-      {confirmDelete ? (
-        <div className="flex gap-1">
-          <button onClick={onDelete} className="cursor-pointer p-1.5 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 transition-colors text-[10px] font-medium px-2">
-            Delete
+      {canDelete && (
+        confirmDelete ? (
+          <div className="flex gap-1">
+            <button onClick={onDelete} className="cursor-pointer p-1.5 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 transition-colors text-[10px] font-medium px-2">
+              Delete
+            </button>
+            <button onClick={() => setConfirmDelete(false)} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 transition-colors text-[10px] px-2">
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button onClick={() => setConfirmDelete(true)} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+            <Trash2 size={12} />
           </button>
-          <button onClick={() => setConfirmDelete(false)} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 transition-colors text-[10px] px-2">
-            Cancel
-          </button>
-        </div>
-      ) : (
-        <button onClick={() => setConfirmDelete(true)} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 hover:text-red-600 dark:hover:text-red-400 transition-colors">
-          <Trash2 size={12} />
-        </button>
+        )
       )}
     </div>
   );
@@ -257,9 +259,12 @@ export function BlockRenderer({ block, entityId, entityLevel }: { block: Block; 
     }
   }
 
+  const isOutcome = entityLevel === "business_outcome" || entityLevel === "product_outcome";
+  const canDelete = !(block.type === "metric" && isOutcome);
+
   return (
     <div className="relative group/block">
-      <BlockToolbar onEdit={() => setEditing(true)} onDelete={handleDelete} />
+      <BlockToolbar onEdit={() => setEditing(true)} onDelete={handleDelete} canDelete={canDelete} />
       {block.type === "accordion" && (
         <AccordionSection label={block.label} defaultOpen={block.defaultOpen}>
           <MarkdownBlock content={block.content} />

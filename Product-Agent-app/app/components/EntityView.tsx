@@ -19,6 +19,8 @@ import { AIActionsMenu, RootAIActionsButton } from "./AIActionsMenu";
 import { StatusPicker, PersonaPicker, SecondaryPersonaPicker, AssumptionTypePicker, TestTypePicker } from "./EntityPickers";
 import { EditableText } from "./EditableText";
 import { BlockRenderer, AddBlockButton, BlockList } from "./EntityBlocks";
+import { MetricCard } from "./MetricCard";
+import type { MetricBlock } from "@/app/lib/schemas";
 import { IceScorePanel } from "./IceScorePanel";
 import { AddChildForm, AddRootEntityForm } from "./EntityForms";
 import { EntityGridView, type CardDisplayProps } from "./EntityGridView";
@@ -405,6 +407,16 @@ export function EntityView() {
                 <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-background to-transparent pointer-events-none" />
               </div>
             )}
+
+            {/* Collapsed metric card for BO/PO */}
+            {!expanded && (entity.level === "business_outcome" || entity.level === "product_outcome") && (() => {
+              const metricBlock = entity.blocks.find(b => b.type === "metric") as MetricBlock | undefined;
+              return metricBlock ? (
+                <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                  <MetricCard block={metricBlock} entityLevel={entity.level} />
+                </div>
+              ) : null;
+            })()}
 
             {/* Collapsed hint: block count */}
             {!expanded && hasBlocks && (

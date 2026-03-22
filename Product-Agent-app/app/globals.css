@@ -268,7 +268,10 @@
 }
 
 /* ── Metric calendar recorded-date dot ── */
-.metric-calendar-recorded .rdp-day_button::after {
+td.metric-calendar-recorded button {
+  position: relative;
+}
+td.metric-calendar-recorded button::after {
   content: "";
   position: absolute;
   bottom: 2px;
