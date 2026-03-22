@@ -28,6 +28,7 @@ export interface MetricChartProps {
   endDate?: string;
   height?: number;
   color?: ChartColorConfig;
+  formatValue?: (value: number) => string;
   className?: string;
 }
 
@@ -104,16 +105,18 @@ function TargetPathLabel({ chartData, color }: {
   );
 }
 
-function ChartTooltip({ active, payload, label }: {
+function ChartTooltip({ active, payload, label, formatValue }: {
   active?: boolean;
   payload?: Array<{ value: number }>;
   label?: string;
+  formatValue?: (value: number) => string;
 }) {
   if (!active || !payload?.length) return null;
+  const fmtVal = formatValue ? formatValue(payload[0].value) : payload[0].value;
   return (
     <div className="bg-popover border border-border-default rounded-lg shadow-md px-2.5 py-1.5 text-xs">
       <div className="text-muted-foreground/60">{label}</div>
-      <div className="font-semibold text-foreground">{payload[0].value}</div>
+      <div className="font-semibold text-foreground">{fmtVal}</div>
     </div>
   );
 }
@@ -126,6 +129,7 @@ function MetricChart({
   endDate,
   height = 110,
   color = DEFAULT_CHART_COLOR,
+  formatValue,
   className,
 }: MetricChartProps) {
   const uid = React.useId();
@@ -188,14 +192,14 @@ function MetricChart({
           <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.06} vertical={false} />
           <XAxis dataKey="date" hide />
           <YAxis hide domain={[yMin, yMax]} />
-          <RechartsTooltip content={<ChartTooltip />} cursor={{ stroke: color.stroke, strokeOpacity: 0.2 }} />
+          <RechartsTooltip content={<ChartTooltip formatValue={formatValue} />} cursor={{ stroke: color.stroke, strokeOpacity: 0.2 }} />
           {target !== undefined && (
             <ReferenceLine
               y={target}
               stroke="#888"
               strokeDasharray="4 3"
               strokeWidth={1}
-              label={{ value: `Target: ${target}`, position: "insideBottomRight", fontSize: 9, fill: "#888" }}
+              label={{ value: `Target: ${formatValue ? formatValue(target) : target}`, position: "insideBottomRight", fontSize: 9, fill: "#888" }}
             />
           )}
           {showToday && (

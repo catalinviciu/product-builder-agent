@@ -4,7 +4,8 @@ import { useState, useRef, useCallback } from "react";
 import { useClickOutside } from "@/app/lib/hooks/useClickOutside";
 import { Pencil, Trash2, Plus, X, Check } from "lucide-react";
 import { cn } from "@/app/lib/utils";
-import type { Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock, EntityLevel, MetricFrequency } from "@/app/lib/schemas";
+import type { Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock, EntityLevel, MetricFrequency, MetricValueFormat } from "@/app/lib/schemas";
+import { METRIC_VALUE_FORMAT_LABELS } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
 import { MarkdownBlock, MarkdownToolbar } from "./MarkdownToolbar";
 import { AccordionSection } from "./AccordionSection";
@@ -146,6 +147,7 @@ export function MetricBlockEditor({ block, onSave, onCancel, entityLevel }: { bl
   // Structured fields
   const isOutcome = entityLevel === "business_outcome" || entityLevel === "product_outcome";
   const [frequency, setFrequency] = useState<MetricFrequency | "">(block.frequency ?? (isOutcome ? "weekly" : ""));
+  const [valueFormat, setValueFormat] = useState<MetricValueFormat>(block.valueFormat ?? "number");
   const [initialValue, setInitialValue] = useState(block.initialValue !== undefined ? String(block.initialValue) : "");
   const [numericTarget, setNumericTarget] = useState(block.numericTarget !== undefined ? String(block.numericTarget) : "");
   const [startDate, setStartDate] = useState(block.startDate ?? "");
@@ -158,6 +160,7 @@ export function MetricBlockEditor({ block, onSave, onCancel, entityLevel }: { bl
     if (isOutcome) {
       // BO/PO always save structured fields
       base.frequency = (frequency || "weekly") as MetricFrequency;
+      base.valueFormat = valueFormat;
       base.initialValue = initialValue ? parseFloat(initialValue) : undefined;
       base.numericTarget = numericTarget ? parseFloat(numericTarget) : undefined;
       base.startDate = startDate || undefined;
@@ -194,11 +197,18 @@ export function MetricBlockEditor({ block, onSave, onCancel, entityLevel }: { bl
           <div className="border-t border-border-subtle pt-3 mt-1">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">Structured Tracking</span>
           </div>
-          <select value={frequency || "weekly"} onChange={(e) => setFrequency(e.target.value as MetricFrequency)} className={cn(inputCls, "text-xs")}>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-          </select>
+          <div className="flex gap-2">
+            <select value={valueFormat} onChange={(e) => setValueFormat(e.target.value as MetricValueFormat)} className={cn(inputCls, "flex-1 text-xs")}>
+              {Object.entries(METRIC_VALUE_FORMAT_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+            <select value={frequency || "weekly"} onChange={(e) => setFrequency(e.target.value as MetricFrequency)} className={cn(inputCls, "flex-1 text-xs")}>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
           <div className="flex gap-2">
             <input type="number" value={initialValue} onChange={(e) => setInitialValue(e.target.value)} placeholder="Initial value" className={cn(inputCls, "flex-1 text-xs")} />
             <input type="number" value={numericTarget} onChange={(e) => setNumericTarget(e.target.value)} placeholder="Numeric target" className={cn(inputCls, "flex-1 text-xs")} />

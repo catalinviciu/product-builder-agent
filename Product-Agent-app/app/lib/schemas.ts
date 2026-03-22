@@ -172,6 +172,27 @@ export function getPeriodDate(date: Date, frequency: MetricFrequency): string {
   }
 }
 
+export type MetricValueFormat = "number" | "currency_usd" | "currency_eur" | "currency_gbp" | "percentage";
+
+export const METRIC_VALUE_FORMAT_LABELS: Record<MetricValueFormat, string> = {
+  number: "Number",
+  currency_usd: "USD ($)",
+  currency_eur: "EUR (€)",
+  currency_gbp: "GBP (£)",
+  percentage: "Percentage (%)",
+};
+
+export function formatMetricValue(value: number, format?: MetricValueFormat): string {
+  const f = format ?? "number";
+  switch (f) {
+    case "currency_usd": return `$${value.toLocaleString()}`;
+    case "currency_eur": return `€${value.toLocaleString()}`;
+    case "currency_gbp": return `£${value.toLocaleString()}`;
+    case "percentage":   return `${value}%`;
+    default:             return value.toLocaleString();
+  }
+}
+
 export interface MetricBlock extends BlockBase {
   type: "metric";
   // Legacy fields (kept for backward compat)
@@ -181,6 +202,7 @@ export interface MetricBlock extends BlockBase {
   timeframe?: string;
   // Structured tracking fields (optional — absent on legacy metrics)
   frequency?: MetricFrequency;
+  valueFormat?: MetricValueFormat;
   initialValue?: number;
   numericTarget?: number;
   startDate?: string;     // ISO date YYYY-MM-DD
@@ -359,14 +381,14 @@ export function createBlockTemplate(level: EntityLevel, entityId: string): Block
   switch (level) {
     case "business_outcome":
       return [
-        { id: `${entityId}-b${ts}`, type: "metric", metric: "Key Metric", currentValue: "", targetValue: "", frequency: "weekly", initialValue: 0, numericTarget: 0, startDate: "", endDate: "" },
+        { id: `${entityId}-b${ts}`, type: "metric", metric: "Key Metric", currentValue: "", targetValue: "", frequency: "weekly", valueFormat: "number", initialValue: 0, numericTarget: 0, startDate: "", endDate: "" },
         { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Strategic Alignment", content: "*How does this outcome connect to the company's strategy or OKRs?*" },
         { id: `${entityId}-b${ts + 2}`, type: "accordion", label: "Why Now", content: "*What makes this outcome urgent or timely?*" },
         { id: `${entityId}-b${ts + 3}`, type: "accordion", label: "Risk of Inaction", content: "*What happens if we don't pursue this outcome?*" },
       ];
     case "product_outcome":
       return [
-        { id: `${entityId}-b${ts}`, type: "metric", metric: "Key Metric", currentValue: "", targetValue: "", frequency: "weekly", initialValue: 0, numericTarget: 0, startDate: "", endDate: "" },
+        { id: `${entityId}-b${ts}`, type: "metric", metric: "Key Metric", currentValue: "", targetValue: "", frequency: "weekly", valueFormat: "number", initialValue: 0, numericTarget: 0, startDate: "", endDate: "" },
         { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Strategic Alignment", content: "*How does this product outcome map to the business outcome above?*" },
         { id: `${entityId}-b${ts + 2}`, type: "accordion", label: "Constraints", content: "*What technical, business, or resource constraints shape this outcome?*" },
         { id: `${entityId}-b${ts + 3}`, type: "accordion", label: "Trade-offs", content: "*What are we choosing not to do? What trade-offs are we accepting?*" },

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Plus, Check, X, CalendarDays } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MetricBlock, MetricFrequency, EntityLevel } from "../lib/schemas";
-import { METRIC_FREQUENCY_LABELS, getPeriodDate } from "../lib/schemas";
+import { METRIC_FREQUENCY_LABELS, getPeriodDate, formatMetricValue } from "../lib/schemas";
 import { useAppStore } from "../lib/store";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -194,6 +194,7 @@ export function MetricCard({ block, entityLevel, entityId }: {
   const target = block.numericTarget;
   const lastRecordedDate = series.length > 0 ? series[series.length - 1].date : undefined;
   const color = getChartColor(entityLevel);
+  const fmt = (v: number) => formatMetricValue(v, block.valueFormat);
 
   const formatShortDate = (dateStr: string) => {
     const d = new Date(dateStr + "T00:00:00");
@@ -218,7 +219,7 @@ export function MetricCard({ block, entityLevel, entityId }: {
             {/* Current — hero */}
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-5xl font-bold text-foreground leading-none">{currentValue}</span>
+                <span className="text-5xl font-bold text-foreground leading-none">{fmt(currentValue)}</span>
                 <TrendIndicator dataSeries={series} />
               </div>
               <span className="text-[10px] text-muted-foreground/60 mt-1">
@@ -232,14 +233,14 @@ export function MetricCard({ block, entityLevel, entityId }: {
             {/* Start → Target */}
             <div className="flex items-center gap-2 min-w-0">
               <div className="flex flex-col">
-                <span className="text-lg font-semibold text-foreground/35 leading-none">{startingValue}</span>
+                <span className="text-lg font-semibold text-foreground/35 leading-none">{fmt(startingValue)}</span>
                 <span className="text-[10px] text-muted-foreground/60 mt-0.5">
                   Start{block.startDate ? ` · ${formatShortDate(block.startDate)}` : ""}
                 </span>
               </div>
               <span className="text-muted-foreground/30 text-sm">→</span>
               <div className="flex flex-col">
-                <span className="text-lg font-semibold text-foreground/35 leading-none">{target ?? block.targetValue}</span>
+                <span className="text-lg font-semibold text-foreground/35 leading-none">{target !== undefined ? fmt(target) : block.targetValue}</span>
                 <span className="text-[10px] text-muted-foreground/60 mt-0.5">
                   Target{block.endDate ? ` · ${formatShortDate(block.endDate)}` : ""}
                 </span>
@@ -274,6 +275,7 @@ export function MetricCard({ block, entityLevel, entityId }: {
             target={target}
             endDate={block.endDate}
             color={color}
+            formatValue={fmt}
           />
         </div>
       </div>
