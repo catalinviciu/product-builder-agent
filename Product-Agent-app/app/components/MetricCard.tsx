@@ -172,6 +172,13 @@ export function MetricCard({ block, entityLevel, entityId }: {
   const [recording, setRecording] = useState(false);
   const isStructured = block.frequency !== undefined;
 
+  // Hooks must be called unconditionally (before any early return)
+  const productLine = useProductLine();
+  const solutionMarkers = useMemo(() => {
+    if (entityLevel !== "product_outcome" || !entityId) return undefined;
+    return selectDoneSolutionsForProductOutcome(productLine.entities, entityId);
+  }, [entityLevel, entityId, productLine.entities]);
+
   // Legacy display
   if (!isStructured) {
     return (
@@ -197,12 +204,6 @@ export function MetricCard({ block, entityLevel, entityId }: {
   const lastRecordedDate = series.length > 0 ? series[series.length - 1].date : undefined;
   const color = getChartColor(entityLevel);
   const fmt = (v: number) => formatMetricValue(v, block.valueFormat);
-
-  const productLine = useProductLine();
-  const solutionMarkers = useMemo(() => {
-    if (entityLevel !== "product_outcome" || !entityId) return undefined;
-    return selectDoneSolutionsForProductOutcome(productLine.entities, entityId);
-  }, [entityLevel, entityId, productLine.entities]);
 
   const formatShortDate = (dateStr: string) => {
     const d = new Date(dateStr + "T00:00:00");
