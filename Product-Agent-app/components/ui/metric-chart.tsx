@@ -40,12 +40,15 @@ export interface MetricChartProps {
 
 // ── Internal overlay components ─────────────────────────────────────────
 
-function TodayMarker({ todayIso, chartData, color }: {
+const CHART_LABEL_COLOR = "#6b7280"; // gray-500 — readable on both light & dark
+
+function TodayMarker({ todayIso, chartData, target }: {
   todayIso: string;
   chartData: { date: string }[];
-  color: ChartColorConfig;
+  target?: number;
 }) {
   const xScale = useXAxisScale();
+  const yScale = useYAxisScale();
   const plotArea = usePlotArea();
   if (!xScale || !plotArea) return null;
 
@@ -72,10 +75,15 @@ function TodayMarker({ todayIso, chartData, color }: {
   }
   if (todayX === null || isNaN(todayX)) return null;
 
+  // Align label Y with the target reference line; fall back to top of plot area
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const yFn = yScale as any;
+  const labelY = target !== undefined && yFn ? (yFn(target) as number) + 12 : plotArea.y + 10;
+
   return (
     <g>
-      <line x1={todayX} x2={todayX} y1={plotArea.y} y2={plotArea.y + plotArea.height} stroke={color.stroke} strokeOpacity={0.35} strokeWidth={1} />
-      <text x={todayX + 3} y={plotArea.y + 10} fontSize={9} fill={color.stroke} fillOpacity={0.5}>Today</text>
+      <line x1={todayX} x2={todayX} y1={plotArea.y} y2={plotArea.y + plotArea.height} stroke={CHART_LABEL_COLOR} strokeOpacity={0.35} strokeWidth={1} />
+      <text x={todayX + 3} y={labelY} fontSize={9} fill={CHART_LABEL_COLOR}>Today</text>
     </g>
   );
 }
@@ -103,6 +111,7 @@ function TargetPathLabel({ chartData, color }: {
   const y1 = yFn(projEnd.projection!) as number;
   const midX = (x0 + x1) / 2;
   const midY = (y0 + y1) / 2;
+  if (isNaN(midX) || isNaN(midY)) return null;
 
   return (
     <text x={midX} y={midY - 6} textAnchor="middle" fontSize={8} fill={color.stroke} fillOpacity={0.45}>
@@ -358,8 +367,12 @@ function MetricChart({
 
   const allValues = dataSeries.map((dp) => dp.value);
   if (target !== undefined) allValues.push(target);
-  const yMin = Math.min(...allValues) - 1;
-  const yMax = Math.max(...allValues) + 1;
+  const rawMin = Math.min(...allValues);
+  const rawMax = Math.max(...allValues);
+  const range = rawMax - rawMin || 1;
+  const padding = range * 0.1;
+  const yMin = rawMin - padding;
+  const yMax = rawMax + padding;
 
   const firstDate = chartData[0].date;
   const lastDate = chartData[chartData.length - 1].date;
@@ -385,14 +398,14 @@ function MetricChart({
           {target !== undefined && (
             <ReferenceLine
               y={target}
-              stroke="#888"
+              stroke={CHART_LABEL_COLOR}
               strokeDasharray="4 3"
               strokeWidth={1}
-              label={{ value: `Target: ${formatValue ? formatValue(target) : target}`, position: "insideBottomRight", fontSize: 9, fill: "#888" }}
+              label={{ value: `Target: ${formatValue ? formatValue(target) : target}`, position: "insideBottomRight", fontSize: 9, fill: CHART_LABEL_COLOR }}
             />
           )}
           {showToday && (
-            <Customized component={<TodayMarker todayIso={todayIso} chartData={chartData} color={color} />} />
+            <Customized component={<TodayMarker todayIso={todayIso} chartData={chartData} target={target} />} />
           )}
           <Area
             type="monotone"
