@@ -1,7 +1,7 @@
 ---
 name: wip-briefing
 description: Reads a product line from Product Agent's store.json and generates a Product Line WIP Briefing per active product outcome — covering metric health, management health signals, critical proposals, and key insights. Read-only — does not modify any data.
-version: 1.0
+version: 1.1
 ---
 
 # ROLE AND PURPOSE
@@ -78,10 +78,10 @@ Opportunities with status `commit`. For each:
 
 | # | Opportunity | Solutions | Management health |
 |---|-------------|-----------|-------------------|
-| N | {title} [`{id}`] | {count} commit, {count} explore | {signal or "Clean"} |
+| N | {title} | {count} commit, {count} explore | {signal or "Clean"} |
 
 Then for each opportunity, a detail section with:
-- Solutions table (title, ID, status, notes)
+- Solutions table (title, status, notes)
 - Assumptions and tests breakdown (if any)
 - **Snapshot**: 1-2 sentence summary of where things stand
 - **To progress**: specific next action
@@ -101,11 +101,13 @@ Include for each:
 
 ## 5. Done — Impact on Product Outcome
 
-For opportunities/solutions with status `done`:
+**Only solutions with status `done` appear in this section.** `done` means shipped — the solution was built, delivered, and is live. `commit` means decided-to-build — the solution has NOT shipped and CANNOT have driven metric impact. Never include `commit` solutions in impact assessment.
 
-| Solution | ID | Impact on PO metric | Assessment |
-|----------|----|--------------------|------------|
-| {title} | {id} | High/Medium/Low | {1-sentence reasoning} |
+For solutions with status `done`:
+
+| Solution | Impact on PO metric | Assessment |
+|----------|---------------------|------------|
+| {title} | High/Medium/Low | {1-sentence reasoning} |
 
 Assess impact by reasoning about whether the solution directly drives the PO metric or is indirect/supportive.
 
@@ -132,6 +134,8 @@ An opportunity in `commit` status means: opportunity and solution exploration is
 
 **Signal if violated:** "No committed solution backing this committed opportunity — sloppy management. **Fix:** promote the most ready solution to commit, or demote the opportunity back to explore."
 
+**`done` solutions under a committed opportunity:** A `done` solution has shipped — it is past `commit`, which is stronger. However, if *all* solutions are either `done` or `explore` (none currently in `commit`), flag a decision point: the opportunity itself may be ready to close as `done` (if the done solutions fully address it), or a remaining explore solution needs to be committed to justify keeping the opportunity open in `commit`.
+
 ## Explore Rule
 
 An opportunity in `explore` status means: either the opportunity is not yet fully defined, or the solutions under it are still being explored.
@@ -144,7 +148,7 @@ An opportunity in `explore` status means: either the opportunity is not yet full
 
 1. **Skip** opportunities with status `draft` or `dropped` — not relevant to WIP.
 2. **Skip** POs with status `draft`, `dropped`, or `archived`.
-3. **Reference entities by name AND ID** — e.g., `"Reduce checkout friction" [abc-123]` — so the builder can look them up.
+3. **Reference entities by their title**, not by ID. The builder sees titles in the app — IDs are internal codes they cannot look up. Use the full title or natural shorthand (e.g., "the airplane view opportunity"). IDs may appear in table columns for structural reference but must never be used in prose (proposals, snapshots, key insights, "to progress" sections).
 4. **Business outcomes are excluded** — focus exclusively on product outcomes and their descendants.
 5. **statusHistory dates**: If `statusHistory` exists, use it to determine when entities changed status. Note that backfilled entries (all entities got today's date when the feature was added) may not reflect actual historical dates.
 
@@ -156,7 +160,7 @@ An opportunity in `explore` status means: either the opportunity is not yet full
 - Use tables for metric health, opportunity listings, and solution breakdowns
 - Use blockquote callouts (`> **Signal:**`) for management health violations
 - Use numbered proposals for critical actions
-- Use bold for entity names, IDs in backtick brackets
+- Use **bold for entity titles** in prose — never reference entities by ID in prose
 - Sections use `##` headers with emoji prefixes for scannability
 
 ---
@@ -236,18 +240,18 @@ The solution went explore to commit to explore — the only regression in the tr
 
 | # | Opportunity | Solutions | Management health |
 |---|-------------|-----------|-------------------|
-| 1 | Builder has no airplane view of in-flight work [`efc2b511`] | 1 explore, 1 explore (reverted from commit), 3 dropped | Clean |
-| 2 | Builders can't see the relationship between outcomes [`e685172d`] | 2 explore (1 with active assumptions), 1 dropped | Clean |
+| 1 | Builder has no airplane view of in-flight work | 1 explore, 1 explore (reverted from commit), 3 dropped | Clean |
+| 2 | Builders can't see the relationship between outcomes | 2 explore (1 with active assumptions), 1 dropped | Clean |
 
 ---
 
 ### Opportunity 1 — Builder has no airplane view of in-flight work
-`efc2b511` · explore
+explore
 
 | Solution | Status | Notes |
 |----------|--------|-------|
-| AI Strategy Briefing — WIP Narrative [`e6696f23`] | `explore` | Was in commit, then reverted |
-| Runway Board — Commit vs Explore Lanes [`d5184e3f`] | `explore` | No assumptions defined |
+| AI Strategy Briefing — WIP Narrative | `explore` | Was in commit, then reverted |
+| Runway Board — Commit vs Explore Lanes | `explore` | No assumptions defined |
 
 **Snapshot:** This report is being generated right now — the AI Briefing concept is proven. The revert means it's not being actively built yet.
 
@@ -256,17 +260,17 @@ The solution went explore to commit to explore — the only regression in the tr
 ---
 
 ### Opportunity 2 — Builders can't see the relationship between outcomes
-`e685172d` · explore
+explore
 
 #### Solution: Outcomes relationship as property + strategy map visualization
-`a9285e62` · explore
+explore
 
 | Assumption | Status | Test | Test status |
 |------------|--------|------|-------------|
-| Read-only tree is sufficient | `explore` | "Fix the wrong connection" prototype [`9452f07f`] | `commit` |
-| Single-parent relationships are valuable enough | `commit` | LinkedIn survey [`345ea6ba`] | `commit` |
-| Builders can identify target from dropdown | `explore` | Timed dropdown selection test [`692c8d90`] | **`draft` — not started** |
-| Auto-layout stays readable for complex strategies | `explore` | Readability test [`fe16ae4b`] | **`draft` — not started** |
+| Read-only tree is sufficient | `explore` | "Fix the wrong connection" prototype | `commit` |
+| Single-parent relationships are valuable enough | `commit` | LinkedIn survey | `commit` |
+| Builders can identify target from dropdown | `explore` | Timed dropdown selection test | **`draft` — not started** |
+| Auto-layout stays readable for complex strategies | `explore` | Readability test | **`draft` — not started** |
 
 **Snapshot:** 2 tests running, 2 never started. The 2 draft tests are the active blocker.
 
@@ -278,11 +282,11 @@ The solution went explore to commit to explore — the only regression in the tr
 
 PO metric moved **0 to 1** between Mar 2 and Mar 9, then flat.
 
-| Solution | ID | Impact on "builders shipping" | Assessment |
-|----------|----|-----------------------------|------------|
-| Solution Context anchor prompt | `1e70fd31` | **High** | Core friction removal. Likely contributor to 0-to-1 movement. |
-| Contextual AI Actions Menu | `4008aef9` | **Medium** | Makes workflow discoverable — accelerates onboarding. |
-| Opportunity Writing AI Skill | `939d0a27` | **Medium** | Deepens use per session — doesn't bring new builders in. |
+| Solution | Impact on "builders shipping" | Assessment |
+|----------|-------------------------------|------------|
+| Solution Context anchor prompt | **High** | Core friction removal. Likely contributor to 0-to-1 movement. |
+| Contextual AI Actions Menu | **Medium** | Makes workflow discoverable — accelerates onboarding. |
+| Opportunity Writing AI Skill | **Medium** | Deepens use per session — doesn't bring new builders in. |
 
 **Net:** The done pile is infrastructure. It improves the experience for the 1 builder already active but does not address activation.
 
@@ -304,8 +308,9 @@ PO metric moved **0 to 1** between Mar 2 and Mar 9, then flat.
 1. **Never modify store.json or any file.** This is a read-only skill.
 2. **Always read fresh store.json** at the start — never work from stale data.
 3. **Skip draft and dropped opportunities.** They are not relevant to WIP assessment.
-4. **Reference every entity by name AND ID.** The builder needs to be able to look them up.
+4. **Reference entities by title, not ID.** The builder sees titles in the app — IDs are invisible internal codes. Use full titles or natural shorthand in all prose. IDs may appear in table columns only.
 5. **Apply management health rules consistently.** Flag violations with specific fix proposals.
 6. **Focus on product outcomes only.** Business outcomes are excluded from this briefing.
 7. **Be opinionated in proposals.** Don't hedge — recommend specific actions based on the data.
 8. **All output is markdown.** Use tables, blockquotes, and headers for scannability.
+9. **Only `done` solutions drive impact.** `commit` = decided to build (not shipped). `done` = shipped. The "Done — Impact" section must only include solutions with status `done`. Never say a `commit` solution "drove" or "contributed to" metric movement.
