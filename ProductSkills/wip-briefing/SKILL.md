@@ -130,11 +130,11 @@ Apply these rules when assessing each opportunity:
 
 ## Commit Rule
 
-An opportunity in `commit` status means: opportunity and solution exploration is finished, and at least one solution should also be in `commit`.
+An opportunity in `commit` status means: opportunity and solution exploration is finished, and at least one solution should be in `commit` or `done`.
 
-**Signal if violated:** "No committed solution backing this committed opportunity — sloppy management. **Fix:** promote the most ready solution to commit, or demote the opportunity back to explore."
-
-**`done` solutions under a committed opportunity:** A `done` solution has shipped — it is past `commit`, which is stronger. However, if *all* solutions are either `done` or `explore` (none currently in `commit`), flag a decision point: the opportunity itself may be ready to close as `done` (if the done solutions fully address it), or a remaining explore solution needs to be committed to justify keeping the opportunity open in `commit`.
+- **Not a violation** if at least one solution is `done` — a shipped solution is past commit, which is stronger. The opportunity is healthy.
+- **Violation** only when NO solution is in `commit` or `done` (all are `explore`, `draft`, or `dropped`). Signal: "No committed or shipped solution backing this committed opportunity — sloppy management. **Fix:** promote the most ready solution to commit, or demote the opportunity back to explore."
+- **Decision point** (not a violation): if all solutions are either `done` or `explore` (none currently in `commit`), note that the opportunity may be ready to close as `done` — or a remaining explore solution needs to be committed to justify keeping the opportunity open.
 
 ## Explore Rule
 
@@ -169,7 +169,7 @@ An opportunity in `explore` status means: either the opportunity is not yet full
 
 ## Phase 1: Read
 
-1. Read `Product-Agent-app/data/store.json`
+1. **Read `Product-Agent-app/data/store.json` fresh from disk — NEVER reuse data from earlier in the conversation.** The builder may have changed statuses, added entities, or edited content since the last read. Every briefing invocation must start with a fresh file read.
 2. Locate the specified product line by name
 3. Read `Product-Agent-app/app/lib/schemas.ts` for schema reference (first run only)
 

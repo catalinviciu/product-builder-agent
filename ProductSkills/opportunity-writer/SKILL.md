@@ -1,7 +1,7 @@
 ---
 name: opportunity-writer
 description: Interviews a product builder to capture a raw opportunity idea and writes it as a correctly-structured, problem-space-only entry in Product Agent's store.json. Enforces Teresa Torres framing — user needs, pains, and desired end states only. Never writes solution language.
-version: 1.0
+version: 1.1
 ---
 
 # ROLE AND PURPOSE
@@ -98,11 +98,34 @@ These are practical maximums to keep the UI readable. The app's `getEntityPrevie
 ### Step 1: Read context from store.json
 
 1. Read `Product-Agent-app/data/store.json`
-2. Locate the parent Product Outcome by ID
-3. **Note the product line key** (the top-level key in store.json that contains this entity, e.g. `productagent-1773131237459`) — you will need this for injection later
-4. Read personas attached to the product line
+2. Locate the parent Product Outcome by ID — read its title, description, metric block, and status
+3. Locate the **business outcome** above the PO (the PO's `parentId`) — read its title, description, and metric block
+4. **Note the product line key** (the top-level key in store.json that contains this entity, e.g. `productagent-1773131237459`) — you will need this for injection later
+5. Read personas attached to the product line
+6. Scan the PO's existing children (opportunities) — note their titles and statuses so you understand what's already being tracked
 
-### Step 2: Interview
+### Step 2: Critical thinking — reason through the opportunity
+
+Before interviewing, think through what the builder is proposing against the strategic context you just read. This step is internal reasoning — you don't output all of it, but it shapes the interview.
+
+**Assess relevance:**
+- Does this opportunity connect to the parent PO's metric? Could solving this pain plausibly move the number?
+- Does it align with the business outcome above? Or is it a real user pain that belongs under a different PO?
+- Is it already covered by an existing opportunity under this PO? (Check the titles you read in Step 1.6.) If so, the builder may need to add a solution to the existing opportunity rather than create a new one.
+
+**Check for common biases:**
+- **Recency bias:** Is the builder reacting to one recent incident and generalising? (e.g., one user had this problem → "all users have this problem")
+- **Solution-in-disguise:** Is the "opportunity" actually a feature idea dressed up as a pain? (The problem-space enforcement rules already catch this, but check here too.)
+- **Confirmation bias:** Is the builder only citing evidence that supports the opportunity and ignoring contradicting signals?
+- **Survivorship bias:** Is the evidence coming only from users who showed up (e.g., Slack channel members) while ignoring the silent majority?
+- **Scope creep:** Is this one opportunity or actually two distinct problems bundled together?
+
+**Decide what to challenge:**
+- Only raise pushback when your reasoning surfaced a genuine concern — not as a default checkbox exercise
+- Frame challenges as honest questions, not objections: *"I notice X — how do you think about that?"* not *"This is wrong because X."*
+- If nothing concerns you, don't force a challenge — say so and move to the interview
+
+### Step 3: Interview
 
 The builder may optionally provide initial context alongside the prompt — either:
 - **Raw text** pasted directly into the terminal message
@@ -114,6 +137,7 @@ The builder may optionally provide initial context alongside the prompt — eith
 3. Do NOT ask for information already answered by the context
 4. Only ask clarifying questions for gaps — missing fields, ambiguities, or anything that drifts into solution space
 5. Summarise what you understood from the context before asking questions, so the builder can correct misreads
+6. **Surface any challenges from Step 2** — if your critical thinking raised genuine concerns (relevance to the PO, overlap with existing opportunities, potential biases in the evidence), raise them here as honest questions. Don't list all biases you checked — only mention what actually concerned you, and frame it as a question.
 
 **If no initial context is provided:**
 1. Ask the builder to describe the problem they've spotted — raw thoughts, voice notes, anything. Raw is fine.
@@ -124,11 +148,12 @@ The builder may optionally provide initial context alongside the prompt — eith
 - **When:** What triggers the problem — what is the builder doing when this happens?
 - **Current workaround:** How do they handle it today without the product?
 - **Desired end state:** What would it look like if this problem didn't exist?
+- **Competition view:** How do competitors or alternatives address this?
 - **Severity signal:** How often does this happen? How painful is it?
 
-### Step 3: Present draft and wait for confirmation
+### Step 4: Present draft and wait for confirmation
 
-After gathering enough signal, draft and present the full opportunity for review (title, description, all blocks). Then show the **Injection Plan**:
+After gathering enough signal (including resolving any challenges from Step 2), draft and present the full opportunity for review (title, description, all blocks). Then show the **Injection Plan**:
 
 ```
 ## Injection Plan
