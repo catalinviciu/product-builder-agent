@@ -407,6 +407,12 @@
             { "action": "Open the account menu to access display preferences", "components": ["AccountMenu"] },
             { "action": "Choose between automatic (time-based) or manual light/dark theme", "components": ["AccountMenu", "ThemePreferenceContext"] }
           ]
+        },
+        {
+          "title": "Configure analytics consent",
+          "stories": [
+            { "action": "Accept or decline anonymous analytics consent on first launch via the consent banner", "components": ["ConsentBanner"] }
+          ]
         }
       ]
     },

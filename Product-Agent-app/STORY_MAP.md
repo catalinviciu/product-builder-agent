@@ -194,6 +194,7 @@
 |:-----|:------|:-----------|
 | **Set display theme** | Open the account menu to access display preferences | `AccountMenu` |
 |  | Choose between automatic (time-based) or manual light/dark theme | `AccountMenu` · `ThemePreferenceContext` |
+| **Configure analytics consent** | Accept or decline anonymous analytics consent on first launch via the consent banner | `ConsentBanner` |
 
 
 ### Activity 11: Export Context for AI Agent

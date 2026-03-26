@@ -8,6 +8,9 @@ import { AccountMenu } from "./AccountMenu";
 import { useAppStore } from "@/app/lib/store";
 import { Menu, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/app/lib/utils";
+import { initIfConsented } from "@/app/lib/analytics";
+import { startAnalyticsSubscribers } from "@/app/lib/analytics-subscribers";
+import { ConsentBanner } from "./ConsentBanner";
 
 function useIsMobile() {
   // Only used for imperative checks (auto-close on nav).
@@ -28,7 +31,11 @@ export function DashboardLayout() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    hydrate().then(() => startPolling());
+    hydrate().then(() => {
+      startPolling();
+      initIfConsented();
+      startAnalyticsSubscribers();
+    });
     return () => stopPolling();
   }, [hydrate, startPolling, stopPolling]);
 
@@ -114,6 +121,7 @@ export function DashboardLayout() {
         </main>
 
         <PersonaSlideOver />
+        <ConsentBanner />
       </div>
     </div>
   );
