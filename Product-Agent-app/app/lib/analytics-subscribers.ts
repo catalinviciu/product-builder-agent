@@ -10,6 +10,26 @@ export function startAnalyticsSubscribers(): void {
   if (subscribed) return;
   subscribed = true;
 
+  // Entity Viewed — fires when the user navigates to an entity
+  useAppStore.subscribe(
+    (state) => state.currentEntityId,
+    (entityId: string | null) => {
+      if (!entityId) return;
+      const state = useAppStore.getState();
+      const pl = state.productLines[state.currentProductLineId];
+      if (!pl) return;
+      const entity = pl.entities[entityId];
+      if (!entity) return;
+
+      trackEvent("Entity Viewed", {
+        entity_type: entity.level,
+        block_count: entity.blocks.length,
+        ice_score_initiated: entity.iceScore != null,
+      });
+    },
+  );
+
+  // Product line data changes
   useAppStore.subscribe(
     (state) => state.productLines,
     (current: ProductLineMap, previous: ProductLineMap) => {
@@ -19,11 +39,42 @@ export function startAnalyticsSubscribers(): void {
       for (const plId of Object.keys(current)) {
         const currPl = current[plId];
         const prevPl = previous[plId];
+
+        // Product Line Created — exists in current but not in previous
+        if (currPl && !prevPl) {
+          trackEvent("Product Line Created", {
+            status: currPl.status,
+            has_personas: (currPl.personas ?? []).length > 0,
+            persona_count: (currPl.personas ?? []).length,
+          });
+          continue;
+        }
+
         if (!currPl || !prevPl) continue;
 
         for (const entityId of Object.keys(currPl.entities)) {
           const currEntity = currPl.entities[entityId];
           const prevEntity = prevPl.entities?.[entityId];
+
+          // Entity Created — exists in current but not in previous
+          if (currEntity && !prevEntity) {
+            const props: Record<string, unknown> = {
+              entity_type: currEntity.level,
+              status: currEntity.status,
+              has_children: currEntity.children.length > 0,
+              child_count: currEntity.children.length,
+            };
+
+            if (currEntity.level === "solution") {
+              props.assumption_count = 0;
+              props.tests_total_count = 0;
+              props.tests_done_count = 0;
+            }
+
+            trackEvent("Entity Created", props);
+            continue;
+          }
+
           if (!currEntity || !prevEntity) continue;
           if (currEntity.status === prevEntity.status) continue;
 
