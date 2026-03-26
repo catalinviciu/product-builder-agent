@@ -85,6 +85,35 @@ export function buildRootAnchor(productLineName: string): string {
   ].join("\n");
 }
 
+export function buildBlockAnchor(
+  store: EntityStore,
+  productLineId: string,
+  productLineName: string,
+  entityId: string,
+  blockId: string,
+): string {
+  const entity = store[entityId];
+  if (!entity) return "";
+  const blockIndex = entity.blocks.findIndex((b) => b.id === blockId);
+  if (blockIndex === -1) return "";
+  const block = entity.blocks[blockIndex];
+  const chain = getParentChain(store, entityId);
+  const pathLabels = [...chain.map((e) => LEVEL_META[e.level].label), LEVEL_META[entity.level].label];
+  const blockLabel = block.type === "accordion" ? block.label
+    : block.type === "metric" ? (block.metric || "Metric")
+    : block.type === "quote" ? "Evidence quote"
+    : "Tags";
+  return [
+    `[Product Agent Context]`,
+    `Product Line: ${productLineName}`,
+    `Path: ${pathLabels.join(" > ")}`,
+    `Entity: "${entity.title}" (${entity.id})`,
+    `Block: "${blockLabel}" [${block.type}] (${block.id})`,
+    `JSONPath: ["${productLineId}"].entities["${entityId}"].blocks[${blockIndex}]`,
+    `Data: Product-Agent-app/data/store.json`,
+  ].join("\n");
+}
+
 // ── Block serialization for AI prompts ──────────────────────────────────
 
 export function serializeBlocksToText(blocks: Block[]): string {

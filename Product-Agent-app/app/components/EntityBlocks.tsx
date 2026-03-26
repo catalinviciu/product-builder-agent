@@ -2,13 +2,15 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useClickOutside } from "@/app/lib/hooks/useClickOutside";
-import { Pencil, Trash2, Plus, X, Check, ChevronDown, CalendarDays } from "lucide-react";
-import { cn } from "@/app/lib/utils";
+import { Pencil, Trash2, Plus, X, Check, ChevronDown, CalendarDays, Copy } from "lucide-react";
+import { cn, buildBlockAnchor } from "@/app/lib/utils";
 import type { Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock, EntityLevel, MetricFrequency, MetricValueFormat } from "@/app/lib/schemas";
 import { METRIC_VALUE_FORMAT_LABELS, METRIC_FREQUENCY_LABELS } from "@/app/lib/schemas";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useAppStore } from "@/app/lib/store";
+import { useProductLine } from "@/app/lib/hooks/useProductLine";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { MarkdownBlock, MarkdownToolbar } from "./MarkdownToolbar";
 import { AccordionSection } from "./AccordionSection";
 import { MetricCard } from "./MetricCard";
@@ -17,14 +19,42 @@ import { EditableText } from "./EditableText";
 
 // ── Block toolbar ─────────────────────────────────────────────────────────
 
-export function BlockToolbar({ onEdit, onDelete, canDelete = true }: { onEdit: () => void; onDelete: () => void; canDelete?: boolean }) {
+export function BlockToolbar({ onEdit, onDelete, onCopyAnchor, canDelete = true }: { onEdit: () => void; onDelete: () => void; onCopyAnchor?: () => void; canDelete?: boolean }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    onCopyAnchor?.();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
+  };
 
   return (
-    <div className="absolute top-1 right-1 opacity-0 group-hover/block:opacity-100 transition-opacity flex gap-1">
-      <button onClick={onEdit} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 hover:text-foreground transition-colors">
-        <Pencil size={12} />
-      </button>
+    <TooltipProvider delayDuration={300}>
+    <div className={cn("absolute top-1 right-1 transition-opacity flex items-center gap-1 z-10", copied ? "opacity-100" : "opacity-0 group-hover/block:opacity-100")}>
+      {copied && (
+        <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap bg-surface-1 border border-emerald-500/30 rounded-md px-2 py-0.5">
+          Copied! Paste in Claude Code
+        </span>
+      )}
+      {onCopyAnchor && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button onClick={handleCopy} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 hover:text-foreground transition-colors">
+              {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{copied ? "Copied!" : "Copy block anchor"}</TooltipContent>
+        </Tooltip>
+      )}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button onClick={onEdit} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 hover:text-foreground transition-colors">
+            <Pencil size={12} />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Edit block</TooltipContent>
+      </Tooltip>
       {canDelete && (
         confirmDelete ? (
           <div className="flex gap-1">
@@ -42,6 +72,7 @@ export function BlockToolbar({ onEdit, onDelete, canDelete = true }: { onEdit: (
         )
       )}
     </div>
+    </TooltipProvider>
   );
 }
 
@@ -315,6 +346,13 @@ export function MetricBlockEditor({ block, onSave, onCancel, entityLevel }: { bl
 export function BlockRenderer({ block, entityId, entityLevel }: { block: Block; entityId: string; entityLevel?: EntityLevel }) {
   const [editing, setEditing] = useState(false);
   const { updateBlock, removeBlock, recordMetricValue } = useAppStore();
+  const productLine = useProductLine();
+  const currentProductLineId = useAppStore((s) => s.currentProductLineId);
+
+  const handleCopyAnchor = () => {
+    const text = buildBlockAnchor(productLine.entities, currentProductLineId, productLine.name, entityId, block.id);
+    navigator.clipboard.writeText(text);
+  };
 
   const handleSave = (updates: Partial<Block>) => {
     updateBlock(entityId, block.id, updates);
@@ -350,7 +388,7 @@ export function BlockRenderer({ block, entityId, entityLevel }: { block: Block; 
 
   return (
     <div className="relative group/block">
-      <BlockToolbar onEdit={() => setEditing(true)} onDelete={handleDelete} canDelete={canDelete} />
+      <BlockToolbar onEdit={() => setEditing(true)} onDelete={handleDelete} onCopyAnchor={handleCopyAnchor} canDelete={canDelete} />
       {block.type === "accordion" && (
         <AccordionSection label={block.label} defaultOpen={block.defaultOpen}>
           <MarkdownBlock content={block.content} />
