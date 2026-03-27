@@ -55,5 +55,6 @@ export function initIfConsented(): void {
 
 export function trackEvent(name: string, properties?: Record<string, unknown>): void {
   if (!initialized) return;
+  console.log(`[Analytics] ${name}`, properties);
   mixpanel.track(name, properties);
 }
