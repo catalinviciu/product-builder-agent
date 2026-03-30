@@ -3,6 +3,7 @@ import { subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { DEFAULT_PRODUCT_LINE_ID } from "./schemas";
 import type { Entity, Block, ProductLine, DiscoveryTree, Persona, AssumptionType, TestType, IceScore, EntityStatus } from "./schemas";
+import { analyticsEmitter, type AnalyticsEventMap } from "./analytics-events";
 
 export interface AppStore {
   // Data
@@ -84,7 +85,7 @@ function debouncedSave(productLines: Record<string, ProductLine>) {
   }, 500);
 }
 
-export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set) => ({
+export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, get) => ({
   productLines: {} as Record<string, ProductLine>,
   currentProductLineId: DEFAULT_PRODUCT_LINE_ID,
   currentEntityId: null,
@@ -163,12 +164,18 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set) 
     }),
   navigateToChild: (childId) => set({ currentEntityId: childId }),
 
-  addProductLine: (pl) =>
+  addProductLine: (pl) => {
     set((draft) => {
       draft.productLines[pl.id] = pl;
       draft.currentProductLineId = pl.id;
       draft.currentEntityId = null;
-    }),
+    });
+    analyticsEmitter.emit("Product Line Created", {
+      status: pl.status,
+      has_personas: (pl.personas ?? []).length > 0,
+      persona_count: (pl.personas ?? []).length,
+    });
+  },
 
   updateProductLine: (id, updates) =>
     set((draft) => {
@@ -195,13 +202,20 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set) 
       }
     }),
 
-  addRootEntity: (entity) =>
+  addRootEntity: (entity) => {
     set((draft) => {
       const pl = draft.productLines[draft.currentProductLineId];
       if (!pl) return;
       pl.tree.rootChildren.push(entity.id);
       pl.entities[entity.id] = entity;
-    }),
+    });
+    analyticsEmitter.emit("Entity Created", {
+      entity_type: entity.level,
+      status: entity.status,
+      has_children: entity.children.length > 0,
+      child_count: entity.children.length,
+    });
+  },
 
   updateEntity: (id, updates) =>
     set((draft) => {
@@ -210,13 +224,26 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set) 
       Object.assign(pl.entities[id], updates);
     }),
 
-  addChildEntity: (parentId, entity) =>
+  addChildEntity: (parentId, entity) => {
     set((draft) => {
       const pl = draft.productLines[draft.currentProductLineId];
       if (!pl || !pl.entities[parentId]) return;
       pl.entities[parentId].children.push(entity.id);
       pl.entities[entity.id] = entity;
-    }),
+    });
+    const payload: AnalyticsEventMap["Entity Created"] = {
+      entity_type: entity.level,
+      status: entity.status,
+      has_children: entity.children.length > 0,
+      child_count: entity.children.length,
+      ...(entity.level === "solution" && {
+        assumption_count: 0,
+        tests_total_count: 0,
+        tests_done_count: 0,
+      }),
+    };
+    analyticsEmitter.emit("Entity Created", payload);
+  },
 
   deleteEntity: (id) =>
     set((draft) => {
@@ -265,19 +292,43 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set) 
       cascade(id);
     }),
 
-  setEntityStatus: (id, status) =>
+  setEntityStatus: (id, status) => {
+    const prev = get();
+    const pl = prev.productLines[prev.currentProductLineId];
+    const entity = pl?.entities[id];
+    if (!entity || entity.status === status) return;
+
     set((draft) => {
-      const pl = draft.productLines[draft.currentProductLineId];
-      if (!pl || !pl.entities[id]) return;
-      const entity = pl.entities[id];
-      if (entity.status === status) return;
-      entity.status = status;
-      if (!entity.statusHistory) entity.statusHistory = [];
-      entity.statusHistory.push({
+      const draftPl = draft.productLines[draft.currentProductLineId];
+      if (!draftPl?.entities[id]) return;
+      draftPl.entities[id].status = status;
+      if (!draftPl.entities[id].statusHistory) draftPl.entities[id].statusHistory = [];
+      draftPl.entities[id].statusHistory!.push({
         status,
         date: new Date().toISOString().slice(0, 10),
       });
-    }),
+    });
+
+    const payload: AnalyticsEventMap["Status Change"] = {
+      entity_type: entity.level,
+      from_status: entity.status,
+      to_status: status,
+      has_children: entity.children.length > 0,
+      child_count: entity.children.length,
+      ...(entity.level === "solution" && (() => {
+        const children = entity.children
+          .map((cid) => pl.entities[cid])
+          .filter((e): e is Entity => e !== undefined);
+        const tests = children.filter((c) => c.level === "test");
+        return {
+          assumption_count: children.filter((c) => c.level === "assumption").length,
+          tests_total_count: tests.length,
+          tests_done_count: tests.filter((t) => t.status === "done").length,
+        };
+      })()),
+    };
+    analyticsEmitter.emit("Status Change", payload);
+  },
 
   addBlock: (entityId, block) =>
     set((draft) => {
