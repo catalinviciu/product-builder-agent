@@ -335,3 +335,15 @@ export function buildWipBriefingPrompt(productLineName: string): string {
   sections.push(`Data: Product-Agent-app/data/store.json`);
   return sections.join("\n\n---\n\n");
 }
+
+// ── New product line setup prompt for AI agents ───────────────────────────
+
+export function buildNewProductLineSetupPrompt(productLine: ProductLine): string {
+  const sections: string[] = [];
+  sections.push(`Use skill: ProductSkills/new-product-line-setup/SKILL.md`);
+  const meta: string[] = [`Product Line: ${productLine.name}`];
+  if (productLine.codePath) meta.push(`Code path: ${productLine.codePath}`);
+  sections.push(meta.join("\n"));
+  sections.push(`Data: Product-Agent-app/data/store.json`);
+  return sections.join("\n\n---\n\n");
+}

@@ -130,16 +130,14 @@ These guides will help you:
 
 In the Product Agent UI:
 
-1. **Create a Product Line** — this is the top-level container for your product
-2. **Set the code path** — edit the product line and fill in your codebase folder name (e.g. `your-app/`)
-3. **Define Personas** — add the user/buyer personas for your product line
-4. **Build your discovery tree** — work top-down:
-   - **Business Outcome** — the measurable business result you're driving
-   - **Product Outcome** — the user behavior change that creates business value (with metric tracking)
-   - **Opportunity** — unmet needs or pain points (assign a Persona here)
-   - **Solution** — concrete ways to address the opportunity
-   - **Assumption** — what must be true for a solution to work
-   - **Test** — lightweight experiments to validate assumptions
+1. **Create a Product Line** — give it a name. This is the top-level container for your product.
+2. **Set the code path** — edit the product line and fill in your codebase folder name (e.g. `your-app/`). If you don't have a codebase yet, leave it blank for now.
+3. **Use your AI co-worker to set up the structure** — in the empty product line, click the **AI Actions** button and select **Set up product line with co-worker**. A prompt is copied to your clipboard — paste it into Claude Code or GitHub Copilot. Your AI co-worker will interview you in plain language and create the initial Business Outcome, Product Outcome, and first Opportunities for you. You don't need to know any product management terminology.
+
+   > **Don't fill in the tree manually.** Product Agent is built around the co-worker model: your AI agent does the thinking and writing, the app shows you what you built together. The manual fields exist for edits — not for first entry.
+
+4. **Define Personas** — add the user/buyer personas for your product line (you can do this during or after the co-worker interview).
+5. **Continue building the tree with AI Actions** — at every level (Opportunity, Solution, Assumption), use the AI Actions menu to write, brainstorm, and test with your co-worker rather than typing manually.
 
 ### 4. Use AI Actions
 
@@ -173,6 +171,7 @@ The `ProductSkills/` folder contains AI agent skills — behavioral instructions
 
 | Skill | What it does |
 |-------|-------------|
+| **new-product-line-setup** | Interviews you in plain language and creates the initial Business Outcome, Product Outcome, and first Opportunities — no PM terminology required |
 | **opportunity-writer** | Writes structured opportunities from unstructured input, keeping content strictly in problem space |
 | **solutions-brainstormer** | Researches an opportunity and generates 5 distinct solution approaches using first-principles thinking |
 | **assumption-tester** | Surfaces critical assumptions behind solutions and designs lightweight validation tests |

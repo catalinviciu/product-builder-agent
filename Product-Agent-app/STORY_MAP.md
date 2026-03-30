@@ -31,6 +31,10 @@
 |  | Set the local code path for a product line so AI prompts can reference the codebase location | `EditProductLineForm` · `SectionNav` |
 | **Change product line status** | Change product line status (active, closed, archived) via the status indicator | `Product Line Selector` |
 | **Delete product line** | Delete a product line from the Product Line Selector | `Product Line Selector` |
+| **Start co-worker setup** | See co-worker intro card on first visit to an empty product line | `CoworkerIntroCard` · `EntityView (RootView)` |
+|  | Copy co-worker setup prompt to clipboard and track Coworker Setup Started event | `CoworkerIntroCard` · `buildNewProductLineSetupPrompt` |
+|  | Dismiss the intro card and see persistent co-worker button in the empty state | `CoworkerIntroCard` · `CoworkerEmptyButton` · `EntityView (RootView)` |
+|  | Re-access co-worker setup prompt via the compact button after dismissing the card | `CoworkerEmptyButton` |
 
 
 ### Activity 2: Define Personas
@@ -208,6 +212,7 @@
 |  | Copy an AI writing prompt from an existing Opportunity to launch the opportunity writer skill for editing | `AIActionsMenu` · `EntityView` · `buildOpportunityWriterPrompt` |
 | **Brainstorm solutions for an opportunity** | Copy an AI prompt from an Opportunity to launch the solutions brainstormer skill and generate 5 distinct solution approaches | `AIActionsMenu` · `EntityView` · `buildSolutionsBrainstormerPrompt` |
 | **Generate WIP briefing** | Copy an AI prompt from the Product Line overview to generate a WIP briefing covering metric health, management signals, and insights per product outcome | `RootAIActionsButton` · `RootView` · `buildWipBriefingPrompt` |
+| **Generate product line setup prompt** | Copy a co-worker setup prompt from the Root AI Actions menu to define a product line's Business Outcome, Product Outcome, and Opportunities via the new-product-line-setup skill | `RootAIActionsButton` · `RootView` · `buildNewProductLineSetupPrompt` |
 
 
 ---

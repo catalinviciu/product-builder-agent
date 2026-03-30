@@ -4,13 +4,13 @@ import { useState, useRef, useEffect } from "react";
 import { MarkdownBlock } from "./MarkdownToolbar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronRight, Pencil, Trash2, Plus, Copy, FileBarChart,
+  ChevronRight, Pencil, Trash2, Plus, Copy, FileBarChart, MessageSquarePlus,
 } from "lucide-react";
 import type { Entity, EntityStatus } from "@/app/lib/schemas";
 import { LEVEL_META, CHILD_LEVEL, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getIceScoreColor, formatMetricValue } from "@/app/lib/schemas";
 import { LEVEL_ICON_MAP } from "@/app/lib/icons";
 import { useAppStore } from "@/app/lib/store";
-import { getEntity, getRootEntities, getEntityPreview, cn, buildRootAnchor, buildWipBriefingPrompt } from "@/app/lib/utils";
+import { getEntity, getRootEntities, getEntityPreview, cn, buildRootAnchor, buildWipBriefingPrompt, buildNewProductLineSetupPrompt } from "@/app/lib/utils";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { EntityBreadcrumb } from "./EntityBreadcrumb";
 
@@ -24,6 +24,7 @@ import type { MetricBlock } from "@/app/lib/schemas";
 import { IceScorePanel } from "./IceScorePanel";
 import { AddChildForm, AddRootEntityForm } from "./EntityForms";
 import { EntityGridView, type CardDisplayProps } from "./EntityGridView";
+import { CoworkerIntroCard, CoworkerEmptyButton } from "./CoworkerIntroCard";
 
 // ── Children grid (now delegates to EntityGridView) ───────────────────────
 
@@ -146,6 +147,7 @@ function RootView() {
   const { updateTree, updateEntity, setEntityStatus } = useAppStore();
   const roots = getRootEntities(entities, tree);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [cardDismissed, setCardDismissed] = useState(false);
   const boMeta = LEVEL_META.business_outcome;
 
   function getRootCardProps(entity: Entity): CardDisplayProps {
@@ -166,43 +168,93 @@ function RootView() {
     return { preview: preview || getEntityPreview(entity), badge };
   }
 
+  const rootActions = [
+    {
+      id: "setup-coworker",
+      label: "Define your product with Builder co-worker",
+      description: "Copy a prompt and paste it into Claude Code or your agentic tool. Your co-worker will interview you and set up your Business Outcome, Product Outcome, and first Opportunities.",
+      icon: MessageSquarePlus,
+      getText: () => buildNewProductLineSetupPrompt(productLine),
+    },
+    {
+      id: "copy-anchor",
+      label: "Copy AI context anchor",
+      description: "Reference this product line in an AI conversation",
+      icon: Copy,
+      getText: () => buildRootAnchor(productLine.name),
+    },
+    {
+      id: "wip-briefing",
+      label: "Product line WIP briefing",
+      description: "AI reads your tree and generates a WIP briefing per product outcome",
+      icon: FileBarChart,
+      getText: () => buildWipBriefingPrompt(productLine.name),
+    },
+  ];
+
+  const header = (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <h1 className="text-lg font-semibold text-foreground">
+          <EditableText
+            value={tree.title}
+            onSave={(v) => updateTree(plId, { title: v })}
+            maxLength={80}
+          />
+        </h1>
+        <RootAIActionsButton actions={rootActions} />
+      </div>
+      <div className="text-xs text-muted-foreground">
+        <EditableText
+          value={tree.description}
+          onSave={(v) => updateTree(plId, { description: v })}
+          placeholder="Add a description..."
+        />
+      </div>
+    </div>
+  );
+
+  // Empty state — no business outcomes yet
+  if (roots.length === 0) {
+    return (
+      <div className="px-8 py-8 pb-28 flex flex-col gap-6">
+        {header}
+        {!cardDismissed ? (
+          <CoworkerIntroCard onDismiss={() => setCardDismissed(true)} />
+        ) : (
+          <EntityGridView
+            items={[]}
+            orderedIds={[]}
+            onReorder={() => {}}
+            onStatusChange={() => {}}
+            headerLabel="Business Outcomes"
+            headerDescription={boMeta.description}
+            getCardProps={getRootCardProps}
+            addButton={
+              <div className="flex flex-col gap-2">
+                <CoworkerEmptyButton />
+                {!showAddForm ? (
+                  <button
+                    onClick={() => setShowAddForm(true)}
+                    className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-border-default hover:border-border-strong transition-colors justify-center"
+                  >
+                    <Plus size={14} /> Add Business Outcome
+                  </button>
+                ) : (
+                  <AddRootEntityForm onClose={() => setShowAddForm(false)} />
+                )}
+              </div>
+            }
+            storageKey="pa-view-mode"
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="px-8 py-8 pb-28 flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold text-foreground">
-            <EditableText
-              value={tree.title}
-              onSave={(v) => updateTree(plId, { title: v })}
-              maxLength={80}
-            />
-          </h1>
-          <RootAIActionsButton actions={[
-            {
-              id: "copy-anchor",
-              label: "Copy AI context anchor",
-              description: "Reference this product line in an AI conversation",
-              icon: Copy,
-              getText: () => buildRootAnchor(productLine.name),
-            },
-            {
-              id: "wip-briefing",
-              label: "Product line WIP briefing",
-              description: "AI reads your tree and generates a WIP briefing per product outcome",
-              icon: FileBarChart,
-              getText: () => buildWipBriefingPrompt(productLine.name),
-            },
-          ]} />
-        </div>
-        <div className="text-xs text-muted-foreground">
-          <EditableText
-            value={tree.description}
-            onSave={(v) => updateTree(plId, { description: v })}
-            placeholder="Add a description..."
-          />
-        </div>
-      </div>
-
+      {header}
       <EntityGridView
         items={roots}
         orderedIds={tree.rootChildren}
@@ -212,16 +264,19 @@ function RootView() {
         headerDescription={boMeta.description}
         getCardProps={getRootCardProps}
         addButton={
-          !showAddForm ? (
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-border-default hover:border-border-strong transition-colors justify-center"
-            >
-              <Plus size={14} /> Add Business Outcome
-            </button>
-          ) : (
-            <AddRootEntityForm onClose={() => setShowAddForm(false)} />
-          )
+          <div className="flex flex-col gap-2">
+            <CoworkerEmptyButton />
+            {!showAddForm ? (
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-border-default hover:border-border-strong transition-colors justify-center"
+              >
+                <Plus size={14} /> Add Business Outcome
+              </button>
+            ) : (
+              <AddRootEntityForm onClose={() => setShowAddForm(false)} />
+            )}
+          </div>
         }
         storageKey="pa-view-mode"
       />
