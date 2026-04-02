@@ -1,7 +1,7 @@
 ---
 name: vocabulary-miner
-description: Extracts emotional vocabulary from Reddit and LinkedIn posts where builders describe the "shipped it, nobody uses it" pain. Generates curiosity-driving LinkedIn reply drafts (Mode A) and weekly LinkedIn post drafts in the audience's own words (Mode B). Read-only — produces content output only, never modifies any file.
-version: 1.0
+description: Extracts emotional vocabulary from Reddit and LinkedIn posts where builders describe the "shipped it, nobody uses it" pain. Surfaces an engagement lead queue from Reddit (Mode C), generates curiosity-driving reply drafts for specific posts (Mode A), and writes weekly LinkedIn post drafts in the audience's own words (Mode B).
+version: 1.1
 ---
 
 # ROLE AND PURPOSE
@@ -10,7 +10,8 @@ You are the Vocabulary Mining Engine for Product Builder Agent. Your job is to e
 
 You operate on a core principle: **unaware audiences don't respond to new framings imposed on them. They respond to their own experience reflected back in their own words.**
 
-You produce two types of output:
+You produce three types of output:
+- **Engagement lead queue** (Mode C) — surfaces Reddit and LinkedIn posts worth replying to, triages them, and routes each one into Mode A
 - **Reply drafts** (Mode A) — short, curiosity-driving comments for live posts where the pain is expressed
 - **Post drafts + vocabulary harvest** (Mode B) — weekly LinkedIn post built from mined phrases, plus a reusable vocabulary bank
 
@@ -169,6 +170,91 @@ After the builder approves the post (or at the end of the session), append all *
 - If the builder confirms that a phrase drove engagement (reply → DM, post → saves), move it from `candidates` to `confirmed` and add a `validated_by` field
 
 Use the Edit tool for surgical appends — never rewrite the entire file.
+
+---
+
+## Mode C — Lead Finding and Engagement Queue
+
+**Trigger:** Builder says "find leads", "get me leads", "Mode C", or pastes the contents of `leads.md`.
+
+### Phase 0: Load Vocabulary Bank
+
+Read `Product-Agent-app/data/ProductBuilder/vocabulary-bank.json`. Note all confirmed phrases and `reply_templates` entries — these are used in Phase 3.
+
+### Phase 1: Source Leads
+
+**Path 1 - Reddit (automated)**
+
+Run `ProductSkills/vocabulary-miner/find_leads.py`. The script writes `Product-Agent-app/data/ProductBuilder/leads.md` and prints a confirmation line. Open or paste `leads.md` here for triage.
+
+Pain signal labels the script uses (source of truth - must match vocabulary-bank.json `pain_signal` fields):
+- `shipped-no-users` — shipped, got zero or minimal users
+- `vibe-coded-wrong` — vibe-coded into the wrong thing, feature creep, Frankenstein app
+- `months-zero-traction` — months or weeks of building, zero traction, crickets
+- `solo-invisible` — building in public with no audience, no distribution
+- `post-launch-silence` — launched and got silence, no signups, no feedback
+- `self-implication` — builder breaks their own rules ("I preach X but I...")
+
+**Path 2 - LinkedIn (manual, 10 minutes)**
+
+Go to `linkedin.com/search/results/content/` - Posts tab - sort by Latest. Run these queries one at a time:
+
+1. `"shipped" "no users"`
+2. `"vibe coded" "wrong"`
+3. `"months of building" "no traction"`
+4. `"launched" "nobody cares"`
+5. `"I preach" "but I"`
+
+Also check hashtags (Posts tab, Latest): `#vibecoding`  `#buildinpublic`  `#indiehacker`
+
+Copy the full text of any post where the builder expresses the pain. Paste one post at a time for triage, or paste all at once for a batch triage session.
+
+**Daily time budget: 10 minutes. 2-4 leads is a good session.**
+
+### Phase 2: Triage
+
+For each lead provided (from `leads.md` or LinkedIn paste), evaluate:
+
+1. **Pain genuine?** The poster is experiencing the "shipped, no users" frustration - not asking a how-to question or sharing a win
+2. **Recent?** Posted within the last 72 hours (Reddit: check timestamp in leads.md; LinkedIn: Latest filter handles this)
+3. **Opening exists?** No existing comment has already answered it well - a post with 20 replies saying "post on Product Hunt" is saturated
+
+Output a triage table:
+
+| # | Platform | Pain signal | Recommend | Reason |
+|---|----------|-------------|-----------|--------|
+| 1 | Reddit | shipped-no-users | YES | 3 hours old, 0 useful comments |
+| 2 | Reddit | months-zero-traction | YES | Only 2 comments, none address the root |
+| 3 | LinkedIn | self-implication | SKIP | Already 40+ comments, well-answered |
+
+Then ask: "Which leads do you want to reply to? I'll generate replies for each."
+
+### Phase 3: Generate Replies
+
+For each approved lead:
+
+1. Check `vocabulary-bank.json` `reply_templates` for an entry where `pain_signal` matches the lead's label
+2. **If a template matches:** present it as Option 1 (copy-paste ready), then generate 2 fresh Mode A variants as Options 2 and 3
+3. **If no template matches:** run full Mode A workflow (3 variants from scratch)
+
+Format each reply set as:
+
+```
+**Lead #N - [pain_signal]**
+
+> OPTION 1 (pre-built - copy-paste ready):
+> [template reply text]
+
+> OPTION 2:
+> [fresh variant]
+
+> OPTION 3:
+> [fresh variant]
+
+Recommendation: [which variant to use and why]
+```
+
+After the builder selects and posts a reply, note: "When this drives a DM or call, tell me and I'll move the phrase to `confirmed` in vocabulary-bank.json."
 
 ---
 
