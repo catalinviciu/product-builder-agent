@@ -18,7 +18,7 @@ import { EntityBreadcrumb } from "./EntityBreadcrumb";
 import { AIActionsMenu, RootAIActionsButton, type AIAction } from "./AIActionsMenu";
 import { StatusPicker, PersonaPicker, SecondaryPersonaPicker, AssumptionTypePicker, TestTypePicker } from "./EntityPickers";
 import { EditableText } from "./EditableText";
-import { BlockRenderer, AddBlockButton, BlockList } from "./EntityBlocks";
+import { BlockRenderer, AddBlockButton, BlockList, ProductLineBlockList } from "./EntityBlocks";
 import { MetricCard } from "./MetricCard";
 import type { MetricBlock } from "@/app/lib/schemas";
 import { IceScorePanel } from "./IceScorePanel";
@@ -143,7 +143,7 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
 
 function RootView() {
   const productLine = useProductLine();
-  const { tree, entities, id: plId } = productLine;
+  const { tree, entities, id: plId, blocks: plBlocks } = productLine;
   const { updateTree, updateEntity, setEntityStatus } = useAppStore();
   const roots = getRootEntities(entities, tree);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -193,24 +193,15 @@ function RootView() {
   ];
 
   const header = (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2">
-        <h1 className="text-lg font-semibold text-foreground">
-          <EditableText
-            value={tree.title}
-            onSave={(v) => updateTree(plId, { title: v })}
-            maxLength={80}
-          />
-        </h1>
-        <RootAIActionsButton actions={rootActions} />
-      </div>
-      <div className="text-xs text-muted-foreground">
+    <div className="flex items-center gap-2">
+      <h1 className="text-lg font-semibold text-foreground">
         <EditableText
-          value={tree.description}
-          onSave={(v) => updateTree(plId, { description: v })}
-          placeholder="Add a description..."
+          value={tree.title}
+          onSave={(v) => updateTree(plId, { title: v })}
+          maxLength={80}
         />
-      </div>
+      </h1>
+      <RootAIActionsButton actions={rootActions} />
     </div>
   );
 
@@ -219,6 +210,12 @@ function RootView() {
     return (
       <div className="px-8 py-8 pb-28 flex flex-col gap-6">
         {header}
+        <ProductLineBlockList
+          plId={plId}
+          description={tree.description}
+          onDescriptionSave={(v) => updateTree(plId, { description: v })}
+          blocks={plBlocks ?? []}
+        />
         {!cardDismissed ? (
           <CoworkerIntroCard onDismiss={() => setCardDismissed(true)} />
         ) : (
@@ -255,6 +252,12 @@ function RootView() {
   return (
     <div className="px-8 py-8 pb-28 flex flex-col gap-6">
       {header}
+      <ProductLineBlockList
+        plId={plId}
+        description={tree.description}
+        onDescriptionSave={(v) => updateTree(plId, { description: v })}
+        blocks={plBlocks ?? []}
+      />
       <EntityGridView
         items={roots}
         orderedIds={tree.rootChildren}

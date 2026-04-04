@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { DEFAULT_PRODUCT_LINE_ID } from "./schemas";
-import type { Entity, Block, ProductLine, DiscoveryTree, Persona, AssumptionType, TestType, IceScore, EntityStatus } from "./schemas";
+import type { Entity, Block, MetricBlock, ProductLine, DiscoveryTree, Persona, AssumptionType, TestType, IceScore, EntityStatus } from "./schemas";
 import { analyticsEmitter, type AnalyticsEventMap } from "./analytics-events";
 
 export interface AppStore {
@@ -52,6 +52,12 @@ export interface AppStore {
   updateBlock: (entityId: string, blockId: string, updates: Partial<Block>) => void;
   removeBlock: (entityId: string, blockId: string) => void;
   recordMetricValue: (entityId: string, blockId: string, date: string, value: number) => void;
+
+  // Product Line Block CRUD
+  addProductLineBlock: (plId: string, block: Block) => void;
+  updateProductLineBlock: (plId: string, blockId: string, updates: Partial<Block>) => void;
+  removeProductLineBlock: (plId: string, blockId: string) => void;
+  recordProductLineMetricValue: (plId: string, blockId: string, date: string, value: number) => void;
 
   // Persona CRUD
   addPersona: (persona: Persona) => void;
@@ -114,6 +120,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
           // Backfill statusHistory for existing entities that predate this field
           const todayIso = new Date().toISOString().slice(0, 10);
           for (const pl of Object.values(data)) {
+            if (!pl.blocks) pl.blocks = [];
             for (const entity of Object.values(pl.entities)) {
               if (!entity.statusHistory) {
                 entity.statusHistory = [{ status: entity.status, date: todayIso }];
@@ -357,6 +364,45 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
       const pl = draft.productLines[draft.currentProductLineId];
       if (!pl || !pl.entities[entityId]) return;
       const block = pl.entities[entityId].blocks.find((b) => b.id === blockId);
+      if (!block || block.type !== "metric") return;
+      if (!block.dataSeries) block.dataSeries = [];
+      const existing = block.dataSeries.find((dp) => dp.date === date);
+      if (existing) {
+        existing.value = value;
+      } else {
+        block.dataSeries.push({ date, value });
+        block.dataSeries.sort((a, b) => a.date.localeCompare(b.date));
+      }
+    }),
+
+  addProductLineBlock: (plId, block) =>
+    set((draft) => {
+      const pl = draft.productLines[plId];
+      if (!pl) return;
+      if (!pl.blocks) pl.blocks = [];
+      pl.blocks.push(block);
+    }),
+
+  updateProductLineBlock: (plId, blockId, updates) =>
+    set((draft) => {
+      const pl = draft.productLines[plId];
+      if (!pl?.blocks) return;
+      const block = pl.blocks.find((b) => b.id === blockId);
+      if (block) Object.assign(block, updates);
+    }),
+
+  removeProductLineBlock: (plId, blockId) =>
+    set((draft) => {
+      const pl = draft.productLines[plId];
+      if (!pl?.blocks) return;
+      pl.blocks = pl.blocks.filter((b) => b.id !== blockId);
+    }),
+
+  recordProductLineMetricValue: (plId, blockId, date, value) =>
+    set((draft) => {
+      const pl = draft.productLines[plId];
+      if (!pl?.blocks) return;
+      const block = pl.blocks.find((b) => b.id === blockId) as MetricBlock | undefined;
       if (!block || block.type !== "metric") return;
       if (!block.dataSeries) block.dataSeries = [];
       const existing = block.dataSeries.find((dp) => dp.date === date);

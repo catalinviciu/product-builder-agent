@@ -441,6 +441,7 @@ export interface ProductLine {
   status: ProductLineStatus;
   personas?: Persona[];
   codePath?: string;
+  blocks?: Block[];
   tree: DiscoveryTree;
   entities: EntityStore;
 }
