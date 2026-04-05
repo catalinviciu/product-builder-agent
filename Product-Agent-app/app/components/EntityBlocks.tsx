@@ -418,7 +418,6 @@ export function AddBlockButton({ idPrefix, onAddBlock }: { idPrefix: string; onA
     { type: "accordion", label: "Accordion Section" },
     { type: "pills", label: "Pills / Tags" },
     { type: "quote", label: "Quote" },
-    { type: "metric", label: "Metric Card" },
   ];
 
   const handleAdd = (type: Block["type"]) => {
@@ -428,7 +427,7 @@ export function AddBlockButton({ idPrefix, onAddBlock }: { idPrefix: string; onA
       case "accordion": block = { id, type, label: "New Section", content: "" }; break;
       case "pills": block = { id, type, items: [{ label: "Label", value: "Value" }] }; break;
       case "quote": block = { id, type, content: "" }; break;
-      case "metric": block = { id, type, metric: "Metric", currentValue: "0", targetValue: "0" }; break;
+      default: return;
     }
     onAddBlock(block);
     setOpen(false);

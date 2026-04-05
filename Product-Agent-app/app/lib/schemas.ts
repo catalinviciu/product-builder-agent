@@ -187,6 +187,20 @@ export const METRIC_VALUE_FORMAT_LABELS: Record<MetricValueFormat, string> = {
   percentage: "Percentage (%)",
 };
 
+// ── Signal tracking ─────────────────────────────────────────────────────
+
+export type SignalStatus = "active" | "paused";
+
+export interface Signal {
+  id: string;
+  name: string;
+  frequency: MetricFrequency;
+  valueFormat: MetricValueFormat;
+  status: SignalStatus;
+  dataSeries: MetricDataPoint[];
+  createdAt: string; // ISO YYYY-MM-DD
+}
+
 export function formatMetricValue(value: number, format?: MetricValueFormat): string {
   const f = format ?? "number";
   switch (f) {
@@ -197,6 +211,40 @@ export function formatMetricValue(value: number, format?: MetricValueFormat): st
     default:             return value.toLocaleString();
   }
 }
+
+// ── Period label helpers ──────────────────────────────────────────────
+
+export function formatPeriodTrigger(dateStr: string, frequency: MetricFrequency): string {
+  const d = new Date(dateStr + "T00:00:00");
+  const month = d.toLocaleString("en", { month: "short" });
+  const day = d.getDate();
+  const year = d.getFullYear();
+  if (frequency === "monthly") return `${month} ${year}`;
+  if (frequency === "weekly") return `Week of ${month} ${day}`;
+  return `${month} ${day}, ${year}`;
+}
+
+export function formatPeriodHint(dateStr: string, frequency: MetricFrequency): string {
+  const d = new Date(dateStr + "T00:00:00");
+  if (frequency === "monthly") {
+    const monthFull = d.toLocaleString("en", { month: "long", year: "numeric" });
+    return `Recording for ${monthFull}`;
+  }
+  if (frequency === "weekly") {
+    const endOfWeek = new Date(d);
+    endOfWeek.setDate(d.getDate() + 6);
+    const startLabel = d.toLocaleString("en", { month: "short", day: "numeric" });
+    const endLabel = endOfWeek.toLocaleString("en", { month: "short", day: "numeric" });
+    return `Recording for ${startLabel} – ${endLabel}`;
+  }
+  return `Recording for ${d.toLocaleString("en", { month: "short", day: "numeric", year: "numeric" })}`;
+}
+
+export const CALENDAR_HEADER: Record<MetricFrequency, string> = {
+  daily: "Select a day",
+  weekly: "Select any day to pick its week",
+  monthly: "Select any day to pick its month",
+};
 
 export interface MetricBlock extends BlockBase {
   type: "metric";
@@ -281,6 +329,7 @@ export interface Entity {
   iceScore?: IceScore;
   children: string[];
   blocks: Block[];
+  signals?: Signal[];
 }
 
 export type EntityStore = Record<string, Entity>;

@@ -60,6 +60,14 @@
   --color-overlay: var(--overlay);
   --color-shadow-color: var(--shadow-color);
 
+  /* ── Accent color tokens ── */
+  --color-accent-purple: var(--accent-purple);
+  --color-accent-purple-bg: var(--accent-purple-bg);
+  --color-accent-green: var(--accent-green);
+  --color-accent-green-bg: var(--accent-green-bg);
+  --color-accent-red: var(--accent-red);
+  --color-accent-red-bg: var(--accent-red-bg);
+
   /* ── Spacing tokens ── */
   --spacing-entity-px: var(--spacing-entity-px);
   --spacing-entity-py: var(--spacing-entity-py);
@@ -129,6 +137,14 @@
   --overlay: oklch(0 0 0 / 40%);
   --shadow-color: oklch(0 0 0 / 8%);
 
+  /* ── Accent colors (light mode) ── */
+  --accent-purple: oklch(0.62 0.22 292);
+  --accent-purple-bg: oklch(0.62 0.22 292 / 8%);
+  --accent-green: oklch(0.72 0.19 155);
+  --accent-green-bg: oklch(0.72 0.19 155 / 12%);
+  --accent-red: oklch(0.63 0.24 25);
+  --accent-red-bg: oklch(0.63 0.24 25 / 12%);
+
   /* ── Spacing tokens ── */
   --spacing-entity-px: 1rem;
   --spacing-entity-py: 0.75rem;
@@ -196,6 +212,14 @@
   /* ── Overlay & shadow (dark mode) ── */
   --overlay: oklch(0 0 0 / 60%);
   --shadow-color: oklch(1 0 0 / 3%);
+
+  /* ── Accent colors (dark mode) ── */
+  --accent-purple: oklch(0.76 0.18 292);
+  --accent-purple-bg: oklch(0.76 0.18 292 / 10%);
+  --accent-green: oklch(0.78 0.16 155);
+  --accent-green-bg: oklch(0.78 0.16 155 / 12%);
+  --accent-red: oklch(0.72 0.20 25);
+  --accent-red-bg: oklch(0.72 0.20 25 / 12%);
 }
 
 /* ── Insight type accent colors ── */

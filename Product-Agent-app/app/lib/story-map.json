@@ -98,7 +98,7 @@
           "stories": [
             { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
             { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
-            { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Add a content block (accordion, pills, or quote)", "components": ["EntityView", "Add Block Button"] },
             { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
             { "action": "Configure structured metric tracking with frequency, numeric targets, and date range", "components": ["EntityBlocks", "MetricBlockEditor", "BlockRenderer"] },
             { "action": "Record a metric data point and view progress in the interactive area chart with hover tooltips", "components": ["MetricCard", "MetricChart", "RecordValueForm"] },
@@ -138,7 +138,7 @@
           "stories": [
             { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
             { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
-            { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Add a content block (accordion, pills, or quote)", "components": ["EntityView", "Add Block Button"] },
             { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
             { "action": "Configure structured metric tracking with frequency, numeric targets, and date range", "components": ["EntityBlocks", "MetricBlockEditor", "BlockRenderer"] },
             { "action": "Record a metric data point and view progress in the interactive area chart with hover tooltips", "components": ["MetricCard", "MetricChart", "RecordValueForm"] },
@@ -154,6 +154,15 @@
           "stories": [
             { "action": "Assign a primary persona via the Persona Picker", "components": ["EntityView", "PersonaPicker"] },
             { "action": "Add or remove secondary personas via the multi-select picker", "components": ["EntityView", "SecondaryPersonaPicker"] }
+          ]
+        },
+        {
+          "title": "Track signals",
+          "stories": [
+            { "action": "Switch to the Signals tab on a Product Outcome to view input tracking", "components": ["EntityView", "SignalsTab"] },
+            { "action": "Add a signal inline with name, frequency, and format", "components": ["SignalsTab"] },
+            { "action": "Record a data point on a signal with the inline record form", "components": ["SignalCard"] },
+            { "action": "Pause or resume a signal to temporarily stop tracking without deleting it", "components": ["SignalCard"] }
           ]
         },
         {
@@ -198,7 +207,7 @@
           "stories": [
             { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
             { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
-            { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Add a content block (accordion, pills, or quote)", "components": ["EntityView", "Add Block Button"] },
             { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
             { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
             { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
@@ -237,7 +246,7 @@
           "stories": [
             { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
             { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
-            { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Add a content block (accordion, pills, or quote)", "components": ["EntityView", "Add Block Button"] },
             { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
             { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
             { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
@@ -282,7 +291,7 @@
           "stories": [
             { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
             { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
-            { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Add a content block (accordion, pills, or quote)", "components": ["EntityView", "Add Block Button"] },
             { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
             { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
             { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
@@ -308,7 +317,7 @@
           "stories": [
             { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
             { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
-            { "action": "Add a content block (accordion, pills, quote, or metric)", "components": ["EntityView", "Add Block Button"] },
+            { "action": "Add a content block (accordion, pills, or quote)", "components": ["EntityView", "Add Block Button"] },
             { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
             { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
             { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },

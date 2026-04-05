@@ -25,6 +25,11 @@ export type AnalyticsEventMap = {
     tests_total_count?: number;
     tests_done_count?: number;
   };
+  "Signal Created": {
+    frequency: string;
+    value_format: string;
+    signal_count: number;
+  };
 };
 
 type ListenerMap = { [K in keyof AnalyticsEventMap]?: Array<Listener<AnalyticsEventMap[K]>> };

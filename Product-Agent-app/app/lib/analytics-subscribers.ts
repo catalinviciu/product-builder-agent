@@ -56,4 +56,8 @@ export function startAnalyticsSubscribers(): void {
   analyticsEmitter.on("Status Change", (props) => {
     trackEvent("Status Change", props);
   });
+
+  analyticsEmitter.on("Signal Created", (props) => {
+    trackEvent("Signal Created", props);
+  });
 }

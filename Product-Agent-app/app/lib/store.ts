@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { DEFAULT_PRODUCT_LINE_ID } from "./schemas";
-import type { Entity, Block, MetricBlock, ProductLine, DiscoveryTree, Persona, AssumptionType, TestType, IceScore, EntityStatus } from "./schemas";
+import type { Entity, Block, MetricBlock, ProductLine, DiscoveryTree, Persona, AssumptionType, TestType, IceScore, EntityStatus, Signal } from "./schemas";
 import { analyticsEmitter, type AnalyticsEventMap } from "./analytics-events";
 
 export interface AppStore {
@@ -52,6 +52,13 @@ export interface AppStore {
   updateBlock: (entityId: string, blockId: string, updates: Partial<Block>) => void;
   removeBlock: (entityId: string, blockId: string) => void;
   recordMetricValue: (entityId: string, blockId: string, date: string, value: number) => void;
+
+  // Signal CRUD (product_outcome entities)
+  addSignal: (entityId: string, signal: Signal) => void;
+  updateSignal: (entityId: string, signalId: string, updates: Partial<Pick<Signal, "name" | "frequency" | "valueFormat" | "status">>) => void;
+  removeSignal: (entityId: string, signalId: string) => void;
+  recordSignalValue: (entityId: string, signalId: string, date: string, value: number) => void;
+  reorderSignals: (entityId: string, signalIds: string[]) => void;
 
   // Product Line Block CRUD
   addProductLineBlock: (plId: string, block: Block) => void;
@@ -125,6 +132,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
               if (!entity.statusHistory) {
                 entity.statusHistory = [{ status: entity.status, date: todayIso }];
               }
+              if (!entity.signals) entity.signals = [];
             }
           }
           set({ productLines: data, currentProductLineId, isHydrated: true });
@@ -373,6 +381,63 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
         block.dataSeries.push({ date, value });
         block.dataSeries.sort((a, b) => a.date.localeCompare(b.date));
       }
+    }),
+
+  // ── Signal CRUD ──────────────────────────────────────────────────────
+
+  addSignal: (entityId, signal) => {
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return;
+      if (!pl.entities[entityId].signals) pl.entities[entityId].signals = [];
+      pl.entities[entityId].signals!.push(signal);
+    });
+    analyticsEmitter.emit("Signal Created", {
+      frequency: signal.frequency,
+      value_format: signal.valueFormat,
+      signal_count: (() => {
+        const pl = get().productLines[get().currentProductLineId];
+        return (pl?.entities[entityId]?.signals ?? []).length;
+      })(),
+    });
+  },
+
+  updateSignal: (entityId, signalId, updates) =>
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return;
+      const signal = (pl.entities[entityId].signals ?? []).find((s) => s.id === signalId);
+      if (signal) Object.assign(signal, updates);
+    }),
+
+  removeSignal: (entityId, signalId) =>
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return;
+      pl.entities[entityId].signals = (pl.entities[entityId].signals ?? []).filter((s) => s.id !== signalId);
+    }),
+
+  recordSignalValue: (entityId, signalId, date, value) =>
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl || !pl.entities[entityId]) return;
+      const signal = (pl.entities[entityId].signals ?? []).find((s) => s.id === signalId);
+      if (!signal) return;
+      const existing = signal.dataSeries.find((dp) => dp.date === date);
+      if (existing) {
+        existing.value = value;
+      } else {
+        signal.dataSeries.push({ date, value });
+        signal.dataSeries.sort((a, b) => a.date.localeCompare(b.date));
+      }
+    }),
+
+  reorderSignals: (entityId, signalIds) =>
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl?.entities[entityId]?.signals) return;
+      const signalMap = new Map(pl.entities[entityId].signals!.map((s) => [s.id, s]));
+      pl.entities[entityId].signals = signalIds.map((id) => signalMap.get(id)!).filter(Boolean);
     }),
 
   addProductLineBlock: (plId, block) =>

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Plus, Check, X, CalendarDays } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MetricBlock, MetricFrequency, EntityLevel } from "../lib/schemas";
-import { METRIC_FREQUENCY_LABELS, getPeriodDate, formatMetricValue } from "../lib/schemas";
+import { METRIC_FREQUENCY_LABELS, getPeriodDate, formatMetricValue, formatPeriodTrigger, formatPeriodHint, CALENDAR_HEADER } from "../lib/schemas";
 import { useAppStore } from "../lib/store";
 import { useProductLine } from "../lib/hooks/useProductLine";
 import { selectDoneSolutionsForProductOutcome } from "../lib/selectors";
@@ -24,39 +24,7 @@ function getChartColor(entityLevel?: EntityLevel): ChartColorConfig {
   return (entityLevel && CHART_COLORS[entityLevel]) || DEFAULT_CHART_COLOR;
 }
 
-// ── Period label helpers ──────────────────────────────────────────────
-
-function formatPeriodTrigger(dateStr: string, frequency: MetricFrequency): string {
-  const d = new Date(dateStr + "T00:00:00");
-  const month = d.toLocaleString("en", { month: "short" });
-  const day = d.getDate();
-  const year = d.getFullYear();
-  if (frequency === "monthly") return `${month} ${year}`;
-  if (frequency === "weekly") return `Week of ${month} ${day}`;
-  return `${month} ${day}, ${year}`;
-}
-
-function formatPeriodHint(dateStr: string, frequency: MetricFrequency): string {
-  const d = new Date(dateStr + "T00:00:00");
-  if (frequency === "monthly") {
-    const monthFull = d.toLocaleString("en", { month: "long", year: "numeric" });
-    return `Recording for ${monthFull}`;
-  }
-  if (frequency === "weekly") {
-    const endOfWeek = new Date(d);
-    endOfWeek.setDate(d.getDate() + 6);
-    const startLabel = d.toLocaleString("en", { month: "short", day: "numeric" });
-    const endLabel = endOfWeek.toLocaleString("en", { month: "short", day: "numeric" });
-    return `Recording for ${startLabel} – ${endLabel}`;
-  }
-  return `Recording for ${d.toLocaleString("en", { month: "short", day: "numeric", year: "numeric" })}`;
-}
-
-const CALENDAR_HEADER: Record<MetricFrequency, string> = {
-  daily: "Select a day",
-  weekly: "Select any day to pick its week",
-  monthly: "Select any day to pick its month",
-};
+// formatPeriodTrigger, formatPeriodHint, CALENDAR_HEADER — imported from schemas.ts
 
 // ── Record Value Form ──────────────────────────────────────────────────
 

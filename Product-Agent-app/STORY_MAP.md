@@ -58,7 +58,7 @@
 | **Add Business Outcome** | Create a new Business Outcome with title and description | `RootView` · `Add Root Form` |
 | **Refine the entity** | Edit the entity title inline | `EntityView` · `EditableText` |
 |  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
-|  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
+|  | Add a content block (accordion, pills, or quote) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
 |  | Configure structured metric tracking with frequency, numeric targets, and date range | `EntityBlocks` · `MetricBlockEditor` · `BlockRenderer` |
 |  | Record a metric data point and view progress in the interactive area chart with hover tooltips | `MetricCard` · `MetricChart` · `RecordValueForm` |
@@ -81,7 +81,7 @@
 | **Add Product Outcome** | Create a new Product Outcome with title and description | `EntityView` · `Add Child Button` |
 | **Refine the entity** | Edit the entity title inline | `EntityView` · `EditableText` |
 |  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
-|  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
+|  | Add a content block (accordion, pills, or quote) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
 |  | Configure structured metric tracking with frequency, numeric targets, and date range | `EntityBlocks` · `MetricBlockEditor` · `BlockRenderer` |
 |  | Record a metric data point and view progress in the interactive area chart with hover tooltips | `MetricCard` · `MetricChart` · `RecordValueForm` |
@@ -92,6 +92,10 @@
 |  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
 | **Assign Personas** | Assign a primary persona via the Persona Picker | `EntityView` · `PersonaPicker` |
 |  | Add or remove secondary personas via the multi-select picker | `EntityView` · `SecondaryPersonaPicker` |
+| **Track signals** | Switch to the Signals tab on a Product Outcome to view input tracking | `EntityView` · `SignalsTab` |
+|  | Add a signal inline with name, frequency, and format | `SignalsTab` |
+|  | Record a data point on a signal with the inline record form | `SignalCard` |
+|  | Pause or resume a signal to temporarily stop tracking without deleting it | `SignalCard` |
 | **Add Opportunity children** | Add a child Opportunity from the children section | `EntityView` · `Add Child Button` |
 
 
@@ -106,7 +110,7 @@
 | **Score opportunity with ICE** | Rate the opportunity using Impact, Confidence, and Ease sliders (1–10 each) to compute an ICE score | `EntityView` · `IceScorePanel` |
 | **Refine the entity** | Edit the entity title inline | `EntityView` · `EditableText` |
 |  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
-|  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
+|  | Add a content block (accordion, pills, or quote) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |
@@ -125,7 +129,7 @@
 | **Add Solution** | Create a new Solution with title and description | `EntityView` · `Add Child Button` |
 | **Refine the entity** | Edit the entity title inline | `EntityView` · `EditableText` |
 |  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
-|  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
+|  | Add a content block (accordion, pills, or quote) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |
@@ -145,7 +149,7 @@
 |  | View the colored type pill on the entity and on child cards in the parent grid | `EntityView` · `ChildEntityCard` |
 | **Refine the Assumption** | Edit the entity title inline | `EntityView` · `EditableText` |
 |  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
-|  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
+|  | Add a content block (accordion, pills, or quote) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |
@@ -156,7 +160,7 @@
 |  | View the colored type pill on the entity and on child cards in the parent grid | `EntityView` · `ChildEntityCard` |
 | **Refine the Test** | Edit the entity title inline | `EntityView` · `EditableText` |
 |  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
-|  | Add a content block (accordion, pills, quote, or metric) | `EntityView` · `Add Block Button` |
+|  | Add a content block (accordion, pills, or quote) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |

@@ -5,6 +5,7 @@ import { MarkdownBlock } from "./MarkdownToolbar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronRight, Pencil, Trash2, Plus, Copy, FileBarChart, MessageSquarePlus,
+  Target, Activity,
 } from "lucide-react";
 import type { Entity, EntityStatus } from "@/app/lib/schemas";
 import { LEVEL_META, CHILD_LEVEL, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getIceScoreColor, formatMetricValue } from "@/app/lib/schemas";
@@ -25,6 +26,7 @@ import { IceScorePanel } from "./IceScorePanel";
 import { AddChildForm, AddRootEntityForm } from "./EntityForms";
 import { EntityGridView, type CardDisplayProps } from "./EntityGridView";
 import { CoworkerIntroCard, CoworkerEmptyButton } from "./CoworkerIntroCard";
+import { SignalsTab } from "./SignalsTab";
 
 // ── Children grid (now delegates to EntityGridView) ───────────────────────
 
@@ -298,16 +300,18 @@ export function EntityView() {
   const [titleDraft, setTitleDraft] = useState("");
   const [confirmDeleteEntity, setConfirmDeleteEntity] = useState(false);
   const [confirmDrop, setConfirmDrop] = useState(false);
+  const [activeTab, setActiveTab] = useState<"discovery" | "signals">("discovery");
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editingTitle && titleInputRef.current) titleInputRef.current.focus();
   }, [editingTitle]);
 
-  // Reset confirmations when entity changes
+  // Reset confirmations and tab when entity changes
   useEffect(() => {
     setConfirmDeleteEntity(false);
     setConfirmDrop(false);
+    setActiveTab("discovery");
   }, [currentEntityId]);
 
   if (!currentEntityId) return <RootView />;
@@ -501,6 +505,39 @@ export function EntityView() {
             )}
           </div>
 
+          {/* View tabs — PO only */}
+          {expanded && entity.level === "product_outcome" && (
+            <div className="flex gap-0 mx-[var(--spacing-entity-px)] border-b border-border-subtle">
+              {([
+                { key: "discovery" as const, icon: Target, label: "Product Outcome Metric" },
+                { key: "signals" as const, icon: Activity, label: "Signals" },
+              ]).map(({ key, icon: Icon, label }) => {
+                const signalCount = (entity.signals ?? []).length;
+                const isActive = activeTab === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={(e) => { e.stopPropagation(); setActiveTab(key); }}
+                    className={cn(
+                      "cursor-pointer text-[13px] font-medium py-2.5 px-5 flex items-center gap-1.5 relative border-b-2 -mb-px transition-colors",
+                      isActive
+                        ? "text-foreground font-semibold border-foreground"
+                        : "text-muted-foreground border-transparent hover:text-foreground",
+                    )}
+                  >
+                    <Icon size={14} />
+                    {label}
+                    {key === "signals" && signalCount > 0 && (
+                      <span className="text-[10px] font-semibold bg-surface-3 text-muted-foreground px-1.5 py-px rounded-full">
+                        {signalCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {/* Expandable content */}
           <AnimatePresence initial={false}>
             {expanded && (
@@ -511,48 +548,57 @@ export function EntityView() {
                 transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
                 className="overflow-hidden"
               >
-                <div className="px-[var(--spacing-content-px)] pb-[var(--spacing-content-py)] flex flex-col gap-[var(--spacing-content-gap)] border-t border-border-subtle pt-[var(--spacing-content-py)]">
-                  {entity.level === "opportunity" ? (
-                    <>
-                      {/* Description + ICE side-by-side */}
-                      <div className="flex flex-col lg:flex-row gap-4">
-                        <div className="lg:w-[60%] min-w-0 text-[length:var(--text-body)] text-foreground/80 leading-[var(--text-body-leading)]">
-                          <EditableText
-                            value={entity.description}
-                            onSave={(v) => updateEntity(entity.id, { description: v })}
-                            as="textarea"
-                            placeholder="Add a description..."
-                            maxLength={800}
-                          />
+                {entity.level === "product_outcome" && activeTab === "signals" ? (
+                  <div className="px-[var(--spacing-content-px)] pb-[var(--spacing-content-py)] pt-[var(--spacing-content-py)]">
+                    <SignalsTab entity={entity} />
+                  </div>
+                ) : (
+                  <div className={cn(
+                    "px-[var(--spacing-content-px)] pb-[var(--spacing-content-py)] flex flex-col gap-[var(--spacing-content-gap)] pt-[var(--spacing-content-py)]",
+                    entity.level !== "product_outcome" && "border-t border-border-subtle",
+                  )}>
+                    {entity.level === "opportunity" ? (
+                      <>
+                        {/* Description + ICE side-by-side */}
+                        <div className="flex flex-col lg:flex-row gap-4">
+                          <div className="lg:w-[60%] min-w-0 text-[length:var(--text-body)] text-foreground/80 leading-[var(--text-body-leading)]">
+                            <EditableText
+                              value={entity.description}
+                              onSave={(v) => updateEntity(entity.id, { description: v })}
+                              as="textarea"
+                              placeholder="Add a description..."
+                              maxLength={800}
+                            />
+                          </div>
+                          <IceScorePanel entityId={entity.id} iceScore={entity.iceScore} />
                         </div>
-                        <IceScorePanel entityId={entity.id} iceScore={entity.iceScore} />
-                      </div>
-                      {/* Blocks (without description, already shown above) */}
-                      {entity.blocks.map((block) => {
-                        const isOutcome = entity.level === "business_outcome" || entity.level === "product_outcome";
-                        return (
-                          <BlockRenderer
-                            key={block.id}
-                            block={block}
-                            ownerId={entity.id}
-                            entityLevel={entity.level}
-                            onUpdateBlock={(bid, upd) => updateBlock(entity.id, bid, upd)}
-                            onRemoveBlock={(bid) => removeBlock(entity.id, bid)}
-                            onRecordMetricValue={(bid, date, val) => recordMetricValue(entity.id, bid, date, val)}
-                            onCopyAnchor={() => {
-                              const text = buildBlockAnchor(productLine.entities, productLine.id, productLine.name, entity.id, block.id);
-                              navigator.clipboard.writeText(text);
-                            }}
-                            canDeleteBlock={!(block.type === "metric" && isOutcome)}
-                          />
-                        );
-                      })}
-                      <AddBlockButton idPrefix={entity.id} onAddBlock={(block) => addBlock(entity.id, block)} />
-                    </>
-                  ) : (
-                    <BlockList entity={entity} />
-                  )}
-                </div>
+                        {/* Blocks (without description, already shown above) */}
+                        {entity.blocks.map((block) => {
+                          const isOutcome = entity.level === "business_outcome" || entity.level === "product_outcome";
+                          return (
+                            <BlockRenderer
+                              key={block.id}
+                              block={block}
+                              ownerId={entity.id}
+                              entityLevel={entity.level}
+                              onUpdateBlock={(bid, upd) => updateBlock(entity.id, bid, upd)}
+                              onRemoveBlock={(bid) => removeBlock(entity.id, bid)}
+                              onRecordMetricValue={(bid, date, val) => recordMetricValue(entity.id, bid, date, val)}
+                              onCopyAnchor={() => {
+                                const text = buildBlockAnchor(productLine.entities, productLine.id, productLine.name, entity.id, block.id);
+                                navigator.clipboard.writeText(text);
+                              }}
+                              canDeleteBlock={!(block.type === "metric" && isOutcome)}
+                            />
+                          );
+                        })}
+                        <AddBlockButton idPrefix={entity.id} onAddBlock={(block) => addBlock(entity.id, block)} />
+                      </>
+                    ) : (
+                      <BlockList entity={entity} />
+                    )}
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
