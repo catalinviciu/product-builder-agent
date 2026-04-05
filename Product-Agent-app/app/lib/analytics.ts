@@ -1,7 +1,7 @@
 import mixpanel from "mixpanel-browser";
 
 const CONSENT_KEY = "pa-analytics-consent";
-const MIXPANEL_TOKEN = "9131ceb444679029be44598ab362c54e";
+const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN ?? "";
 const DECLINE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
 
 let initialized = false;
