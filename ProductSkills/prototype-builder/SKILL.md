@@ -17,12 +17,12 @@ You use the app's exact design system so the prototype feels real to the person 
 | File | Role |
 |:-----|:-----|
 | `Product-Agent-app/data/store.json` | **Read + write.** The live app data. Always read fresh before writing. |
-| `{codePath}/app/globals.css` | **Reference only.** Design tokens (OKLch color vars, spacing, typography). |
-| `{codePath}/app/components/` | **Reference only.** Existing component HTML/structure to replicate for existing-screen prototypes. |
-| `{codePath}/Prototypes/[filename].html` | **Write directly.** Claude writes this file using the Write tool. |
-| `ProductSkills/prototype-builder/inject_prototype.py` | **Injection tool.** Copies HTML to public/ and adds Prototype block to entity in store.json. |
+| `Product-Agent-app/app/globals.css` | **Reference only.** Design tokens (OKLch color vars, spacing, typography). |
+| `Product-Agent-app/app/components/` | **Reference only.** Existing component HTML/structure to replicate for existing-screen prototypes. |
+| `Product-Agent-app/public/prototypes/{productLineSlug}/[filename].html` | **Write directly.** Claude writes this file using the Write tool. The folder is created automatically if it doesn't exist. Served by Next.js at `localhost:3000/prototypes/{productLineSlug}/[filename].html`. |
+| `ProductSkills/prototype-builder/inject_prototype.py` | **Injection tool.** Adds Prototype block to the entity in store.json. |
 
-> `codePath` is read from the product line record in store.json (e.g. `Product-Agent-app`). Derive all file paths from it at runtime — never hardcode.
+> `productLineSlug` is the product line's `name` field, slugified (lowercased, spaces → hyphens, special chars removed). Example: product line "Product Builder" → `product-builder` → file saved at `Product-Agent-app/public/prototypes/product-builder/my-proto.html`.
 
 ---
 
@@ -40,7 +40,7 @@ You operate in **3 phases**. Complete Phase 0 automatically, then stop for expli
 
 1. Read `Product-Agent-app/data/store.json`
 2. Locate the entity by ID
-3. **Note the product line key** and `codePath` — you need these for all file paths
+3. **Note the product line key** and **name** (for the slug) — you need these for all file paths
 4. If `level: "test"` — read the test, its parent assumption, and the grandparent solution
 5. If `level: "solution"` — read the solution and its parent opportunity
 6. Read product line personas if available
@@ -53,9 +53,9 @@ From the entity's content (title, description, blocks), identify the specific mo
 
 Determine whether the feature being prototyped touches an **existing screen** in the app or requires a **completely new screen**:
 
-- Scan `{codePath}/app/components/` — look for components whose purpose overlaps the feature (EntityView, SectionNav, DashboardLayout, etc.)
+- Scan `Product-Agent-app/app/components/` — look for components whose purpose overlaps the feature (EntityView, SectionNav, DashboardLayout, etc.)
 - **Existing screen:** The prototype base will be a faithful static HTML replica of that screen. Only the new feature is overlaid on top. Nothing else changes.
-- **New screen:** Build using the app's existing design system and component patterns. Read `globals.css` for tokens and the closest existing components for layout/card/button/form patterns. Do not invent new styles — the new screen must look like it belongs in the app.
+- **New screen:** Build using the app's existing design system and component patterns. Read `Product-Agent-app/app/globals.css` for tokens and the closest existing components for layout/card/button/form patterns. Do not invent new styles — the new screen must look like it belongs in the app.
 
 ---
 
@@ -71,7 +71,7 @@ Determine whether the feature being prototyped touches an **existing screen** in
 - **Screen type:** [Existing — {ComponentName} | New screen]
 - **What's being tested:** [The specific interaction or decision]
 - **Screens / states:** [List of screens or states the prototype will show]
-- **Filename:** `[kebab-case-descriptive-name.html]`
+- **Filename:** `[slugified-entity-title.html]` (derived from the entity's title — slugified the same way as productLineSlug)
 
 ### Key screens (ASCII sketch)
 [One sketch per key state — wrapped in code fences]
@@ -96,7 +96,7 @@ If the prototype targets an existing screen, read the relevant component file(s)
 
 ### Step 2: Write the HTML file
 
-Write `{codePath}/Prototypes/[filename].html` using the Write tool.
+Write `Product-Agent-app/public/prototypes/{productLineSlug}/[filename].html` using the Write tool. Create the directory if it doesn't exist.
 
 **All prototypes must be:**
 - Single self-contained HTML file — no external dependencies except CDNs
@@ -119,7 +119,7 @@ Show:
 ```
 ## Built
 
-- **File:** `{codePath}/Prototypes/[filename].html`
+- **File:** `Product-Agent-app/public/prototypes/{productLineSlug}/[filename].html`
 - **Screens:** [list]
 - **Key interactions:** [list]
 
@@ -143,7 +143,7 @@ Create `_prototype_input.json` at the repo root:
   "productLineId": "<product-line-key>",
   "entityId": "<entity-uuid>",
   "prototypeFilename": "<filename>.html",
-  "blockContent": "**[Prototype name](http://localhost:3000/prototypes/<filename>.html)**\n\n<One sentence: what this prototype tests and what we're observing.>"
+  "blockContent": "**[Prototype name](http://localhost:3000/prototypes/<productLineSlug>/<filename>.html)**\n\n<One sentence: what this prototype tests and what we're observing.>"
 }
 ```
 
@@ -154,7 +154,6 @@ python ProductSkills/prototype-builder/inject_prototype.py _prototype_input.json
 ```
 
 The script will:
-- Copy the HTML file to `{codePath}/public/prototypes/`
 - Add or update a `"Prototype"` accordion block on the entity in store.json
 
 ### Step 3: Clean up
@@ -165,7 +164,7 @@ rm _prototype_input.json
 
 ### Step 4: Confirm to the builder
 
-"Prototype linked. Open it at `http://localhost:3000/prototypes/[filename].html`. It's also now referenced in the entity's Prototype block in the discovery tree."
+"Prototype linked. Open it at `http://localhost:3000/prototypes/{productLineSlug}/[filename].html`. It's also now referenced in the entity's Prototype block in the discovery tree."
 
 ---
 
@@ -173,7 +172,7 @@ rm _prototype_input.json
 
 1. **Never build without Phase 1 confirmation.** Thin context produces useless prototypes — always get alignment on what's being tested before writing a line of HTML.
 2. **Always check for a "Prototype UI/UX Guidance" block** on the entity before building. If it exists, those decisions override your defaults.
-3. **Never overwrite an existing prototype file** without explicit builder approval. Check if the filename already exists in `{codePath}/Prototypes/` before writing.
+3. **Never overwrite an existing prototype file** without explicit builder approval. Check if the filename already exists in `Product-Agent-app/public/prototypes/{productLineSlug}/` before writing.
 4. **Existing screen = faithful replica.** Do not simplify, redesign, or restructure the surrounding UI. Only the new feature changes.
 5. **New screen = app's design system only.** No invented styles, no generic UI patterns. If you can't find the right token or pattern in the codebase, ask before guessing.
 6. **Always include a Facilitator Note panel** in the prototype. It must be clearly labelled and contain the facilitator script from Phase 1.

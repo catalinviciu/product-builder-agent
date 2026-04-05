@@ -1,6 +1,8 @@
 """
-Inject a prototype reference into an entity in Product Agent's store.json,
-and copy the HTML file into the product line's public/prototypes/ folder.
+Inject a prototype reference into an entity in Product Agent's store.json.
+
+Prototypes are written directly to public/prototypes/{productLineSlug}/ by Claude.
+This script only adds the Prototype block to the entity in store.json.
 
 Usage:
     python ProductSkills/prototype-builder/inject_prototype.py _prototype_input.json
@@ -13,24 +15,30 @@ Input JSON shape:
   "blockContent": "Markdown content for the Prototype block..."
 }
 
-codePath is read directly from the product line record in store.json.
-
 The script:
-  1. Validates input fields and file existence
-  2. Reads codePath from the product line record
-  3. Copies the HTML file to {codePath}/public/prototypes/
-  4. Adds or updates a "Prototype" accordion block on the entity
-  5. Writes store.json back
+  1. Validates input fields
+  2. Verifies the prototype HTML exists in public/prototypes/{productLineSlug}/
+  3. Adds or updates a "Prototype" accordion block on the entity
+  4. Writes store.json back
 """
 
 import json
-import shutil
+import re
 import sys
 import time
-import uuid
 from pathlib import Path
 
 STORE_PATH = Path("Product-Agent-app/data/store.json")
+APP_PATH = Path("Product-Agent-app")
+
+
+def slugify(name: str) -> str:
+    """Convert a product line name to a folder-safe slug."""
+    slug = name.lower().strip()
+    slug = re.sub(r"[^a-z0-9\s-]", "", slug)
+    slug = re.sub(r"[\s]+", "-", slug)
+    slug = re.sub(r"-+", "-", slug).strip("-")
+    return slug
 
 LIMITS = {
     "prototypeFilename": 120,
@@ -103,24 +111,20 @@ def main():
         print(f"Error: product line '{pl_id}' not found in store")
         sys.exit(1)
 
-    # Get codePath from product line
-    code_path = pl.get("codePath")
-    if not code_path:
-        print(f"Error: product line '{pl_id}' has no codePath set")
+    # Get product line name and slugify for folder path
+    pl_name = pl.get("name")
+    if not pl_name:
+        print(f"Error: product line '{pl_id}' has no name set")
         sys.exit(1)
 
-    # Locate source file
-    source_file = Path(code_path) / "Prototypes" / filename
-    if not source_file.exists():
-        print(f"Error: prototype file not found at {source_file}")
-        sys.exit(1)
+    pl_slug = slugify(pl_name)
 
-    # Copy to public/prototypes/
-    dest_dir = Path(code_path) / "public" / "prototypes"
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    dest_file = dest_dir / filename
-    shutil.copy2(source_file, dest_file)
-    print(f"Copied: {source_file} → {dest_file}")
+    # Verify the prototype HTML exists in public/prototypes/{slug}/
+    proto_file = APP_PATH / "public" / "prototypes" / pl_slug / filename
+    if not proto_file.exists():
+        print(f"Error: prototype file not found at {proto_file}")
+        print(f"  Claude should write it there before running this script.")
+        sys.exit(1)
 
     # Find entity
     entity = pl.get("entities", {}).get(entity_id)
@@ -152,7 +156,7 @@ def main():
         json.dump(store, f, indent=2, ensure_ascii=False)
 
     print(f"{action} Prototype block on entity '{entity.get('title', entity_id)[:60]}'")
-    print(f"Prototype available at: http://localhost:3000/prototypes/{filename}")
+    print(f"Prototype available at: http://localhost:3000/prototypes/{pl_slug}/{filename}")
 
 
 if __name__ == "__main__":
