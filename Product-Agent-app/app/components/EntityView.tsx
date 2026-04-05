@@ -10,7 +10,7 @@ import type { Entity, EntityStatus } from "@/app/lib/schemas";
 import { LEVEL_META, CHILD_LEVEL, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getIceScoreColor, formatMetricValue } from "@/app/lib/schemas";
 import { LEVEL_ICON_MAP } from "@/app/lib/icons";
 import { useAppStore } from "@/app/lib/store";
-import { getEntity, getRootEntities, getEntityPreview, cn, buildRootAnchor, buildWipBriefingPrompt, buildNewProductLineSetupPrompt } from "@/app/lib/utils";
+import { getEntity, getRootEntities, getEntityPreview, cn, buildRootAnchor, buildBlockAnchor, buildWipBriefingPrompt, buildNewProductLineSetupPrompt } from "@/app/lib/utils";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { EntityBreadcrumb } from "./EntityBreadcrumb";
 
@@ -290,7 +290,7 @@ function RootView() {
 // ── Main component ───────────────────────────────────────────────────────
 
 export function EntityView() {
-  const { currentEntityId, updateEntity, deleteEntity, dropEntityCascade, setEntityStatus } = useAppStore();
+  const { currentEntityId, updateEntity, deleteEntity, dropEntityCascade, setEntityStatus, updateBlock, removeBlock, recordMetricValue, addBlock } = useAppStore();
   const productLine = useProductLine();
   const { entities } = productLine;
   const [expanded, setExpanded] = useState(false);
@@ -528,10 +528,26 @@ export function EntityView() {
                         <IceScorePanel entityId={entity.id} iceScore={entity.iceScore} />
                       </div>
                       {/* Blocks (without description, already shown above) */}
-                      {entity.blocks.map((block) => (
-                        <BlockRenderer key={block.id} block={block} entityId={entity.id} entityLevel={entity.level} />
-                      ))}
-                      <AddBlockButton entityId={entity.id} />
+                      {entity.blocks.map((block) => {
+                        const isOutcome = entity.level === "business_outcome" || entity.level === "product_outcome";
+                        return (
+                          <BlockRenderer
+                            key={block.id}
+                            block={block}
+                            ownerId={entity.id}
+                            entityLevel={entity.level}
+                            onUpdateBlock={(bid, upd) => updateBlock(entity.id, bid, upd)}
+                            onRemoveBlock={(bid) => removeBlock(entity.id, bid)}
+                            onRecordMetricValue={(bid, date, val) => recordMetricValue(entity.id, bid, date, val)}
+                            onCopyAnchor={() => {
+                              const text = buildBlockAnchor(productLine.entities, productLine.id, productLine.name, entity.id, block.id);
+                              navigator.clipboard.writeText(text);
+                            }}
+                            canDeleteBlock={!(block.type === "metric" && isOutcome)}
+                          />
+                        );
+                      })}
+                      <AddBlockButton idPrefix={entity.id} onAddBlock={(block) => addBlock(entity.id, block)} />
                     </>
                   ) : (
                     <BlockList entity={entity} />

@@ -343,19 +343,20 @@ export function MetricBlockEditor({ block, onSave, onCancel, entityLevel }: { bl
 
 // ── Block renderer ────────────────────────────────────────────────────────
 
-export function BlockRenderer({ block, entityId, entityLevel }: { block: Block; entityId: string; entityLevel?: EntityLevel }) {
+export function BlockRenderer({ block, ownerId, entityLevel, onUpdateBlock, onRemoveBlock, onRecordMetricValue, onCopyAnchor, canDeleteBlock = true }: {
+  block: Block;
+  ownerId: string;
+  entityLevel?: EntityLevel;
+  onUpdateBlock: (blockId: string, updates: Partial<Block>) => void;
+  onRemoveBlock: (blockId: string) => void;
+  onRecordMetricValue: (blockId: string, date: string, value: number) => void;
+  onCopyAnchor?: () => void;
+  canDeleteBlock?: boolean;
+}) {
   const [editing, setEditing] = useState(false);
-  const { updateBlock, removeBlock, recordMetricValue } = useAppStore();
-  const productLine = useProductLine();
-  const currentProductLineId = useAppStore((s) => s.currentProductLineId);
-
-  const handleCopyAnchor = () => {
-    const text = buildBlockAnchor(productLine.entities, currentProductLineId, productLine.name, entityId, block.id);
-    navigator.clipboard.writeText(text);
-  };
 
   const handleSave = (updates: Partial<Block>) => {
-    updateBlock(entityId, block.id, updates);
+    onUpdateBlock(block.id, updates);
 
     // Auto-seed: when structured tracking is first enabled, seed the start date with initial value
     if (
@@ -366,13 +367,13 @@ export function BlockRenderer({ block, entityId, entityLevel }: { block: Block; 
     ) {
       const currentSeries = (block as MetricBlock).dataSeries ?? [];
       if (currentSeries.length === 0) {
-        recordMetricValue(entityId, block.id, updates.startDate as string, updates.initialValue as number);
+        onRecordMetricValue(block.id, updates.startDate as string, updates.initialValue as number);
       }
     }
 
     setEditing(false);
   };
-  const handleDelete = () => removeBlock(entityId, block.id);
+  const handleDelete = () => onRemoveBlock(block.id);
 
   if (editing) {
     switch (block.type) {
@@ -383,12 +384,9 @@ export function BlockRenderer({ block, entityId, entityLevel }: { block: Block; 
     }
   }
 
-  const isOutcome = entityLevel === "business_outcome" || entityLevel === "product_outcome";
-  const canDelete = !(block.type === "metric" && isOutcome);
-
   return (
     <div className="relative group/block">
-      <BlockToolbar onEdit={() => setEditing(true)} onDelete={handleDelete} onCopyAnchor={handleCopyAnchor} canDelete={canDelete} />
+      <BlockToolbar onEdit={() => setEditing(true)} onDelete={handleDelete} onCopyAnchor={onCopyAnchor} canDelete={canDeleteBlock} />
       {block.type === "accordion" && (
         <AccordionSection label={block.label} defaultOpen={block.defaultOpen}>
           <MarkdownBlock content={block.content} />
@@ -402,7 +400,7 @@ export function BlockRenderer({ block, entityId, entityLevel }: { block: Block; 
         </blockquote>
       )}
       {block.type === "metric" && (
-        <MetricCard block={block} entityLevel={entityLevel} entityId={entityId} />
+        <MetricCard block={block} entityLevel={entityLevel} entityId={ownerId} />
       )}
     </div>
   );
@@ -410,9 +408,8 @@ export function BlockRenderer({ block, entityId, entityLevel }: { block: Block; 
 
 // ── Add Block dropdown ────────────────────────────────────────────────────
 
-export function AddBlockButton({ entityId }: { entityId: string }) {
+export function AddBlockButton({ idPrefix, onAddBlock }: { idPrefix: string; onAddBlock: (block: Block) => void }) {
   const [open, setOpen] = useState(false);
-  const { addBlock } = useAppStore();
   const ref = useRef<HTMLDivElement>(null);
   const handleClickOutside = useCallback(() => setOpen(false), []);
   useClickOutside(ref, handleClickOutside, open);
@@ -425,7 +422,7 @@ export function AddBlockButton({ entityId }: { entityId: string }) {
   ];
 
   const handleAdd = (type: Block["type"]) => {
-    const id = `${entityId}-b${Date.now()}`;
+    const id = `${idPrefix}-b${Date.now()}`;
     let block: Block;
     switch (type) {
       case "accordion": block = { id, type, label: "New Section", content: "" }; break;
@@ -433,7 +430,7 @@ export function AddBlockButton({ entityId }: { entityId: string }) {
       case "quote": block = { id, type, content: "" }; break;
       case "metric": block = { id, type, metric: "Metric", currentValue: "0", targetValue: "0" }; break;
     }
-    addBlock(entityId, block);
+    onAddBlock(block);
     setOpen(false);
   };
 
@@ -465,7 +462,16 @@ export function AddBlockButton({ entityId }: { entityId: string }) {
 // ── Block list ────────────────────────────────────────────────────────────
 
 export function BlockList({ entity }: { entity: Entity }) {
-  const { updateEntity } = useAppStore();
+  const { updateEntity, updateBlock, removeBlock, recordMetricValue, addBlock } = useAppStore();
+  const productLine = useProductLine();
+  const currentProductLineId = useAppStore((s) => s.currentProductLineId);
+
+  const isOutcome = entity.level === "business_outcome" || entity.level === "product_outcome";
+
+  const handleCopyAnchor = (blockId: string) => {
+    const text = buildBlockAnchor(productLine.entities, currentProductLineId, productLine.name, entity.id, blockId);
+    navigator.clipboard.writeText(text);
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -479,118 +485,24 @@ export function BlockList({ entity }: { entity: Entity }) {
         />
       </div>
       {entity.blocks.map((block) => (
-        <BlockRenderer key={block.id} block={block} entityId={entity.id} entityLevel={entity.level} />
+        <BlockRenderer
+          key={block.id}
+          block={block}
+          ownerId={entity.id}
+          entityLevel={entity.level}
+          onUpdateBlock={(bid, upd) => updateBlock(entity.id, bid, upd)}
+          onRemoveBlock={(bid) => removeBlock(entity.id, bid)}
+          onRecordMetricValue={(bid, date, val) => recordMetricValue(entity.id, bid, date, val)}
+          onCopyAnchor={() => handleCopyAnchor(block.id)}
+          canDeleteBlock={!(block.type === "metric" && isOutcome)}
+        />
       ))}
-      <AddBlockButton entityId={entity.id} />
+      <AddBlockButton idPrefix={entity.id} onAddBlock={(block) => addBlock(entity.id, block)} />
     </div>
   );
 }
 
 // ── Product Line block list ────────────────────────────────────────────────
-
-function ProductLineBlockRenderer({ block, plId }: { block: Block; plId: string }) {
-  const [editing, setEditing] = useState(false);
-  const { updateProductLineBlock, removeProductLineBlock, recordProductLineMetricValue } = useAppStore();
-
-  const handleSave = (updates: Partial<Block>) => {
-    updateProductLineBlock(plId, block.id, updates);
-    if (
-      block.type === "metric" &&
-      "frequency" in updates && updates.frequency &&
-      "startDate" in updates && updates.startDate &&
-      "initialValue" in updates && updates.initialValue !== undefined
-    ) {
-      const currentSeries = (block as MetricBlock).dataSeries ?? [];
-      if (currentSeries.length === 0) {
-        recordProductLineMetricValue(plId, block.id, updates.startDate as string, updates.initialValue as number);
-      }
-    }
-    setEditing(false);
-  };
-  const handleDelete = () => removeProductLineBlock(plId, block.id);
-
-  if (editing) {
-    switch (block.type) {
-      case "accordion": return <AccordionBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} labelMaxLength={40} contentMaxLength={3000} />;
-      case "pills": return <PillsBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
-      case "quote": return <QuoteBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
-      case "metric": return <MetricBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
-    }
-  }
-
-  return (
-    <div className="relative group/block">
-      <BlockToolbar onEdit={() => setEditing(true)} onDelete={handleDelete} canDelete={true} />
-      {block.type === "accordion" && (
-        <AccordionSection label={block.label} defaultOpen={block.defaultOpen}>
-          <MarkdownBlock content={block.content} />
-        </AccordionSection>
-      )}
-      {block.type === "pills" && <Pills items={block.items} />}
-      {block.type === "quote" && (
-        <blockquote className="border-l-2 border-amber-400/30 pl-4 py-2 text-sm text-foreground/70 italic bg-amber-400/[0.03] rounded-r-lg">
-          <p>{block.content}</p>
-          {block.attribution && <cite className="text-xs text-muted-foreground/50 not-italic block mt-1">&mdash; {block.attribution}</cite>}
-        </blockquote>
-      )}
-      {block.type === "metric" && (
-        <MetricCard block={block} entityLevel={undefined} entityId={plId} />
-      )}
-    </div>
-  );
-}
-
-function ProductLineAddBlockButton({ plId }: { plId: string }) {
-  const [open, setOpen] = useState(false);
-  const { addProductLineBlock } = useAppStore();
-  const ref = useRef<HTMLDivElement>(null);
-  const handleClickOutside = useCallback(() => setOpen(false), []);
-  useClickOutside(ref, handleClickOutside, open);
-
-  const blockTypes: { type: Block["type"]; label: string }[] = [
-    { type: "accordion", label: "Accordion Section" },
-    { type: "pills", label: "Pills / Tags" },
-    { type: "quote", label: "Quote" },
-    { type: "metric", label: "Metric Card" },
-  ];
-
-  const handleAdd = (type: Block["type"]) => {
-    const id = `${plId}-b${Date.now()}`;
-    let block: Block;
-    switch (type) {
-      case "accordion": block = { id, type, label: "New Section", content: "" }; break;
-      case "pills": block = { id, type, items: [{ label: "Label", value: "Value" }] }; break;
-      case "quote": block = { id, type, content: "" }; break;
-      case "metric": block = { id, type, metric: "Metric", currentValue: "0", targetValue: "0" }; break;
-    }
-    addProductLineBlock(plId, block);
-    setOpen(false);
-  };
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-border-default hover:border-border-strong transition-colors w-full justify-center"
-      >
-        <Plus size={14} /> Add block
-      </button>
-      {open && (
-        <div className="absolute left-0 right-0 bottom-full mb-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden">
-          {blockTypes.map((bt) => (
-            <button
-              key={bt.type}
-              onClick={() => handleAdd(bt.type)}
-              className="cursor-pointer flex items-center gap-2 w-full px-3 py-2.5 text-left text-xs text-foreground hover:bg-surface-hover transition-colors"
-            >
-              {bt.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 export function ProductLineBlockList({ plId, description, onDescriptionSave, blocks }: {
   plId: string;
@@ -598,6 +510,8 @@ export function ProductLineBlockList({ plId, description, onDescriptionSave, blo
   onDescriptionSave: (v: string) => void;
   blocks: Block[];
 }) {
+  const { updateProductLineBlock, removeProductLineBlock, recordProductLineMetricValue, addProductLineBlock } = useAppStore();
+
   return (
     <div className="flex flex-col gap-4">
       <div className="text-[length:var(--text-body)] text-foreground/80 leading-[var(--text-body-leading)]">
@@ -610,9 +524,16 @@ export function ProductLineBlockList({ plId, description, onDescriptionSave, blo
         />
       </div>
       {blocks.map((block) => (
-        <ProductLineBlockRenderer key={block.id} block={block} plId={plId} />
+        <BlockRenderer
+          key={block.id}
+          block={block}
+          ownerId={plId}
+          onUpdateBlock={(bid, upd) => updateProductLineBlock(plId, bid, upd)}
+          onRemoveBlock={(bid) => removeProductLineBlock(plId, bid)}
+          onRecordMetricValue={(bid, date, val) => recordProductLineMetricValue(plId, bid, date, val)}
+        />
       ))}
-      <ProductLineAddBlockButton plId={plId} />
+      <AddBlockButton idPrefix={plId} onAddBlock={(block) => addProductLineBlock(plId, block)} />
     </div>
   );
 }
