@@ -1,7 +1,7 @@
 ---
 name: prototype-builder
 description: Takes a solution or test (prototype type) entity, determines whether the feature touches an existing app screen or needs a new one, designs a lightweight HTML prototype using the app's real design system, builds it as a self-contained file, then links it back to the entity in the discovery tree.
-version: 1.0
+version: 2.0
 ---
 
 # ROLE AND PURPOSE
@@ -17,12 +17,22 @@ You use the app's exact design system so the prototype feels real to the person 
 | File | Role |
 |:-----|:-----|
 | `Product-Agent-app/data/store.json` | **Read + write.** The live app data. Always read fresh before writing. |
-| `Product-Agent-app/app/globals.css` | **Reference only.** Design tokens (OKLch color vars, spacing, typography). |
-| `Product-Agent-app/app/components/` | **Reference only.** Existing component HTML/structure to replicate for existing-screen prototypes. |
+| `{codePath}/` | **Reference only.** The product line's codebase. Resolved dynamically — see [Resolving the codebase](#resolving-the-codebase). |
 | `Product-Agent-app/public/prototypes/{productLineSlug}/[filename].html` | **Write directly.** Claude writes this file using the Write tool. The folder is created automatically if it doesn't exist. Served by Next.js at `localhost:3000/prototypes/{productLineSlug}/[filename].html`. |
 | `ProductSkills/prototype-builder/inject_prototype.py` | **Injection tool.** Adds Prototype block to the entity in store.json. |
 
 > `productLineSlug` is the product line's `name` field, slugified (lowercased, spaces → hyphens, special chars removed). Example: product line "Product Builder" → `product-builder` → file saved at `Product-Agent-app/public/prototypes/product-builder/my-proto.html`.
+
+---
+
+## Resolving the codebase
+
+Each product line has an optional `codePath` field pointing to its codebase root (e.g. `Product-Agent-app`). This is the codebase whose design system the prototype must match.
+
+- **If `codePath` is set:** use it as the base path for all codebase references below.
+- **If `codePath` is not set:** ask the builder which codebase this product line maps to before proceeding.
+
+All references to "the codebase" in this skill mean the directory at `{codePath}/`.
 
 ---
 
@@ -40,7 +50,7 @@ You operate in **3 phases**. Complete Phase 0 automatically, then stop for expli
 
 1. Read `Product-Agent-app/data/store.json`
 2. Locate the entity by ID
-3. **Note the product line key** and **name** (for the slug) — you need these for all file paths
+3. **Note the product line key**, **name** (for the slug), and **`codePath`** — you need these for all file paths and design system discovery
 4. If `level: "test"` — read the test, its parent assumption, and the grandparent solution
 5. If `level: "solution"` — read the solution and its parent opportunity
 6. Read product line personas if available
@@ -49,13 +59,41 @@ You operate in **3 phases**. Complete Phase 0 automatically, then stop for expli
 
 From the entity's content (title, description, blocks), identify the specific moment or user decision the prototype should test. If a block labelled **"Prototype UI/UX Guidance"** exists on the entity, read it carefully — it contains design decisions that must be applied.
 
-### Step 3: Screen check
+### Step 3: Discover the design system
+
+Read the product line's `codePath` to locate the codebase. Then extract the design system by scanning for these artifacts (adapt file names/paths to whatever the codebase uses):
+
+1. **Global styles / design tokens** — look for CSS files defining custom properties, theme tokens, or design variables. Common locations: `globals.css`, `variables.css`, `theme.css`, `tokens.css`, or a `styles/` directory. Extract:
+   - Color palette (token names + values for both light and dark themes if present)
+   - Surface/background tokens and their opacity patterns
+   - Border styles and opacity levels
+   - Spacing scale (padding, gaps, margins)
+   - Typography (font family, sizes, weights, line-heights)
+   - Border-radius values
+   - Shadow definitions
+   - Any glassmorphism, card, or utility class patterns
+
+2. **Component patterns** — scan the components directory for card, button, form, layout, and navigation patterns. Note:
+   - How cards are styled (background, border, radius, shadow, hover states)
+   - Button variants and sizes
+   - How icons are used (library, sizes, stroke-widths)
+   - Spacing and padding conventions
+   - Transition/animation patterns (durations, easing)
+   - Overall density — is the UI spacious or compact?
+
+3. **Font stack** — check layout files or global styles for font imports (Google Fonts, local fonts, system fonts). The prototype must use the same typeface.
+
+4. **Icon library** — identify which icon set the codebase uses (Lucide, Heroicons, Phosphor, etc.) and load the matching CDN in the prototype.
+
+**Output a Design System Summary** as part of your internal context (not shown to the builder) with the concrete values you'll use in the prototype. This ensures you're working from extracted facts, not assumptions.
+
+### Step 4: Screen check
 
 Determine whether the feature being prototyped touches an **existing screen** in the app or requires a **completely new screen**:
 
-- Scan `Product-Agent-app/app/components/` — look for components whose purpose overlaps the feature (EntityView, SectionNav, DashboardLayout, etc.)
+- Scan the codebase's component directory — look for components whose purpose overlaps the feature
 - **Existing screen:** The prototype base will be a faithful static HTML replica of that screen. Only the new feature is overlaid on top. Nothing else changes.
-- **New screen:** Build using the app's existing design system and component patterns. Read `Product-Agent-app/app/globals.css` for tokens and the closest existing components for layout/card/button/form patterns. Do not invent new styles — the new screen must look like it belongs in the app.
+- **New screen:** Build using the design system extracted in Step 3. Match card styles, button styles, spacing, and typography exactly. Do not invent new styles — the new screen must look like it belongs in the app.
 
 ---
 
@@ -92,7 +130,7 @@ Determine whether the feature being prototyped touches an **existing screen** in
 
 ### Step 1: Read source components (existing screen only)
 
-If the prototype targets an existing screen, read the relevant component file(s) to extract the real HTML structure, Tailwind classes, and layout patterns. The prototype must match what the user actually sees in the app — not an approximation.
+If the prototype targets an existing screen, read the relevant component file(s) from `{codePath}/` to extract the real HTML structure, CSS classes, and layout patterns. The prototype must match what the user actually sees in the app — not an approximation.
 
 ### Step 2: Write the HTML file
 
@@ -100,16 +138,23 @@ Write `Product-Agent-app/public/prototypes/{productLineSlug}/[filename].html` us
 
 **All prototypes must be:**
 - Single self-contained HTML file — no external dependencies except CDNs
-- Inline `<style>` with the full OKLch token set from `globals.css` (both `:root` light and `.dark` dark values)
-- Google Fonts CDN: DM Sans (same weights as the app)
-- Lucide icons via CDN: `https://unpkg.com/lucide@latest/dist/umd/lucide.min.js`
-- Dark mode toggle button
+- Inline `<style>` with the **full design token set extracted in Phase 0 Step 3** — both light and dark theme values. Copy the actual CSS custom property definitions from the codebase, not approximations.
+- **Font CDN** matching the codebase's font stack (e.g. Google Fonts for DM Sans, Inter, etc.)
+- **Icon CDN** matching the codebase's icon library (e.g. `https://unpkg.com/lucide@latest/dist/umd/lucide.min.js` for Lucide)
+- Dark mode toggle button (if the codebase supports dark mode)
 - Vanilla JS for screen/state transitions
 - A visible **Facilitator Note** panel (clearly labelled, excluded from participant view instructions)
 
 **If existing screen:** replicate the screen's HTML faithfully, then add only the new feature. Do not simplify, restyle, or restructure the surrounding UI.
 
-**If new screen:** use the actual design tokens and component patterns from the app. Match card styles, button styles, spacing, and typography exactly.
+**If new screen:** use the design tokens and component patterns extracted in Phase 0 Step 3. The prototype must feel like a native screen of the app — same surfaces, borders, spacing, typography, radius, and interaction patterns. Never fall back on generic styling.
+
+**Design quality bar:** The prototype should feel **sleek, polished, and minimal** — matching the codebase's aesthetic, not a wireframe. Specific rules:
+- Use the codebase's actual surface/background tokens — never plain white cards or flat gray backgrounds
+- Match border opacity and subtlety — if the codebase uses semi-transparent borders, so does the prototype
+- Replicate the codebase's spacing generosity or density — don't default to generic padding
+- Hover/active states must use the codebase's transition patterns (duration, easing, property changes)
+- If the codebase's aesthetic is minimal and spacious, the prototype must be too. If it's dense and information-rich, match that. The prototype should be indistinguishable from a real screen at first glance.
 
 Apply any guidance from a **"Prototype UI/UX Guidance"** block on the entity.
 
@@ -174,7 +219,7 @@ rm _prototype_input.json
 2. **Always check for a "Prototype UI/UX Guidance" block** on the entity before building. If it exists, those decisions override your defaults.
 3. **Never overwrite an existing prototype file** without explicit builder approval. Check if the filename already exists in `Product-Agent-app/public/prototypes/{productLineSlug}/` before writing.
 4. **Existing screen = faithful replica.** Do not simplify, redesign, or restructure the surrounding UI. Only the new feature changes.
-5. **New screen = app's design system only.** No invented styles, no generic UI patterns. If you can't find the right token or pattern in the codebase, ask before guessing.
+5. **New screen = codebase's design system only.** No invented styles, no generic UI patterns. Every color, spacing value, border, and radius must come from the design tokens extracted in Phase 0 Step 3. If you can't find the right token or pattern in the codebase, ask before guessing.
 6. **Always include a Facilitator Note panel** in the prototype. It must be clearly labelled and contain the facilitator script from Phase 1.
 7. **Prototypes test one moment, not a whole product.** If the scope feels like it requires more than 3 screens, push back and narrow it down with the builder.
 8. **Always read current store.json before writing** — never work from stale data.
