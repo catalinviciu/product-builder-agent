@@ -86,7 +86,7 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
       <p className="text-xs text-muted-foreground/70 leading-relaxed line-clamp-2">{preview}</p>
 
       {(personaName || badge || assumptionTypeLabel || testTypeLabel || iceScore != null) && (
-        <div className="flex items-center justify-end gap-1.5">
+        <div className="flex items-center justify-end gap-1.5 flex-wrap">
           {iceScore != null && iceScoreColor && (
             <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full border font-medium", iceScoreColor.text, iceScoreColor.bg, iceScoreColor.border)}>
               ICE: {iceScore}

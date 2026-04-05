@@ -21,7 +21,7 @@ export function IceScorePanel({ entityId, iceScore }: { entityId: string; iceSco
 
   if (!scored) {
     return (
-      <div className="w-full md:w-[40%] shrink-0 rounded-xl border border-border-default bg-surface-1 p-3">
+      <div className="w-full lg:w-[40%] shrink-0 rounded-xl border border-border-default bg-surface-1 p-3">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-sm font-semibold text-foreground">ICE Score</span>
@@ -39,7 +39,7 @@ export function IceScorePanel({ entityId, iceScore }: { entityId: string; iceSco
   }
 
   return (
-    <div className="w-full md:w-[40%] shrink-0 rounded-xl border border-border-default bg-surface-1 p-3 flex flex-col gap-2">
+    <div className="w-full lg:w-[40%] shrink-0 rounded-xl border border-border-default bg-surface-1 p-3 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold text-foreground">ICE Score</span>
         <div className="flex items-center gap-2">

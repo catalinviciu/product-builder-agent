@@ -427,7 +427,7 @@ export function EntityView() {
                       if (e.key === " ") e.stopPropagation();
                     }}
                     onBlur={() => { if (titleDraft.trim()) updateEntity(entity.id, { title: titleDraft.trim() }); setEditingTitle(false); }}
-                    className="text-xl font-semibold text-foreground bg-surface-hover border border-border-strong rounded-lg px-2 py-1 focus:outline-none focus:border-border-focus"
+                    className="text-lg lg:text-xl font-semibold text-foreground bg-surface-hover border border-border-strong rounded-lg px-2 py-1 focus:outline-none focus:border-border-focus"
                   />
                   <div className={cn("text-right text-[10px] px-1",
                     titleDraft.length >= 120 ? "text-red-500 dark:text-red-400" :
@@ -438,7 +438,7 @@ export function EntityView() {
                   </div>
                 </div>
               ) : (
-                <h1 className="text-xl font-semibold text-foreground flex-1 flex items-center gap-2">
+                <h1 className="text-lg lg:text-xl font-semibold text-foreground flex-1 flex items-center gap-2">
                   {entity.title}
                   <button
                     onClick={(e) => { e.stopPropagation(); setTitleDraft(entity.title); setEditingTitle(true); }}
@@ -515,8 +515,8 @@ export function EntityView() {
                   {entity.level === "opportunity" ? (
                     <>
                       {/* Description + ICE side-by-side */}
-                      <div className="flex flex-col md:flex-row gap-4">
-                        <div className="md:w-[60%] min-w-0 text-[length:var(--text-body)] text-foreground/80 leading-[var(--text-body-leading)]">
+                      <div className="flex flex-col lg:flex-row gap-4">
+                        <div className="lg:w-[60%] min-w-0 text-[length:var(--text-body)] text-foreground/80 leading-[var(--text-body-leading)]">
                           <EditableText
                             value={entity.description}
                             onSave={(v) => updateEntity(entity.id, { description: v })}

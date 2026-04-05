@@ -221,14 +221,14 @@ export function MetricCard({ block, entityLevel, entityId }: {
       </div>
 
       {/* Side-by-side: summary left, chart right */}
-      <div className="flex flex-col md:flex-row gap-2">
+      <div className="flex flex-col lg:flex-row gap-2">
         {/* Left: metric summary panel */}
-        <div className="md:w-[35%] min-w-0 bg-surface-1 rounded-lg border border-border-subtle px-4 py-3">
-          <div className="flex items-center gap-4">
+        <div className="lg:w-[35%] min-w-0 bg-surface-1 rounded-lg border border-border-subtle px-4 py-3">
+          <div className="flex items-center gap-4 flex-wrap">
             {/* Current — hero */}
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-5xl font-bold text-foreground leading-none">{fmt(currentValue)}</span>
+                <span className="text-4xl lg:text-5xl font-bold text-foreground leading-none">{fmt(currentValue)}</span>
                 <TrendIndicator dataSeries={series} />
               </div>
               <span className="text-[10px] text-muted-foreground/60 mt-1">
@@ -278,7 +278,7 @@ export function MetricCard({ block, entityLevel, entityId }: {
         </div>
 
         {/* Right: chart */}
-        <div className="md:w-[65%] min-w-0 bg-surface-1 rounded-lg border border-border-subtle p-1.5">
+        <div className="lg:w-[65%] min-w-0 bg-surface-1 rounded-lg border border-border-subtle p-1.5">
           <MetricChart
             dataSeries={series}
             target={target}

@@ -147,7 +147,7 @@ export function EntityGridView({
 
       {/* Grid view */}
       {viewMode === "grid" && items.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {[...items].sort((a, b) => STATUS_GROUP_ORDER[a.status] - STATUS_GROUP_ORDER[b.status]).map((child) => {
             const cardProps = getCardProps(child);
             return (
@@ -182,7 +182,7 @@ export function EntityGridView({
       {/* Kanban view */}
       {viewMode === "kanban" && items.length > 0 && (
         <DndContext sensors={sensors} onDragEnd={handleDragEnd} onDragStart={(e) => setActiveId(e.active.id as string)} collisionDetection={pointerWithin}>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none flex md:grid">
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-3 overflow-x-auto xl:overflow-x-visible snap-x snap-mandatory xl:snap-none flex xl:grid">
             {KANBAN_COLUMNS.map((col) => {
               const doneItems = items.filter((c) => c.status === "done");
               const archivedOrDroppedItems = items.filter((c) => c.status === "archived" || c.status === "dropped");

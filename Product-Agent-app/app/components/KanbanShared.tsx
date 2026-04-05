@@ -24,7 +24,7 @@ export function KanbanColumn({ columnKey, label, dotColor, accentBorder, childre
     <div
       ref={setNodeRef}
       className={cn(
-        "rounded-lg bg-surface-1 border border-border-subtle p-2 flex flex-col gap-2 min-w-[75vw] md:min-w-0 snap-center",
+        "rounded-lg bg-surface-1 border border-border-subtle p-2 flex flex-col gap-2 min-w-[75vw] md:min-w-[220px] xl:min-w-0 snap-center xl:snap-align-none",
         "border-t-2",
         accentBorder,
         isOver && "border-border-strong bg-surface-2",
