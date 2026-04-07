@@ -3,7 +3,7 @@
 import React, { useState, useRef, useCallback } from "react";
 import { useClickOutside } from "@/app/lib/hooks/useClickOutside";
 import {
-  LayoutGrid, ChevronDown, Check, Plus, Pencil, X, Trash2,
+  ChevronDown, Check, Plus, Pencil, X, Trash2,
 } from "lucide-react";
 import type { Entity, ProductLineStatus } from "@/app/lib/schemas";
 import { LEVEL_META, PRODUCT_LINE_STATUS_META, PRODUCT_LINE_STATUSES, ENTITY_STATUS_META } from "@/app/lib/schemas";
@@ -277,7 +277,7 @@ const HIDDEN_STATUSES = new Set(["done", "archived", "dropped"]);
 const STATUS_SORT_ORDER: Record<string, number> = { commit: 0, explore: 1, draft: 2 };
 
 export function SectionNav() {
-  const { currentEntityId, navigateTo } = useAppStore();
+  const { currentEntityId, navigateTo, viewMode, setViewMode } = useAppStore();
   const { tree, entities, name } = useProductLine();
 
   const expandedIds = React.useMemo(() => {
@@ -345,22 +345,34 @@ export function SectionNav() {
       <ProductLineSelector />
       <PersonaManager />
 
-      <button
-        onClick={() => navigateTo(null)}
-        className={cn(
-          "cursor-pointer flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-left transition-colors duration-150",
-          "hover:bg-surface-hover",
-          currentEntityId === null && "bg-surface-active text-foreground",
-          currentEntityId !== null && "text-muted-foreground"
-        )}
-      >
-        <LayoutGrid size={13} className="shrink-0 text-muted-foreground/60" />
-        <span className={cn("text-xs font-medium", currentEntityId === null && "text-foreground")}>
-          Overview
-        </span>
-      </button>
+      {/* View mode toggle */}
+      <div className="flex gap-0.5 p-0.5 bg-surface-2 rounded-lg mb-1">
+        <button
+          onClick={() => { setViewMode("discovery"); navigateTo(null); }}
+          className={cn(
+            "cursor-pointer flex-1 text-xs py-1.5 rounded-md font-medium transition-colors",
+            viewMode === "discovery"
+              ? "bg-surface-3 text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-surface-hover"
+          )}
+        >
+          Discovery
+        </button>
+        <button
+          onClick={() => setViewMode("metric-tree")}
+          className={cn(
+            "cursor-pointer flex-1 text-xs py-1.5 rounded-md font-medium transition-colors",
+            viewMode === "metric-tree"
+              ? "bg-surface-3 text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-surface-hover"
+          )}
+        >
+          Metric Tree
+        </button>
+      </div>
 
-      {tree.rootChildren
+      {/* Entity tree — only shown in discovery mode */}
+      {viewMode === "discovery" && tree.rootChildren
         .map((id) => entities[id])
         .filter((entity): entity is Entity => !!entity && !HIDDEN_STATUSES.has(entity.status))
         .sort((a, b) => (STATUS_SORT_ORDER[a.status] ?? 99) - (STATUS_SORT_ORDER[b.status] ?? 99))

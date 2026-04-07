@@ -13,6 +13,27 @@ export function generateId(): string {
 
 // ── Tree helpers ────────────────────────────────────────────────────────
 
+/**
+ * Returns all descendant IDs (BFS) — used for cycle prevention in reparentEntity.
+ */
+export function getDescendantIds(
+  entities: EntityStore,
+  entityId: string,
+): string[] {
+  const result: string[] = [];
+  const queue = [entityId];
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    const entity = entities[id];
+    if (!entity) continue;
+    for (const childId of entity.children) {
+      result.push(childId);
+      queue.push(childId);
+    }
+  }
+  return result;
+}
+
 export function getEntity(store: EntityStore, id: string): Entity | undefined {
   return store[id];
 }

@@ -12,8 +12,8 @@
 
 ## Backbone (Activity Overview)
 
-| 1. Set Up a Product Line | 2. Define Personas | 3. Define a Business Outcome | 4. Define a Product Outcome | 5. Map Opportunities | 6. Design Solutions | 7. Validate Assumptions | 8. Organize & Prioritize | 9. Navigate & Review | 10. Manage Preferences | 11. Export Context for AI Agent |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1. Set Up a Product Line | 2. Define Personas | 3. Define a Business Outcome | 4. Define a Product Outcome | 5. Map Opportunities | 6. Design Solutions | 7. Validate Assumptions | 8. Organize & Prioritize | 9. View & Manage the Metric Tree | 10. Navigate & Review | 11. Manage Preferences | 12. Export Context for AI Agent |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 ---
 
@@ -183,19 +183,32 @@
 | **Compare ICE scores** | Compare ICE score badges on opportunity cards to prioritize across the grid | `ChildEntityCard` · `ICE Badge` |
 
 
-### Activity 9: Navigate & Review
+### Activity 9: View & Manage the Metric Tree
+> See how all outcomes and signals relate as a metric hierarchy, and adjust driver/driven relationships.
+
+| Step | Story | Components |
+|:-----|:------|:-----------|
+| **Switch to Metric Tree view** | Toggle from Discovery Tree to Metric Tree using the sidebar segmented control | `SectionNav` · `ViewModeToggle` |
+| **Browse metric relationships** | View all Business and Product Outcomes arranged as a recursive driver/driven tree with connector lines | `MetricTreeView` · `MetricTreeCard` |
+|  | See signal health and latest values as detail rows inside each outcome card | `MetricTreeCard` |
+|  | Navigate to an outcome's detail view by clicking its metric card | `MetricTreeCard` · `EntityView` |
+|  | Zoom in or out on large metric trees using the zoom controls | `MetricTreeView` |
+| **Reparent a metric** | Change a Product Outcome's driver relationship by picking a new parent in the reparent dropdown, updating the tree immediately | `MetricTreeCard` · `ReparentDropdown` |
+
+
+### Activity 10: Navigate & Review
 > Move through the discovery tree to review and connect ideas.
 
 | Step | Story | Components |
 |:-----|:------|:-----------|
-| **Open Overview** | Navigate to the Overview page to see all Business Outcomes | `SectionNav` |
+| **Open Overview** | Navigate to the product line overview by selecting Discovery Tree in the sidebar view toggle | `SectionNav` · `ViewModeToggle` |
 | **Browse the entity tree** | Navigate to any entity by clicking it in the sidebar tree | `SectionNav` |
 | **Use breadcrumbs** | Jump to any ancestor entity using the breadcrumb trail | `EntityBreadcrumb` |
 | **Switch product line** | Switch to a different product line via the Product Line Selector | `Product Line Selector` |
 | **Toggle sidebar** | Collapse or expand the sidebar to control workspace layout | `DashboardLayout` · `Sidebar Toggle` |
 
 
-### Activity 10: Manage Preferences
+### Activity 11: Manage Preferences
 > Customize how the workspace looks and behaves.
 
 | Step | Story | Components |
@@ -205,7 +218,7 @@
 | **Configure analytics consent** | Accept or decline anonymous analytics consent on first launch via the consent banner | `ConsentBanner` |
 
 
-### Activity 11: Export Context for AI Agent
+### Activity 12: Export Context for AI Agent
 > Generate context-rich prompts from the discovery tree to drive AI-assisted planning and coding.
 
 | Step | Story | Components |

@@ -378,6 +378,34 @@
       ]
     },
     {
+      "id": "manage-metric-tree",
+      "title": "View & Manage the Metric Tree",
+      "goal": "See how all outcomes and signals relate as a metric hierarchy, and adjust driver/driven relationships.",
+      "steps": [
+        {
+          "title": "Switch to Metric Tree view",
+          "stories": [
+            { "action": "Toggle from Discovery Tree to Metric Tree using the sidebar segmented control", "components": ["SectionNav", "ViewModeToggle"] }
+          ]
+        },
+        {
+          "title": "Browse metric relationships",
+          "stories": [
+            { "action": "View all Business and Product Outcomes arranged as a recursive driver/driven tree with connector lines", "components": ["MetricTreeView", "MetricTreeCard"] },
+            { "action": "See signal health and latest values as detail rows inside each outcome card", "components": ["MetricTreeCard"] },
+            { "action": "Navigate to an outcome's detail view by clicking its metric card", "components": ["MetricTreeCard", "EntityView"] },
+            { "action": "Zoom in or out on large metric trees using the zoom controls", "components": ["MetricTreeView"] }
+          ]
+        },
+        {
+          "title": "Reparent a metric",
+          "stories": [
+            { "action": "Change a Product Outcome's driver relationship by picking a new parent in the reparent dropdown, updating the tree immediately", "components": ["MetricTreeCard", "ReparentDropdown"] }
+          ]
+        }
+      ]
+    },
+    {
       "id": "navigate-review",
       "title": "Navigate & Review",
       "goal": "Move through the discovery tree to review and connect ideas.",
@@ -385,7 +413,7 @@
         {
           "title": "Open Overview",
           "stories": [
-            { "action": "Navigate to the Overview page to see all Business Outcomes", "components": ["SectionNav"] }
+            { "action": "Navigate to the product line overview by selecting Discovery Tree in the sidebar view toggle", "components": ["SectionNav", "ViewModeToggle"] }
           ]
         },
         {

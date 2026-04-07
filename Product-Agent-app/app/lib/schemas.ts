@@ -199,6 +199,8 @@ export interface Signal {
   status: SignalStatus;
   dataSeries: MetricDataPoint[];
   createdAt: string; // ISO YYYY-MM-DD
+  /** Optional parent signal id — when set, the signal nests under another signal within the same PO. */
+  parentSignalId?: string;
 }
 
 export function formatMetricValue(value: number, format?: MetricValueFormat): string {

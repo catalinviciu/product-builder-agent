@@ -126,18 +126,45 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
     </>
   ) : undefined;
 
+  // When a PO has been reparented under another PO via the Metric Tree, it appears
+  // as a child here. Separate those from the expected Opportunity children.
+  const poChildren = entity.level === "product_outcome"
+    ? children.filter((c) => c.level === "product_outcome")
+    : [];
+  const primaryChildren = entity.level === "product_outcome"
+    ? children.filter((c) => c.level !== "product_outcome")
+    : children;
+
   return (
-    <EntityGridView
-      items={children}
-      orderedIds={entity.children}
-      onReorder={(newIds) => updateEntity(entity.id, { children: newIds })}
-      onStatusChange={(id, status) => setEntityStatus(id, status)}
-      headerLabel={levelMeta.childrenLabel}
-      headerDescription={childLevel ? LEVEL_META[childLevel].description : undefined}
-      getCardProps={getChildCardProps}
-      addButton={addButton}
-      storageKey="pa-view-mode"
-    />
+    <>
+      {poChildren.length > 0 && (
+        <EntityGridView
+          items={poChildren}
+          orderedIds={entity.children.filter((id) => poChildren.some((c) => c.id === id))}
+          onReorder={() => {}} // reorder via metric tree only
+          onStatusChange={(id, status) => setEntityStatus(id, status)}
+          headerLabel="Product Outcomes"
+          headerDescription={LEVEL_META.product_outcome.description}
+          getCardProps={getChildCardProps}
+          storageKey={`pa-view-mode-po-${entity.id}`}
+        />
+      )}
+      <EntityGridView
+        items={primaryChildren}
+        orderedIds={entity.children.filter((id) => primaryChildren.some((c) => c.id === id))}
+        onReorder={(newIds) => {
+          // Merge reordered primary IDs back with any PO child IDs (keep them at start)
+          const poIds = entity.children.filter((id) => poChildren.some((c) => c.id === id));
+          updateEntity(entity.id, { children: [...poIds, ...newIds] });
+        }}
+        onStatusChange={(id, status) => setEntityStatus(id, status)}
+        headerLabel={levelMeta.childrenLabel}
+        headerDescription={childLevel ? LEVEL_META[childLevel].description : undefined}
+        getCardProps={getChildCardProps}
+        addButton={addButton}
+        storageKey="pa-view-mode"
+      />
+    </>
   );
 }
 
@@ -295,7 +322,7 @@ export function EntityView() {
   const { currentEntityId, updateEntity, deleteEntity, dropEntityCascade, setEntityStatus, updateBlock, removeBlock, recordMetricValue, addBlock } = useAppStore();
   const productLine = useProductLine();
   const { entities } = productLine;
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const [confirmDeleteEntity, setConfirmDeleteEntity] = useState(false);

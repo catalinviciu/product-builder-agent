@@ -4,6 +4,7 @@ import { immer } from "zustand/middleware/immer";
 import { DEFAULT_PRODUCT_LINE_ID } from "./schemas";
 import type { Entity, Block, MetricBlock, ProductLine, DiscoveryTree, Persona, AssumptionType, TestType, IceScore, EntityStatus, Signal } from "./schemas";
 import { analyticsEmitter, type AnalyticsEventMap } from "./analytics-events";
+import { getDescendantIds } from "./utils";
 
 export interface AppStore {
   // Data
@@ -14,8 +15,10 @@ export interface AppStore {
   currentEntityId: string | null;
   isHydrated: boolean;
   sidebarOpen: boolean;
+  viewMode: "discovery" | "metric-tree";
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
+  setViewMode: (mode: "discovery" | "metric-tree") => void;
   personaPanelOpen: boolean;
   personaPanelId: string | null;
   openPersonaPanel: (id?: string) => void;
@@ -32,6 +35,12 @@ export interface AppStore {
   navigateTo: (id: string | null) => void;
   navigateUp: () => void;
   navigateToChild: (childId: string) => void;
+  navigateFromMetricTree: (entityId: string) => void;
+  reparentEntity: (entityId: string, newParentId: string) => void;
+  reparentSignal: (
+    signalId: string,
+    target: { poId: string; parentSignalId?: string },
+  ) => void;
 
   // Product Line CRUD
   addProductLine: (pl: ProductLine) => void;
@@ -104,8 +113,14 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
   currentEntityId: null,
   isHydrated: false,
   sidebarOpen: true,
+  viewMode: "discovery" as "discovery" | "metric-tree",
   toggleSidebar: () => set((draft) => { draft.sidebarOpen = !draft.sidebarOpen; }),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  setViewMode: (mode) => set((draft) => {
+    draft.viewMode = mode;
+    draft.currentEntityId = null;
+    draft.sidebarOpen = mode === "discovery";
+  }),
   personaPanelOpen: false,
   personaPanelId: null,
   openPersonaPanel: (id) => set({ personaPanelOpen: true, personaPanelId: id ?? null }),
@@ -166,7 +181,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
 
   switchProductLine: (id) => {
     if (typeof window !== "undefined") localStorage.setItem("pa-current-pl", id);
-    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null });
+    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null, viewMode: "discovery", sidebarOpen: true });
   },
   navigateTo: (id) => set({ currentEntityId: id }),
   navigateUp: () =>
@@ -178,6 +193,100 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
       draft.currentEntityId = entity ? (entity.parentId || null) : null;
     }),
   navigateToChild: (childId) => set({ currentEntityId: childId }),
+
+  navigateFromMetricTree: (entityId) => set((draft) => {
+    draft.viewMode = "discovery";
+    draft.currentEntityId = entityId;
+    draft.sidebarOpen = true;
+  }),
+
+  reparentEntity: (entityId, newParentId) => set((draft) => {
+    const pl = draft.productLines[draft.currentProductLineId];
+    if (!pl) return;
+    const entity = pl.entities[entityId];
+    const newParent = pl.entities[newParentId];
+    if (!entity || !newParent) return;
+    if (entity.parentId === newParentId) return;
+    // Cycle prevention: can't reparent to self or a descendant
+    const descendants = getDescendantIds(pl.entities, entityId);
+    if (entityId === newParentId || descendants.includes(newParentId)) return;
+    // Remove from old parent
+    const oldParentId = entity.parentId;
+    if (oldParentId && pl.entities[oldParentId]) {
+      pl.entities[oldParentId].children = pl.entities[oldParentId].children.filter((id) => id !== entityId);
+    } else {
+      pl.tree.rootChildren = pl.tree.rootChildren.filter((id) => id !== entityId);
+    }
+    // Add to new parent
+    newParent.children.push(entityId);
+    entity.parentId = newParentId;
+  }),
+
+  reparentSignal: (signalId, target) => set((draft) => {
+    const pl = draft.productLines[draft.currentProductLineId];
+    if (!pl) return;
+    const targetPo = pl.entities[target.poId];
+    if (!targetPo || targetPo.level !== "product_outcome") return;
+
+    // Find the PO currently holding the signal
+    let currentPoId: string | undefined;
+    for (const [eid, e] of Object.entries(pl.entities)) {
+      if ((e.signals ?? []).some((s) => s.id === signalId)) {
+        currentPoId = eid;
+        break;
+      }
+    }
+    if (!currentPoId) return;
+    const currentPo = pl.entities[currentPoId];
+    const currentSignals = currentPo.signals ?? [];
+    const signal = currentSignals.find((s) => s.id === signalId);
+    if (!signal) return;
+
+    // Compute descendants of the signal (within its current PO)
+    const descendants = new Set<string>();
+    const queue = [signalId];
+    while (queue.length) {
+      const id = queue.shift()!;
+      for (const s of currentSignals) {
+        if (s.parentSignalId === id && !descendants.has(s.id)) {
+          descendants.add(s.id);
+          queue.push(s.id);
+        }
+      }
+    }
+
+    // Validate parent-signal target
+    if (target.parentSignalId) {
+      if (target.parentSignalId === signalId) return;
+      // Only meaningful if target signal is in target PO
+      const targetSignals = targetPo.signals ?? [];
+      const targetParent = targetSignals.find((s) => s.id === target.parentSignalId);
+      if (!targetParent) return;
+      // Cycle check — only applies if same PO (cross-PO moves carry descendants along, so no cycle possible)
+      if (currentPoId === target.poId && descendants.has(target.parentSignalId)) return;
+    }
+
+    // No-op
+    if (
+      currentPoId === target.poId &&
+      (signal.parentSignalId ?? undefined) === (target.parentSignalId ?? undefined)
+    ) return;
+
+    if (currentPoId === target.poId) {
+      // Same-PO move: just reassign parentSignalId
+      signal.parentSignalId = target.parentSignalId;
+      return;
+    }
+
+    // Cross-PO move: carry the full subtree along
+    const movedIds = new Set<string>([signalId, ...descendants]);
+    const moved = currentSignals.filter((s) => movedIds.has(s.id));
+    currentPo.signals = currentSignals.filter((s) => !movedIds.has(s.id));
+    const movedRoot = moved.find((s) => s.id === signalId);
+    if (movedRoot) movedRoot.parentSignalId = target.parentSignalId;
+    if (!targetPo.signals) targetPo.signals = [];
+    targetPo.signals.push(...moved);
+  }),
 
   addProductLine: (pl) => {
     set((draft) => {
