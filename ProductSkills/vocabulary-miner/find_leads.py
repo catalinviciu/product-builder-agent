@@ -35,23 +35,46 @@ except ImportError:
 
 OUTPUT_PATH = Path(__file__).parent.parent.parent / "Product-Agent-app/data/ProductBuilder/leads.md"
 
-# Primary subreddits — confirmed highest signal for target persona
-# (PMs who vibecode, engineers building their own products)
-SUBREDDITS = "vibecoding+buildinpublic"
+# Primary subreddits — targeting Product Manager persona
+# PMs struggling with artifact labor, context fragmentation, and outcome discipline
+SUBREDDITS = "ProductManagement+productmanagers+agile+scrum+OKRs+startups"
 
 KEYWORDS = [
-    "shipped no users",
-    "built nobody uses",
-    "no traction after launch",
-    "vibe coded nobody",
-    "built the wrong thing",
-    "months building zero users",
-    "launched no signups",
-    "crickets after launch",
-    "shipped nobody cares",
-    "pm vibe coding",
-    "product manager building",
-    "engineer building own",
+    # Artifact labor / tedious PM work
+    "writing PRDs is",
+    "hate writing tickets",
+    "spend all day writing docs",
+    "documentation takes forever",
+    "too much time on slides",
+    "writing specs nobody reads",
+    "PRD takes hours",
+    "updating confluence",
+    "maintaining wiki",
+    # Context fragmentation
+    "context lost between teams",
+    "scattered across docs",
+    "tribal knowledge",
+    "context switching kills",
+    "team doesn't have context",
+    "onboarding takes forever",
+    "nobody reads the docs",
+    "knowledge silos",
+    # Outcome discipline
+    "feature factory",
+    "building wrong thing",
+    "shipped nobody uses",
+    "no clear outcome",
+    "output over outcomes",
+    "lost track of why",
+    "roadmap theater",
+    "stakeholder whack-a-mole",
+    # AI for PM work
+    "AI for product management",
+    "AI product manager",
+    "using AI for PM work",
+    "chatgpt for product",
+    "AI writing PRDs",
+    "AI roadmap",
 ]
 
 # Posts matching these patterns are researchers/interviewers, not builders in pain.
@@ -74,11 +97,11 @@ RESEARCHER_SIGNALS = [
 # Must match pain_signal values in vocabulary-bank.json reply_templates.
 # First-match priority: order matters.
 PAIN_SIGNALS = {
+    "artifact-labor":       ["writing PRDs", "writing specs", "writing tickets", "updating docs", "maintaining wiki", "confluence", "documentation takes", "slides deck", "spend all day writing"],
+    "context-fragmentation":["context lost", "scattered across", "tribal knowledge", "knowledge silo", "nobody reads the doc", "onboarding takes", "team doesn't have context", "context switching"],
+    "feature-factory":      ["feature factory", "output over outcome", "roadmap theater", "building wrong", "shipped nobody", "no clear outcome", "lost track of why", "stakeholder whack"],
+    "ai-for-pm":            ["ai for product", "ai product manager", "chatgpt for product", "ai writing prd", "ai roadmap", "using ai for pm"],
     "shipped-no-users":     ["no users", "zero users", "nobody using", "nobody uses", "no one uses"],
-    "vibe-coded-wrong":     ["vibe cod", "built wrong", "wrong thing", "feature creep", "frankenstein"],
-    "months-zero-traction": ["months building", "weeks building", "zero traction", "no traction", "crickets"],
-    "solo-invisible":       ["no one knows", "nobody knows", "no distribution", "building in public", "building in the dark"],
-    "post-launch-silence":  ["no signups", "no feedback", "nobody cares", "launched and", "silence after"],
     "self-implication":     ["i broke", "i stopped being", "i preach", "i tell my clients", "my own rules"],
 }
 

@@ -19,6 +19,14 @@ You are **read-only**. You never modify store.json or any other file. All output
 
 ---
 
+# PYTHON ENVIRONMENT
+
+**Always use `/c/Python312/python.exe`** when running any `.py` script in this skill. The default `python` command resolves to Python 3.13 which is missing pip and all required packages (praw, python-dotenv). Python 3.12 at `C:\Python312\python.exe` has everything installed.
+
+Example: `/c/Python312/python.exe ProductSkills/vocabulary-miner/find_leads.py`
+
+---
+
 # FILES YOU WORK WITH
 
 | File | Role |
@@ -188,24 +196,26 @@ Read `Product-Agent-app/data/ProductBuilder/vocabulary-bank.json`. Note all conf
 Run `ProductSkills/vocabulary-miner/find_leads.py`. The script writes `Product-Agent-app/data/ProductBuilder/leads.md` and prints a confirmation line. Open or paste `leads.md` here for triage.
 
 Pain signal labels the script uses (source of truth - must match vocabulary-bank.json `pain_signal` fields):
+- `artifact-labor` — PM drowning in PRDs, specs, tickets, slides, wiki updates
+- `context-fragmentation` — context lost between teams, scattered docs, tribal knowledge, onboarding pain
+- `feature-factory` — output over outcomes, roadmap theater, building wrong things, no clear outcome
+- `ai-for-pm` — exploring AI for PM work, AI writing PRDs, AI roadmapping
 - `shipped-no-users` — shipped, got zero or minimal users
-- `vibe-coded-wrong` — vibe-coded into the wrong thing, feature creep, Frankenstein app
-- `months-zero-traction` — months or weeks of building, zero traction, crickets
-- `solo-invisible` — building in public with no audience, no distribution
-- `post-launch-silence` — launched and got silence, no signups, no feedback
-- `self-implication` — builder breaks their own rules ("I preach X but I...")
+- `self-implication` — PM breaks their own rules ("I preach X but I...")
 
 **Path 2 - LinkedIn (manual, 10 minutes)**
 
 Go to `linkedin.com/search/results/content/` - Posts tab - sort by Latest. Run these queries one at a time:
 
-1. `"shipped" "no users"`
-2. `"vibe coded" "wrong"`
-3. `"months of building" "no traction"`
-4. `"launched" "nobody cares"`
-5. `"I preach" "but I"`
+1. `"feature factory" "product"`
+2. `"writing PRDs" "hours"`
+3. `"context lost" "team"`
+4. `"outcome" "not output"`
+5. `"AI" "product management"`
+6. `"shipped" "nobody uses"`
+7. `"scattered docs" "product"`
 
-Also check hashtags (Posts tab, Latest): `#vibecoding`  `#buildinpublic`  `#indiehacker`
+Also check hashtags (Posts tab, Latest): `#productmanagement`  `#continuousdiscovery`  `#productops`  `#outcomedriven`
 
 Copy the full text of any post where the builder expresses the pain. Paste one post at a time for triage, or paste all at once for a batch triage session.
 
@@ -255,6 +265,22 @@ Recommendation: [which variant to use and why]
 ```
 
 After the builder selects and posts a reply, note: "When this drives a DM or call, tell me and I'll move the phrase to `confirmed` in vocabulary-bank.json."
+
+### Phase 4: Save Lead Queue to File
+
+After generating all replies, write the full session output to:
+
+```
+Product-Agent-app/public/prototypes/product-builder-agent/lead-queue-YYYY-MM-DD.md
+```
+
+Use today's date in the filename. The file should contain:
+
+1. **Header** - date, source subreddits, leads scanned / qualified counts
+2. **Priority queue** - each YES lead with its triage reason, post excerpt, all 3 reply options, and the recommendation + rationale
+3. **Skipped leads summary** - a table grouping skipped leads by reason (success story, too old, wrong pain type, product showcase) with counts
+
+Use the Write tool to create the file. If a file for today already exists, overwrite it with the updated session.
 
 ---
 

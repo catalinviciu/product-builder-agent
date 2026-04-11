@@ -12,7 +12,7 @@ Input JSON shape:
     "title": "...",
     "description": "...",
     "blocks": [
-      { "type": "metric", "metric": "...", "currentValue": "...", "targetValue": "...", "timeframe": "..." },
+      { "type": "metric", "metric": "...", "frequency": "monthly", "valueFormat": "number", "initialValue": 0, "numericTarget": 3, "startDate": "2026-04-01", "endDate": "2026-09-30" },
       { "type": "accordion", "label": "Strategic Alignment", "content": "..." },
       { "type": "accordion", "label": "Why Now", "content": "..." },
       { "type": "accordion", "label": "Risk of Inaction", "content": "..." }
@@ -23,7 +23,7 @@ Input JSON shape:
     "description": "...",
     "personaId": "<optional>",
     "blocks": [
-      { "type": "metric", "metric": "...", "currentValue": "...", "targetValue": "...", "timeframe": "..." },
+      { "type": "metric", "metric": "...", "frequency": "weekly", "valueFormat": "number", "initialValue": 0, "numericTarget": 5, "startDate": "2026-04-01", "endDate": "2026-07-31" },
       { "type": "accordion", "label": "Strategic Alignment", "content": "..." },
       { "type": "accordion", "label": "Constraints", "content": "..." },
       { "type": "accordion", "label": "Trade-offs", "content": "..." }
@@ -84,8 +84,10 @@ def validate_entity(name: str, entity: dict) -> list[str]:
 
     for bi, block in enumerate(entity.get("blocks", [])):
         if block.get("type") == "metric":
-            # Validate metric fields are present
-            for field in ("metric", "currentValue", "targetValue", "timeframe"):
+            # Validate Structured Tracking metric fields
+            if not block.get("metric"):
+                errors.append(f"{name} metric block: missing 'metric' name")
+            for field in ("frequency", "valueFormat"):
                 if not block.get(field):
                     errors.append(f"{name} metric block: missing '{field}'")
         else:
@@ -108,9 +110,18 @@ def build_blocks(entity_id: str, blocks_spec: list, ts: int) -> list:
                 "id": block_id,
                 "type": "metric",
                 "metric": block["metric"],
-                "currentValue": block["currentValue"],
-                "targetValue": block["targetValue"],
-                "timeframe": block["timeframe"],
+                # Legacy fields for backward compat
+                "currentValue": str(block.get("initialValue", 0)),
+                "targetValue": str(block.get("numericTarget", 0)),
+                "timeframe": "",
+                # Structured Tracking fields
+                "frequency": block.get("frequency", "monthly"),
+                "valueFormat": block.get("valueFormat", "number"),
+                "initialValue": block.get("initialValue", 0),
+                "numericTarget": block.get("numericTarget", 0),
+                "startDate": block.get("startDate", ""),
+                "endDate": block.get("endDate", ""),
+                "dataSeries": [],
             })
         else:
             blocks.append({
