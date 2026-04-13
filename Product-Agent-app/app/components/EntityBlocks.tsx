@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useClickOutside } from "@/app/lib/hooks/useClickOutside";
-import { Pencil, Trash2, Plus, X, Check, ChevronDown, CalendarDays, Copy } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Check, ChevronDown, CalendarDays, Copy, Quote } from "lucide-react";
 import { cn, buildBlockAnchor } from "@/app/lib/utils";
 import type { Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock, EntityLevel, MetricFrequency, MetricValueFormat } from "@/app/lib/schemas";
 import { METRIC_VALUE_FORMAT_LABELS, METRIC_FREQUENCY_LABELS } from "@/app/lib/schemas";
@@ -155,7 +155,7 @@ export function PillsBlockEditor({ block, onSave, onCancel }: { block: PillsBloc
           <button onClick={() => setItems(items.filter((_, j) => j !== i))} className="cursor-pointer p-1 text-muted-foreground/40 hover:text-red-600 dark:hover:text-red-400"><X size={14} /></button>
         </div>
       ))}
-      <button onClick={() => setItems([...items, { label: "", value: "" }])} className="cursor-pointer text-xs text-muted-foreground/50 hover:text-foreground flex items-center gap-1"><Plus size={12} /> Add item</button>
+      <button onClick={() => setItems([...items, { label: "", value: "" }])} className="cursor-pointer text-xs text-muted-foreground/60 hover:text-foreground flex items-center gap-1"><Plus size={12} /> Add item</button>
       <div className="flex gap-2">
         <button onClick={() => onSave({ items })} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
         <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
@@ -403,9 +403,14 @@ export function BlockRenderer({ block, ownerId, entityLevel, onUpdateBlock, onRe
       )}
       {block.type === "pills" && <Pills items={block.items} />}
       {block.type === "quote" && (
-        <blockquote className="border-l-2 border-amber-400/30 pl-4 py-2 text-sm text-foreground/70 italic bg-amber-400/[0.03] rounded-r-lg">
-          <p>{block.content}</p>
-          {block.attribution && <cite className="text-xs text-muted-foreground/50 not-italic block mt-1">&mdash; {block.attribution}</cite>}
+        <blockquote className="quote-block text-sm text-foreground/80 italic">
+          <div className="flex gap-2">
+            <Quote size={14} className="text-muted-foreground/40 shrink-0 mt-0.5" />
+            <div>
+              <p>{block.content}</p>
+              {block.attribution && <cite className="text-xs text-muted-foreground/70 not-italic block mt-1.5 font-medium">&mdash; {block.attribution}</cite>}
+            </div>
+          </div>
         </blockquote>
       )}
       {block.type === "metric" && (
@@ -446,7 +451,7 @@ export function AddBlockButton({ idPrefix, onAddBlock }: { idPrefix: string; onA
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-border-default hover:border-border-strong transition-colors w-full justify-center"
+        className="cursor-pointer flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-foreground px-3 py-2 rounded-lg border border-dashed border-border-default hover:border-border-strong transition-colors w-full justify-center"
       >
         <Plus size={14} /> Add block
       </button>

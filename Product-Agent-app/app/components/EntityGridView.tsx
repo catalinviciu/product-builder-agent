@@ -113,7 +113,7 @@ export function EntityGridView({
               {headerLabel}
             </span>
             {headerDescription && (
-              <span className="text-[11px] text-muted-foreground/30 italic hidden sm:inline">
+              <span className="text-[11px] text-muted-foreground/50 italic hidden sm:inline">
                 {headerDescription}
               </span>
             )}
@@ -202,7 +202,7 @@ export function EntityGridView({
                   count={totalCount}
                 >
                   {colChildren.length === 0 && (col.key !== "done" || archivedOrDroppedItems.length === 0) && (
-                    <p className="text-xs text-muted-foreground/30 italic px-1 py-3 text-center">No items</p>
+                    <p className="text-xs text-muted-foreground/50 italic px-1 py-3 text-center">No items</p>
                   )}
                   <SortableContext items={colChildren.map(c => c.id)} strategy={verticalListSortingStrategy}>
                   {colChildren.map((child) => {

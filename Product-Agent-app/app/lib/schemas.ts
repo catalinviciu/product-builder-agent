@@ -9,11 +9,14 @@ export type EntityLevel =
   | "assumption"
   | "test";
 
+export type EntityTier = "strategic" | "tactical" | "leaf";
+
 export interface LevelMeta {
   label: string;
   description: string;
   childrenLabel: string;
   icon: string;
+  tier: EntityTier;
   accentColor: string;
   bgTint: string;
   borderTint: string;
@@ -26,6 +29,7 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
     description: "The measurable business result this product must drive",
     childrenLabel: "Product Outcomes",
     icon: "Target",
+    tier: "strategic",
     accentColor: "text-blue-600 dark:text-blue-400",
     bgTint: "bg-blue-500/[0.06] dark:bg-blue-500/[0.04]",
     borderTint: "border-blue-500/25 dark:border-blue-500/20",
@@ -36,6 +40,7 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
     description: "The user behavior change that creates business value",
     childrenLabel: "Opportunities",
     icon: "TrendingUp",
+    tier: "strategic",
     accentColor: "text-violet-600 dark:text-violet-400",
     bgTint: "bg-violet-500/[0.06] dark:bg-violet-500/[0.04]",
     borderTint: "border-violet-500/25 dark:border-violet-500/20",
@@ -46,6 +51,7 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
     description: "Persona's unmet need, pain point, or desire that drives the product outcome",
     childrenLabel: "Solutions",
     icon: "Lightbulb",
+    tier: "tactical",
     accentColor: "text-amber-600 dark:text-amber-400",
     bgTint: "bg-amber-500/[0.06] dark:bg-amber-500/[0.04]",
     borderTint: "border-amber-500/25 dark:border-amber-500/20",
@@ -56,6 +62,7 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
     description: "A specific way to address an opportunity",
     childrenLabel: "Assumptions",
     icon: "Puzzle",
+    tier: "tactical",
     accentColor: "text-emerald-600 dark:text-emerald-400",
     bgTint: "bg-emerald-500/[0.06] dark:bg-emerald-500/[0.04]",
     borderTint: "border-emerald-500/25 dark:border-emerald-500/20",
@@ -66,6 +73,7 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
     description: "An assumption that must be true for a solution to work",
     childrenLabel: "Tests",
     icon: "HelpCircle",
+    tier: "leaf",
     accentColor: "text-orange-600 dark:text-orange-400",
     bgTint: "bg-orange-500/[0.06] dark:bg-orange-500/[0.04]",
     borderTint: "border-orange-500/25 dark:border-orange-500/20",
@@ -76,6 +84,7 @@ export const LEVEL_META: Record<EntityLevel, LevelMeta> = {
     description: "An experiment to validate or invalidate an assumption",
     childrenLabel: "",
     icon: "FlaskConical",
+    tier: "leaf",
     accentColor: "text-cyan-600 dark:text-cyan-400",
     bgTint: "bg-cyan-500/[0.06] dark:bg-cyan-500/[0.04]",
     borderTint: "border-cyan-500/25 dark:border-cyan-500/20",

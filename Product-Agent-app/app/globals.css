@@ -84,6 +84,18 @@
   /* ── Typography tokens ── */
   --text-body: var(--text-body);
   --text-body-leading: var(--text-body-leading);
+
+  /* ── Entity title sizing — tier-based visual weight ── */
+  --text-title-strategic: var(--text-title-strategic);
+  --text-title-strategic-lg: var(--text-title-strategic-lg);
+  --text-title-tactical: var(--text-title-tactical);
+  --text-title-tactical-lg: var(--text-title-tactical-lg);
+  --text-title-leaf: var(--text-title-leaf);
+  --text-title-leaf-lg: var(--text-title-leaf-lg);
+
+  /* ── Entity icon sizing ── */
+  --spacing-icon-strategic: var(--spacing-icon-strategic);
+  --spacing-icon-default: var(--spacing-icon-default);
 }
 
 :root {
@@ -161,6 +173,18 @@
   /* ── Typography tokens ── */
   --text-body: 0.875rem;
   --text-body-leading: 1.625;
+
+  /* ── Entity title sizing — tier-based visual weight ── */
+  --text-title-strategic: 1.375rem;     /* 22px — BO, PO */
+  --text-title-strategic-lg: 1.625rem;  /* 26px — BO, PO on lg+ */
+  --text-title-tactical: 1.125rem;      /* 18px — Opportunity, Solution */
+  --text-title-tactical-lg: 1.25rem;    /* 20px — Opportunity, Solution on lg+ */
+  --text-title-leaf: 1rem;              /* 16px — Assumption, Test */
+  --text-title-leaf-lg: 1.125rem;       /* 18px — Assumption, Test on lg+ */
+
+  /* ── Entity icon sizing ── */
+  --spacing-icon-strategic: 2.25rem;    /* 36px — larger icon badge for BO/PO */
+  --spacing-icon-default: 1.75rem;      /* 28px — current w-7 h-7 */
 }
 
 .dark {
@@ -306,6 +330,25 @@ td.metric-calendar-recorded button::after {
   border-radius: 50%;
   background-color: var(--color-primary, #3b82f6);
   opacity: 0.7;
+}
+
+/* ── Quote block ── */
+@layer utilities {
+  .quote-block {
+    border-left: 3px solid oklch(0.78 0.19 55 / 50%);
+    padding: 0.75rem 1rem;
+    background: var(--surface-1);
+    border-radius: 0 0.5rem 0.5rem 0;
+  }
+}
+
+/* ── Sidebar tree depth line ── */
+@layer utilities {
+  .tree-line {
+    border-left: 1px solid var(--border-subtle);
+    margin-left: 0.5rem;
+    padding-left: 0.5rem;
+  }
 }
 
 /* ── Scrollbar styling ── */

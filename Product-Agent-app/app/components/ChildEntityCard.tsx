@@ -68,7 +68,7 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
       )}
     >
       {status && !hideStatus && (
-        <span className={cn("absolute top-3 right-3 text-[9px] px-1.5 py-0.5 rounded border font-medium", ENTITY_STATUS_META[status].color)}>
+        <span className={cn("absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded border font-medium", ENTITY_STATUS_META[status].color)}>
           {ENTITY_STATUS_META[status].label}
         </span>
       )}
@@ -83,7 +83,7 @@ export function ChildEntityCard({ id, title, level, preview, status, badge, hide
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground/70 leading-relaxed line-clamp-2">{preview}</p>
+      <p className="text-xs text-muted-foreground/60 leading-relaxed line-clamp-2 mt-0.5">{preview}</p>
 
       {(personaName || badge || assumptionTypeLabel || testTypeLabel || iceScore != null) && (
         <div className="flex items-center justify-end gap-1.5 flex-wrap">

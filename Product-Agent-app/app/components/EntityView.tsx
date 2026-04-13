@@ -349,6 +349,19 @@ export function EntityView() {
   const levelMeta = LEVEL_META[entity.level];
   const IconComponent = LEVEL_ICON_MAP[levelMeta.icon];
   const hasBlocks = entity.blocks.length > 0;
+  const tier = levelMeta.tier;
+
+  const tierIconClasses = tier === "strategic"
+    ? "w-9 h-9 rounded-xl"
+    : tier === "tactical"
+    ? "w-8 h-8 rounded-xl"
+    : "w-7 h-7 rounded-lg";
+  const tierIconSize = tier === "strategic" ? 20 : tier === "tactical" ? 17 : 16;
+  const tierTitleClasses = tier === "strategic"
+    ? "text-[length:var(--text-title-strategic)] lg:text-[length:var(--text-title-strategic-lg)] font-bold"
+    : tier === "tactical"
+    ? "text-[length:var(--text-title-tactical)] lg:text-[length:var(--text-title-tactical-lg)] font-semibold"
+    : "text-[length:var(--text-title-leaf)] lg:text-[length:var(--text-title-leaf-lg)] font-semibold";
 
   return (
     <div className="px-[var(--spacing-page-px)] py-[var(--spacing-page-py)] pb-28 flex flex-col gap-[var(--spacing-page-gap)]">
@@ -441,8 +454,8 @@ export function EntityView() {
                 <ChevronRight size={12} className="text-muted-foreground/50 group-hover/collapse:text-muted-foreground transition-colors" />
               </motion.div>
               {IconComponent && (
-                <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", levelMeta.iconBg)}>
-                  <IconComponent size={16} className={levelMeta.accentColor} />
+                <div className={cn("flex items-center justify-center shrink-0", tierIconClasses, levelMeta.iconBg)}>
+                  <IconComponent size={tierIconSize} className={levelMeta.accentColor} />
                 </div>
               )}
               {editingTitle ? (
@@ -458,7 +471,7 @@ export function EntityView() {
                       if (e.key === " ") e.stopPropagation();
                     }}
                     onBlur={() => { if (titleDraft.trim()) updateEntity(entity.id, { title: titleDraft.trim() }); setEditingTitle(false); }}
-                    className="text-lg lg:text-xl font-semibold text-foreground bg-surface-hover border border-border-strong rounded-lg px-2 py-1 focus:outline-none focus:border-border-focus"
+                    className={cn(tierTitleClasses, "text-foreground bg-surface-hover border border-border-strong rounded-lg px-2 py-1 focus:outline-none focus:border-border-focus")}
                   />
                   <div className={cn("text-right text-[10px] px-1",
                     titleDraft.length >= 120 ? "text-red-500 dark:text-red-400" :
@@ -469,7 +482,7 @@ export function EntityView() {
                   </div>
                 </div>
               ) : (
-                <h1 className="text-lg lg:text-xl font-semibold text-foreground flex-1 flex items-center gap-2">
+                <h1 className={cn(tierTitleClasses, "text-foreground flex-1 flex items-center gap-2")}>
                   {entity.title}
                   <button
                     onClick={(e) => { e.stopPropagation(); setTitleDraft(entity.title); setEditingTitle(true); }}
@@ -500,7 +513,7 @@ export function EntityView() {
               )}
             </div>
 
-            <p className="text-xs text-muted-foreground/60 italic">
+            <p className="text-xs text-muted-foreground/70 italic px-2.5 py-1 rounded-md bg-surface-1 border border-border-subtle inline-block">
               {levelMeta.description}
             </p>
 
@@ -510,7 +523,7 @@ export function EntityView() {
                 <div className="text-[length:var(--text-body)] text-foreground/80 leading-[var(--text-body-leading)] line-clamp-3">
                   <MarkdownBlock content={entity.description} />
                 </div>
-                <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+                <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
               </div>
             )}
 
@@ -526,7 +539,7 @@ export function EntityView() {
 
             {/* Collapsed hint: block count */}
             {!expanded && hasBlocks && (
-              <span className="text-[11px] text-muted-foreground/40">
+              <span className="text-[11px] text-muted-foreground/50">
                 {entity.blocks.length} content block{entity.blocks.length !== 1 ? "s" : ""}
               </span>
             )}

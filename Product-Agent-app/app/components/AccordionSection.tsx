@@ -10,7 +10,10 @@ export function AccordionSection({ label, children, defaultOpen = false }: {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="rounded-xl border border-border-default overflow-hidden">
+    <div className={cn(
+      "rounded-xl border border-border-default overflow-hidden transition-all duration-150",
+      open && "border-l-2 border-l-border-strong"
+    )}>
       <button
         onClick={() => setOpen(!open)}
         className="cursor-pointer flex items-center gap-2 w-full px-[var(--spacing-block-px)] py-[var(--spacing-block-py)] bg-surface-1 hover:bg-surface-2 transition-colors"
@@ -22,7 +25,7 @@ export function AccordionSection({ label, children, defaultOpen = false }: {
             open && "rotate-90"
           )}
         />
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70">
           {label}
         </span>
       </button>
