@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import {
   Bold, Italic, Link, List, ListOrdered, Eye, EyeOff,
 } from "lucide-react";
+import { cn } from "@/app/lib/utils";
 
 export function MarkdownBlock({ content }: { content: string }) {
   if (!content) return null;
@@ -123,9 +124,16 @@ export function MarkdownToolbar({
       <button type="button" title="Numbered list" className={btnClass} onClick={() => insertLinePrefix(textareaRef, "1. ", draft, setDraft)}>
         <ListOrdered size={14} />
       </button>
-      <div className="w-px h-4 bg-border-subtle mx-1" />
-      <button type="button" title={showPreview ? "Edit" : "Preview"} className={btnClass} onClick={() => setShowPreview(!showPreview)}>
-        {showPreview ? <EyeOff size={14} /> : <Eye size={14} />}
+      <div className="flex-1" />
+      <button type="button" title={showPreview ? "Back to editing" : "Preview markdown"}
+        className={cn(
+          "cursor-pointer flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors",
+          showPreview
+            ? "bg-surface-3 text-foreground hover:bg-surface-active"
+            : "text-muted-foreground/60 hover:text-foreground hover:bg-surface-hover"
+        )}
+        onClick={() => setShowPreview(!showPreview)}>
+        {showPreview ? <><EyeOff size={13} /> Edit</> : <><Eye size={13} /> Preview</>}
       </button>
     </div>
   );

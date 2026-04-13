@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useClickOutside } from "@/app/lib/hooks/useClickOutside";
 import { Pencil, Trash2, Plus, X, Check, ChevronDown, CalendarDays, Copy } from "lucide-react";
 import { cn, buildBlockAnchor } from "@/app/lib/utils";
@@ -83,6 +83,15 @@ export function AccordionBlockEditor({ block, onSave, onCancel, labelMaxLength, 
   const [content, setContent] = useState(block.content);
   const [showPreview, setShowPreview] = useState(false);
   const contentRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [content]);
+
   return (
     <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
       <div className="flex flex-col gap-0.5">
@@ -102,13 +111,13 @@ export function AccordionBlockEditor({ block, onSave, onCancel, labelMaxLength, 
       <div className="flex flex-col gap-0.5">
         <MarkdownToolbar textareaRef={contentRef} draft={content} setDraft={setContent} showPreview={showPreview} setShowPreview={setShowPreview} />
         {showPreview ? (
-          <div className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 min-h-[144px]">
+          <div className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 min-h-[8rem] max-h-[24rem] overflow-y-auto">
             {content ? <MarkdownBlock content={content} /> : <span className="text-muted-foreground/40 italic text-sm">Nothing to preview</span>}
           </div>
         ) : (
-          <textarea ref={contentRef} value={content} onChange={(e) => setContent(e.target.value)} rows={6} placeholder="Content (markdown)"
+          <textarea ref={contentRef} value={content} onChange={(e) => setContent(e.target.value)} placeholder="Content (markdown)"
             {...(contentMaxLength ? { maxLength: contentMaxLength } : {})}
-            className="w-full bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus font-mono" />
+            className="w-full bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus font-mono min-h-[8rem] max-h-[24rem] overflow-y-auto resize-none" />
         )}
         {contentMaxLength && (
           <div className={cn("text-right text-[10px]",
@@ -377,7 +386,7 @@ export function BlockRenderer({ block, ownerId, entityLevel, onUpdateBlock, onRe
 
   if (editing) {
     switch (block.type) {
-      case "accordion": return <AccordionBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} labelMaxLength={40} contentMaxLength={3000} />;
+      case "accordion": return <AccordionBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} labelMaxLength={150} contentMaxLength={5000} />;
       case "pills": return <PillsBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
       case "quote": return <QuoteBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
       case "metric": return <MetricBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} entityLevel={entityLevel} />;
@@ -480,7 +489,7 @@ export function BlockList({ entity }: { entity: Entity }) {
           onSave={(v) => updateEntity(entity.id, { description: v })}
           as="textarea"
           placeholder="Add a description..."
-          maxLength={800}
+          maxLength={3000}
         />
       </div>
       {entity.blocks.map((block) => (
@@ -519,7 +528,7 @@ export function ProductLineBlockList({ plId, description, onDescriptionSave, blo
           onSave={onDescriptionSave}
           as="textarea"
           placeholder="Add a description..."
-          maxLength={800}
+          maxLength={3000}
         />
       </div>
       {blocks.map((block) => (

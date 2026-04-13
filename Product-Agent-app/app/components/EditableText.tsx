@@ -5,6 +5,15 @@ import { Pencil, Check, X } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { MarkdownBlock, MarkdownToolbar } from "./MarkdownToolbar";
 
+function useAutoResize(ref: React.RefObject<HTMLTextAreaElement | null>, value: string) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [ref, value]);
+}
+
 export function EditableText({ value, onSave, as = "input", placeholder, maxLength }: {
   value: string; onSave: (v: string) => void; as?: "input" | "textarea"; placeholder?: string; maxLength?: number;
 }) {
@@ -16,6 +25,10 @@ export function EditableText({ value, onSave, as = "input", placeholder, maxLeng
   useEffect(() => {
     if (editing && ref.current) ref.current.focus();
   }, [editing]);
+
+  // Must be called unconditionally (Rules of Hooks) — no-ops when ref.current is null
+  const textareaRef = ref as React.RefObject<HTMLTextAreaElement>;
+  useAutoResize(textareaRef, draft);
 
   if (!editing) {
     const display = as === "textarea" && value
@@ -68,11 +81,12 @@ export function EditableText({ value, onSave, as = "input", placeholder, maxLeng
             setShowPreview={setShowPreview}
           />
           {showPreview ? (
-            <div className="w-full bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm min-h-[6rem]">
+            <div className="w-full bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm min-h-[6rem] max-h-[24rem] overflow-y-auto">
               {draft ? <MarkdownBlock content={draft} /> : <span className="text-muted-foreground/40 italic">Nothing to preview</span>}
             </div>
           ) : (
-            <textarea ref={ref as React.RefObject<HTMLTextAreaElement>} rows={4} {...(maxLength ? { maxLength } : {})} {...common} />
+            <textarea ref={textareaRef} {...(maxLength ? { maxLength } : {})} {...common}
+              className={cn(common.className, "min-h-[6rem] max-h-[24rem] overflow-y-auto resize-none")} />
           )}
           {charCounter}
         </div>
