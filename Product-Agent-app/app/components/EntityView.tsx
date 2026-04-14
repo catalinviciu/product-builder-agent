@@ -606,7 +606,7 @@ export function EntityView() {
                     {entity.level === "opportunity" ? (
                       <>
                         {/* Description + ICE side-by-side */}
-                        <div className="flex flex-col lg:flex-row gap-4">
+                        <div className="flex flex-col lg:flex-row lg:items-start gap-4">
                           <div className="lg:w-[60%] min-w-0 text-[length:var(--text-body)] text-foreground/80 leading-[var(--text-body-leading)]">
                             <EditableText
                               value={entity.description}

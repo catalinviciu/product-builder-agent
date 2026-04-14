@@ -37,7 +37,7 @@ OUTPUT_PATH = Path(__file__).parent.parent.parent / "Product-Agent-app/data/Prod
 
 # Primary subreddits — targeting Product Manager persona
 # PMs struggling with artifact labor, context fragmentation, and outcome discipline
-SUBREDDITS = "ProductManagement+productmanagers+agile+scrum+OKRs+startups"
+SUBREDDITS = "productmanagers+agile+scrum+OKRs+startups+vibecoding+buildinpublic"
 
 KEYWORDS = [
     # Artifact labor / tedious PM work
