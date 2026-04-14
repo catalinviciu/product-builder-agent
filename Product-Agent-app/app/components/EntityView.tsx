@@ -444,73 +444,79 @@ export function EntityView() {
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(!expanded); } }}
             className="cursor-pointer text-left w-full px-[var(--spacing-entity-px)] py-[var(--spacing-entity-py)] flex flex-col gap-[var(--spacing-entity-gap)] group/collapse"
           >
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-start gap-2.5">
               {/* Collapse/expand chevron — left side, before icon */}
               <motion.div
                 animate={{ rotate: expanded ? 90 : 0 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="shrink-0 w-5 h-5 rounded flex items-center justify-center bg-surface-2 border border-border-subtle group-hover/collapse:bg-surface-3 group-hover/collapse:border-border-default transition-all"
+                className="shrink-0 w-5 h-5 rounded flex items-center justify-center bg-surface-2 border border-border-subtle group-hover/collapse:bg-surface-3 group-hover/collapse:border-border-default transition-all mt-1"
               >
                 <ChevronRight size={12} className="text-muted-foreground/50 group-hover/collapse:text-muted-foreground transition-colors" />
               </motion.div>
               {IconComponent && (
-                <div className={cn("flex items-center justify-center shrink-0", tierIconClasses, levelMeta.iconBg)}>
+                <div className={cn("flex items-center justify-center shrink-0 mt-0.5", tierIconClasses, levelMeta.iconBg)}>
                   <IconComponent size={tierIconSize} className={levelMeta.accentColor} />
                 </div>
               )}
-              {editingTitle ? (
-                <div className="flex flex-col flex-1 gap-0.5" onClick={(e) => e.stopPropagation()}>
-                  <input
-                    ref={titleInputRef}
-                    value={titleDraft}
-                    maxLength={120}
-                    onChange={(e) => setTitleDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") { if (titleDraft.trim()) updateEntity(entity.id, { title: titleDraft.trim() }); setEditingTitle(false); }
-                      if (e.key === "Escape") setEditingTitle(false);
-                      if (e.key === " ") e.stopPropagation();
-                    }}
-                    onBlur={() => { if (titleDraft.trim()) updateEntity(entity.id, { title: titleDraft.trim() }); setEditingTitle(false); }}
-                    className={cn(tierTitleClasses, "text-foreground bg-surface-hover border border-border-strong rounded-lg px-2 py-1 focus:outline-none focus:border-border-focus")}
-                  />
-                  <div className={cn("text-right text-[10px] px-1",
-                    titleDraft.length >= 120 ? "text-red-500 dark:text-red-400" :
-                    titleDraft.length >= 102 ? "text-amber-500 dark:text-amber-400" :
-                    "text-muted-foreground/40"
-                  )}>
-                    {titleDraft.length}/120
-                  </div>
-                </div>
-              ) : (
-                <h1 className={cn(tierTitleClasses, "text-foreground flex-1 flex items-center gap-2")}>
-                  {entity.title}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setTitleDraft(entity.title); setEditingTitle(true); }}
-                    className="cursor-pointer text-muted-foreground/30 opacity-0 group-hover/collapse:opacity-100 hover:text-muted-foreground transition-all shrink-0"
-                    title="Edit title"
-                  >
-                    <Pencil size={13} />
-                  </button>
-                </h1>
-              )}
-              {PERSONA_LEVELS.has(entity.level) && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <PersonaPicker entityId={entity.id} personaId={entity.personaId} secondaryPersonaIds={entity.secondaryPersonaIds} />
-                  {MULTI_PERSONA_LEVELS.has(entity.level) && entity.personaId && (
-                    <SecondaryPersonaPicker
-                      entityId={entity.id}
-                      secondaryPersonaIds={entity.secondaryPersonaIds ?? []}
-                      excludePersonaId={entity.personaId}
+              <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                {editingTitle ? (
+                  <div className="flex flex-col gap-0.5" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      ref={titleInputRef}
+                      value={titleDraft}
+                      maxLength={120}
+                      onChange={(e) => setTitleDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") { if (titleDraft.trim()) updateEntity(entity.id, { title: titleDraft.trim() }); setEditingTitle(false); }
+                        if (e.key === "Escape") setEditingTitle(false);
+                        if (e.key === " ") e.stopPropagation();
+                      }}
+                      onBlur={() => { if (titleDraft.trim()) updateEntity(entity.id, { title: titleDraft.trim() }); setEditingTitle(false); }}
+                      className={cn(tierTitleClasses, "text-foreground bg-surface-hover border border-border-strong rounded-lg px-2 py-1 w-full focus:outline-none focus:border-border-focus")}
                     />
-                  )}
-                </div>
-              )}
-              {entity.level === "assumption" && (
-                <AssumptionTypePicker entityId={entity.id} assumptionType={entity.assumptionType} />
-              )}
-              {entity.level === "test" && (
-                <TestTypePicker entityId={entity.id} testType={entity.testType} />
-              )}
+                    <div className={cn("text-right text-[10px] px-1",
+                      titleDraft.length >= 120 ? "text-red-500 dark:text-red-400" :
+                      titleDraft.length >= 102 ? "text-amber-500 dark:text-amber-400" :
+                      "text-muted-foreground/40"
+                    )}>
+                      {titleDraft.length}/120
+                    </div>
+                  </div>
+                ) : (
+                  <h1 className={cn(tierTitleClasses, "text-foreground")}>
+                    {entity.title}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setTitleDraft(entity.title); setEditingTitle(true); }}
+                      className="cursor-pointer text-muted-foreground/30 opacity-0 group-hover/collapse:opacity-100 hover:text-muted-foreground transition-all shrink-0 inline-flex align-middle ml-2"
+                      title="Edit title"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                  </h1>
+                )}
+                {(PERSONA_LEVELS.has(entity.level) || entity.level === "assumption" || entity.level === "test") && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {PERSONA_LEVELS.has(entity.level) && (
+                      <>
+                        <PersonaPicker entityId={entity.id} personaId={entity.personaId} secondaryPersonaIds={entity.secondaryPersonaIds} />
+                        {MULTI_PERSONA_LEVELS.has(entity.level) && entity.personaId && (
+                          <SecondaryPersonaPicker
+                            entityId={entity.id}
+                            secondaryPersonaIds={entity.secondaryPersonaIds ?? []}
+                            excludePersonaId={entity.personaId}
+                          />
+                        )}
+                      </>
+                    )}
+                    {entity.level === "assumption" && (
+                      <AssumptionTypePicker entityId={entity.id} assumptionType={entity.assumptionType} />
+                    )}
+                    {entity.level === "test" && (
+                      <TestTypePicker entityId={entity.id} testType={entity.testType} />
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <p className="text-xs text-muted-foreground/70 italic px-2.5 py-1 rounded-md bg-surface-1 border border-border-subtle inline-block">
