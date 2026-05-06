@@ -273,6 +273,12 @@
             { "action": "Copy the slicer prompt from a Solution's empty Stories tab to start populating the story map", "components": ["EntityView", "StoriesTab", "buildUserStorySlicerPrompt", "Toaster"] },
             { "action": "[system] Slicer skill writes structured Story records into solution.stories[] in store.json (replaces previous MD-file output)", "components": ["ProductSkills/user-story-slicer/SKILL.md", "schemas.ts (Story, StoryIteration)", "store.ts (hydrate backfill)"] }
           ]
+        },
+        {
+          "title": "Read the Patton story map for the active persona",
+          "stories": [
+            { "action": "View activities, tasks, and iteration rows (WS / Enhancement / GA) as a Patton-style grid with story cards at each task × iteration intersection", "components": ["StoriesTab", "PattonMap", "PattonMapCard"] }
+          ]
         }
       ]
     },

@@ -34,6 +34,11 @@ export type AnalyticsEventMap = {
     solution_id: string;
     persona_count: number;
   };
+  story_map_rendered: {
+    solution_id: string;
+    story_count: number;
+    activity_count: number;
+  };
 };
 
 type ListenerMap = { [K in keyof AnalyticsEventMap]?: Array<Listener<AnalyticsEventMap[K]>> };

@@ -64,4 +64,8 @@ export function startAnalyticsSubscribers(): void {
   analyticsEmitter.on("slicer_prompt_copied", (props) => {
     trackEvent("SlicerPromptCopied", props);
   });
+
+  analyticsEmitter.on("story_map_rendered", (props) => {
+    trackEvent("StoryMapRendered", props);
+  });
 }

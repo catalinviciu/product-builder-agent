@@ -145,6 +145,7 @@
 |:-----|:------|:-----------|
 | **Slice empty user journey to populate the map** | Copy the slicer prompt from a Solution's empty Stories tab to start populating the story map | `EntityView` · `StoriesTab` · `buildUserStorySlicerPrompt` · `Toaster` |
 |  | [system] Slicer skill writes structured Story records into solution.stories[] in store.json (replaces previous MD-file output) | `ProductSkills/user-story-slicer/SKILL.md` · `schemas.ts (Story, StoryIteration)` · `store.ts (hydrate backfill)` |
+| **Read the Patton story map for the active persona** | View activities, tasks, and iteration rows (WS / Enhancement / GA) as a Patton-style grid with story cards at each task × iteration intersection | `StoriesTab` · `PattonMap` · `PattonMapCard` |
 
 
 ### Activity 8: Validate Assumptions

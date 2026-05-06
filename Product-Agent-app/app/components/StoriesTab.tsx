@@ -7,6 +7,7 @@ import type { Entity } from "@/app/lib/schemas";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { buildUserStorySlicerPrompt } from "@/app/lib/utils";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
+import { PattonMap } from "./PattonMap";
 
 interface StoriesTabProps {
   entity: Entity;
@@ -24,8 +25,8 @@ export function StoriesTab({ entity }: StoriesTabProps) {
 
   if (stories.length > 0) {
     return (
-      <div className="text-sm text-muted-foreground p-8">
-        {stories.length} {stories.length === 1 ? "story" : "stories"} sliced. Map render coming in Story 2.
+      <div className="px-[var(--spacing-content-px)] py-[var(--spacing-content-py)]">
+        <PattonMap entityId={entity.id} stories={stories} />
       </div>
     );
   }
