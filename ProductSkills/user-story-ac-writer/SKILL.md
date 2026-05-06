@@ -1,5 +1,6 @@
 ---
 name: user-story-ac-writer
+version: 1.0.0
 description: Takes confirmed user stories (output of user-story-slicer) and produces Gherkin acceptance criteria plus Pendo analytics events for each story. Processes one story at a time with human confirmation. Use when the team has confirmed stories and needs detailed AC before development.
 ---
 
