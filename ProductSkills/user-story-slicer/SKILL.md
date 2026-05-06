@@ -240,84 +240,58 @@ Present the stories and ask for feedback. During this phase:
 
 ## Phase 5: Output
 
-**Step 1:** Ask the user for the output folder path.
+**Step 1:** Resolve the `Solution ID` from the prompt header (the line `Solution ID: <id>`).
 
-**Step 2:** Create an MD file with all confirmed stories. Use filename format: `Stories - [Journey/Feature Name].md`
+**Step 2:** Read `Product-Agent-app/data/store.json`.
 
-**File structure (mandatory layout):**
+**Step 3:** Locate the solution entity by walking `productLines[*].entities[<solutionId>]`. Search every product line until found. If not found in any product line, stop and tell the user:
+> "Could not find solution ID `<solutionId>` in store.json. Please verify the ID and try again."
 
-```markdown
-# User Stories: [Journey/Feature Name]
+**Step 4:** For each confirmed story (in priority-layer order: WS first, then Enh, then GA), build a `Story` record matching this schema:
 
-> Source: [block anchor reference or MD file path]
-> Generated: [date]
-> Status: Draft -- no acceptance criteria yet
-
----
-
-## Story Map
-
-| Activity | User Task | Story | Release |
-|----------|-----------|-------|---------|
-| [Activity] | [User Task] | Story N: [Title] | [Release] |
-...
-
-**Walking skeleton:** Stories X, Y, Z (brief description of what they deliver end-to-end)
-**Enhancement layer:** Stories A, B (brief description)
-**GA layer:** Stories C, D (brief description)
-
----
-
-## Walking Skeleton
-
----
-
-## Story 1: [Title]
-...
-
-## Story 2: [Title]
-...
-
----
-
-## Enhancement Layer
-
----
-
-## Story 4: [Title]
-...
-
----
-
-## GA Layer
-
----
-
-## Story 6: [Title]
-...
+```ts
+{
+  id: string;                              // "story-1", "story-2", ... — sequential per priority layer order
+  title: string;
+  persona: string;                         // resolved persona name (e.g. "Molly (Dispatcher)")
+  activity: string;                        // Activity from the story map backbone
+  task: string;                            // User Task this story maps to
+  iteration: "WS" | "Enh" | "GA";         // Walking Skeleton | Enhancement | GA
+  narrative?: { role: string; action: string; benefit: string };  // parsed from "As a / I / so that"
+  context?: string;                        // Context section content (markdown)
+  outOfScope?: string[];                   // Out of Scope bullets (one string per bullet)
+  dependencies?: string[];                 // Dependencies bullets
+  humanVerification?: string;             // Human Verification section content
+  acceptanceCriteria?: string;             // Leave undefined — populated by AC writer skill
+  analyticsEvents?: AnalyticsEventDef[];   // Leave undefined — populated by AC writer skill
+}
 ```
 
-**Layout rules:**
-- Story map table ALWAYS comes first, immediately after the header
-- Below the table, add a one-line summary per layer explaining what that layer delivers
-- Stories are then grouped under their layer heading: "Walking Skeleton", "Enhancement Layer", "GA Layer"
-- Within each layer, stories appear in numbered order
-- A horizontal rule (`---`) separates each layer heading from its stories
+Story IDs are `story-1`, `story-2`, etc. — numbered in the same priority-layer order used in Phase 3 (WS first, Enh next, GA last). IDs must be sequential and stable so later skills (AC writer, Plan & Implement) can reference them.
+
+**Step 5:** Set `entities[solutionId].stories = [...]` — overwrite the array with the full set of confirmed stories. (There are no prior stories at this stage; re-slicing is handled separately.)
+
+**Step 6:** Write the modified JSON back to `Product-Agent-app/data/store.json`. Preserve all other content. Use 2-space indentation.
+
+**Step 7:** Tell the builder:
+> "Done. Refresh Product Agent to see your stories on the Solution's Stories tab."
 
 ---
 
 # RULES (NON-NEGOTIABLE)
 
 1. **Never write acceptance criteria.** That's a separate skill.
-2. **Never skip the clarification and assumptions phases.** Even if the journey seems clear.
-3. **Always produce vertical slices.** Never horizontal.
-4. **Always use specific personas.** Never "a user" or "a developer."
-5. **Push back when the user breaks story quality rules.** You are the quality gate. Explain the rule, cite the manual concept, and suggest an alternative.
-6. **Ask one question at a time.** Never batch questions.
-7. **Present assumptions before writing.** Never start stories with unconfirmed assumptions.
-8. **One story, one User Task.** A User Task can have multiple stories, but a story must map to exactly one primary User Task. If it spans two User Tasks, split it or reassign.
-9. **Slice for AI precision.** Apply all 9 splitting patterns against each story. Optimize for the minimum size AI can build independently -- no overlapping component state, no rework. Too big = AI loses precision. Too small = overlapping context forces rework.
-10. **Cover every detail from the input.** Every behavioral detail, constraint, interaction rule, and edge case documented in the user journey MUST appear in exactly one story's Context/Constraints or Human Verification section. After drafting all stories, do a completeness check: walk the input line by line and verify each detail landed somewhere. If a detail is missing, add it to the appropriate story. Nothing from the input should be lost or summarized away -- if the journey says "selections are not persistent across page refresh," that exact constraint must appear in a story.
+2. **Output goes to `store.json`, never to MD files.** Story IDs are `story-<n>` and must be sequential and stable so later skills (AC writer, Plan & Implement) can reference them.
+3. **Never skip the clarification and assumptions phases.** Even if the journey seems clear.
+4. **Always produce vertical slices.** Never horizontal.
+5. **Always use specific personas.** Never "a user" or "a developer."
+6. **Push back when the user breaks story quality rules.** You are the quality gate. Explain the rule, cite the manual concept, and suggest an alternative.
+7. **Ask one question at a time.** Never batch questions.
+8. **Present assumptions before writing.** Never start stories with unconfirmed assumptions.
+9. **One story, one User Task.** A User Task can have multiple stories, but a story must map to exactly one primary User Task. If it spans two User Tasks, split it or reassign.
+10. **Slice for AI precision.** Apply all 9 splitting patterns against each story. Optimize for the minimum size AI can build independently -- no overlapping component state, no rework. Too big = AI loses precision. Too small = overlapping context forces rework.
+11. **Cover every detail from the input.** Every behavioral detail, constraint, interaction rule, and edge case documented in the user journey MUST appear in exactly one story's Context/Constraints or Human Verification section. After drafting all stories, do a completeness check: walk the input line by line and verify each detail landed somewhere. If a detail is missing, add it to the appropriate story. Nothing from the input should be lost or summarized away -- if the journey says "selections are not persistent across page refresh," that exact constraint must appear in a story.
+12. **A reusable component is NOT a system story.** Building a `Toaster`, `Modal`, `Button`, or any UI primitive used by exactly one user story is part of that story's implementation, not a separate system story. System stories are reserved for technical enablers with no user-facing UI of their own (schema migrations, skill rewrites that change data contracts, backfills, infra changes). See "Bad: Treating a UI primitive as a system story" below.
 
 ---
 
@@ -356,3 +330,22 @@ Splitting "View and manage active filter chips" into:
 **Why it's bad:** The display layer is trivial -- rendering a list of labels is not a substantial buildable unit. Unlike the attribute tree (which has API integration, collapsible tree structure, scroll behavior, and delivers standalone browsing value), chips without dismiss buttons are an incomplete UX pattern with no independent user value. "See my filters" and "manage my filters" are the same user intent.
 
 **The rule:** Only split read-only display from interaction when the display layer has **substantial independent complexity** (API calls, data transformation, component architecture, meaningful standalone value). If the display is just "render a list of labels/badges/counts," it stays with its interaction in one story.
+
+## Bad: Treating a UI primitive as a system story
+
+While slicing the "Slice user journey into stories" feature, the slicer team had two enablers that the user-facing Story 1 needed:
+
+- **(A)** Rewrite the `user-story-slicer` skill so it writes structured `Story` records to `store.json` instead of generating an MD file.
+- **(B)** Build a reusable `<Toaster />` + `showToast()` primitive because the spec said the Story 1 CTA should "confirm with a toast."
+
+Both got written up as "System Story S1" and "System Story S2."
+
+**Why S2 is wrong:** A toast component is a UI primitive built as part of a user-facing story's implementation. The component was needed *because* Story 1 said "show a toast" — that requirement lives entirely inside Story 1. Promoting the implementation detail to its own system story:
+
+- Splits a single user-visible behavior across two story cards (the user can't observe S2 without Story 1)
+- Implies a stand-alone deliverable where there is none — `<Toaster />` ships with Story 1 or it doesn't ship at all
+- Pollutes the system-story list with UI bookkeeping that belongs in Story 1's Constraints / Context section
+
+**Why S1 is right:** S1 changes the skill's data contract. It has no UI of its own, multiple downstream stories (Story 1, Story 4 AC writer, Stories 5/6/7 Plan & Implement) depend on the new contract, and it could in principle be built and validated against `store.json` independently of any one user-facing flow. That's a system story.
+
+**The rule:** A system story is justified only when (a) it has no user-facing UI of its own, AND (b) it changes a data contract, schema, or infra dependency that survives independent of any single user story. If the only reason it exists is to fulfill one user story's UI requirement, fold it into that story's Constraints. The litmus test: *"Could this be shipped in isolation and still be true after Story N is reverted?"* If yes → system story. If no → implementation detail of Story N.

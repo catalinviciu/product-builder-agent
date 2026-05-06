@@ -148,6 +148,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
                 entity.statusHistory = [{ status: entity.status, date: todayIso }];
               }
               if (!entity.signals) entity.signals = [];
+              if (entity.level === "solution" && !entity.stories) entity.stories = [];
             }
           }
           set({ productLines: data, currentProductLineId, isHydrated: true });

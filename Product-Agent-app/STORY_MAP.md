@@ -12,8 +12,8 @@
 
 ## Backbone (Activity Overview)
 
-| 1. Set Up a Product Line | 2. Define Personas | 3. Define a Business Outcome | 4. Define a Product Outcome | 5. Map Opportunities | 6. Design Solutions | 7. Validate Assumptions | 8. Organize & Prioritize | 9. View & Manage the Metric Tree | 10. Navigate & Review | 11. Manage Preferences | 12. Export Context for AI Agent |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1. Set Up a Product Line | 2. Define Personas | 3. Define a Business Outcome | 4. Define a Product Outcome | 5. Map Opportunities | 6. Design Solutions | 7. Slice the User Journey into Stories | 8. Validate Assumptions | 9. Organize & Prioritize | 10. View & Manage the Metric Tree | 11. Navigate & Review | 12. Manage Preferences | 13. Export Context for AI Agent |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 ---
 
@@ -138,7 +138,16 @@
 | **Add Assumption children** | Add a child Assumption from the children section | `EntityView` · `Add Child Button` |
 
 
-### Activity 7: Validate Assumptions
+### Activity 7: Slice the User Journey into Stories
+> Turn a solution's high-level user journey into a structured set of INVEST-compliant stories that can be reviewed, refined, and handed to the agent.
+
+| Step | Story | Components |
+|:-----|:------|:-----------|
+| **Slice empty user journey to populate the map** | Copy the slicer prompt from a Solution's empty Stories tab to start populating the story map | `EntityView` · `StoriesTab` · `buildUserStorySlicerPrompt` · `Toaster` |
+|  | [system] Slicer skill writes structured Story records into solution.stories[] in store.json (replaces previous MD-file output) | `ProductSkills/user-story-slicer/SKILL.md` · `schemas.ts (Story, StoryIteration)` · `store.ts (hydrate backfill)` |
+
+
+### Activity 8: Validate Assumptions
 > Surface and test the riskiest assumptions behind a solution.
 
 | Step | Story | Components |
@@ -168,7 +177,7 @@
 |  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
 
 
-### Activity 8: Organize & Prioritize
+### Activity 9: Organize & Prioritize
 > Manage entity statuses and views to focus on what matters most.
 
 | Step | Story | Components |
@@ -183,7 +192,7 @@
 | **Compare ICE scores** | Compare ICE score badges on opportunity cards to prioritize across the grid | `ChildEntityCard` · `ICE Badge` |
 
 
-### Activity 9: View & Manage the Metric Tree
+### Activity 10: View & Manage the Metric Tree
 > See how all outcomes and signals relate as a metric hierarchy, and adjust driver/driven relationships.
 
 | Step | Story | Components |
@@ -196,7 +205,7 @@
 | **Reparent a metric** | Change a Product Outcome's driver relationship by picking a new parent in the reparent dropdown, updating the tree immediately | `MetricTreeCard` · `ReparentDropdown` |
 
 
-### Activity 10: Navigate & Review
+### Activity 11: Navigate & Review
 > Move through the discovery tree to review and connect ideas.
 
 | Step | Story | Components |
@@ -208,7 +217,7 @@
 | **Toggle sidebar** | Collapse or expand the sidebar to control workspace layout | `DashboardLayout` · `Sidebar Toggle` |
 
 
-### Activity 11: Manage Preferences
+### Activity 12: Manage Preferences
 > Customize how the workspace looks and behaves.
 
 | Step | Story | Components |
@@ -218,7 +227,7 @@
 | **Configure analytics consent** | Accept or decline anonymous analytics consent on first launch via the consent banner | `ConsentBanner` |
 
 
-### Activity 12: Export Context for AI Agent
+### Activity 13: Export Context for AI Agent
 > Generate context-rich prompts from the discovery tree to drive AI-assisted planning and coding.
 
 | Step | Story | Components |

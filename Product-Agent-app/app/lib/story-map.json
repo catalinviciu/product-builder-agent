@@ -263,6 +263,20 @@
       ]
     },
     {
+      "id": "slice-user-stories",
+      "title": "Slice the User Journey into Stories",
+      "goal": "Turn a solution's high-level user journey into a structured set of INVEST-compliant stories that can be reviewed, refined, and handed to the agent.",
+      "steps": [
+        {
+          "title": "Slice empty user journey to populate the map",
+          "stories": [
+            { "action": "Copy the slicer prompt from a Solution's empty Stories tab to start populating the story map", "components": ["EntityView", "StoriesTab", "buildUserStorySlicerPrompt", "Toaster"] },
+            { "action": "[system] Slicer skill writes structured Story records into solution.stories[] in store.json (replaces previous MD-file output)", "components": ["ProductSkills/user-story-slicer/SKILL.md", "schemas.ts (Story, StoryIteration)", "store.ts (hydrate backfill)"] }
+          ]
+        }
+      ]
+    },
+    {
       "id": "validate-assumptions",
       "title": "Validate Assumptions",
       "goal": "Surface and test the riskiest assumptions behind a solution.",

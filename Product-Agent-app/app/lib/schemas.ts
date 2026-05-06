@@ -322,6 +322,31 @@ export const TEST_TYPE_META: Record<TestType, TestTypeMeta> = {
   research_spike: { label: "Research Spike",        description: "Time-boxed engineering activity to evaluate technical difficulty", color: "text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border-indigo-500/25", dotColor: "bg-indigo-500 dark:bg-indigo-400" },
 };
 
+// ── User Stories ──────────────────────────────────────────────────────────
+
+export type StoryIteration = "WS" | "Enh" | "GA";
+
+export interface AnalyticsEventDef {
+  name: string;
+  properties: Record<string, string>;
+}
+
+export interface Story {
+  id: string;                              // "story-1", "story-2", ...
+  title: string;
+  persona: string;                         // resolved persona name
+  activity: string;
+  task: string;
+  iteration: StoryIteration;
+  narrative?: { role: string; action: string; benefit: string };
+  context?: string;
+  outOfScope?: string[];
+  dependencies?: string[];
+  humanVerification?: string;
+  acceptanceCriteria?: string;             // gherkin block; populated by AC writer skill
+  analyticsEvents?: AnalyticsEventDef[];   // populated by AC writer skill
+}
+
 // ── Unified entity ────────────────────────────────────────────────────────
 
 export interface Entity {
@@ -341,6 +366,7 @@ export interface Entity {
   children: string[];
   blocks: Block[];
   signals?: Signal[];
+  stories?: Story[];                       // only meaningful when level === "solution"
 }
 
 export type EntityStore = Record<string, Entity>;

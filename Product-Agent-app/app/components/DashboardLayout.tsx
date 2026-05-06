@@ -12,6 +12,7 @@ import { cn } from "@/app/lib/utils";
 import { initIfConsented } from "@/app/lib/analytics";
 import { startAnalyticsSubscribers } from "@/app/lib/analytics-subscribers";
 import { ConsentBanner } from "./ConsentBanner";
+import { Toaster } from "@/components/ui/toast";
 
 function useIsMobile() {
   // Only used for imperative checks (auto-close on nav).
@@ -124,6 +125,7 @@ export function DashboardLayout() {
 
         <PersonaSlideOver />
         <ConsentBanner />
+        <Toaster />
       </div>
     </div>
   );

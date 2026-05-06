@@ -5,7 +5,7 @@ import { MarkdownBlock } from "./MarkdownToolbar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronRight, Pencil, Trash2, Plus, Copy, FileBarChart, MessageSquarePlus,
-  Target, Activity,
+  Target, Activity, LayoutGrid,
 } from "lucide-react";
 import type { Entity, EntityStatus } from "@/app/lib/schemas";
 import { LEVEL_META, CHILD_LEVEL, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getIceScoreColor, formatMetricValue } from "@/app/lib/schemas";
@@ -27,6 +27,7 @@ import { AddChildForm, AddRootEntityForm } from "./EntityForms";
 import { EntityGridView, type CardDisplayProps } from "./EntityGridView";
 import { CoworkerIntroCard, CoworkerEmptyButton } from "./CoworkerIntroCard";
 import { SignalsTab } from "./SignalsTab";
+import { StoriesTab } from "./StoriesTab";
 
 // ── Children grid (now delegates to EntityGridView) ───────────────────────
 
@@ -327,7 +328,7 @@ export function EntityView() {
   const [titleDraft, setTitleDraft] = useState("");
   const [confirmDeleteEntity, setConfirmDeleteEntity] = useState(false);
   const [confirmDrop, setConfirmDrop] = useState(false);
-  const [activeTab, setActiveTab] = useState<"discovery" | "signals">("discovery");
+  const [activeTab, setActiveTab] = useState<"discovery" | "signals" | "stories">("discovery");
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -551,36 +552,66 @@ export function EntityView() {
             )}
           </div>
 
-          {/* View tabs — PO only */}
-          {expanded && entity.level === "product_outcome" && (
+          {/* View tabs — PO and Solution */}
+          {expanded && (entity.level === "product_outcome" || entity.level === "solution") && (
             <div className="flex gap-0 mx-[var(--spacing-entity-px)] border-b border-border-subtle">
-              {([
-                { key: "discovery" as const, icon: Target, label: "Product Outcome Metric" },
-                { key: "signals" as const, icon: Activity, label: "Signals" },
-              ]).map(({ key, icon: Icon, label }) => {
-                const signalCount = (entity.signals ?? []).length;
-                const isActive = activeTab === key;
-                return (
-                  <button
-                    key={key}
-                    onClick={(e) => { e.stopPropagation(); setActiveTab(key); }}
-                    className={cn(
-                      "cursor-pointer text-[13px] font-medium py-2.5 px-5 flex items-center gap-1.5 relative border-b-2 -mb-px transition-colors",
-                      isActive
-                        ? "text-foreground font-semibold border-foreground"
-                        : "text-muted-foreground border-transparent hover:text-foreground",
-                    )}
-                  >
-                    <Icon size={14} />
-                    {label}
-                    {key === "signals" && signalCount > 0 && (
-                      <span className="text-[10px] font-semibold bg-surface-3 text-muted-foreground px-1.5 py-px rounded-full">
-                        {signalCount}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+              {entity.level === "product_outcome" ? (
+                ([
+                  { key: "discovery" as const, icon: Target, label: "Product Outcome Metric" },
+                  { key: "signals" as const, icon: Activity, label: "Signals" },
+                ] as const).map(({ key, icon: Icon, label }) => {
+                  const signalCount = (entity.signals ?? []).length;
+                  const isActive = activeTab === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={(e) => { e.stopPropagation(); setActiveTab(key); }}
+                      className={cn(
+                        "cursor-pointer text-[13px] font-medium py-2.5 px-5 flex items-center gap-1.5 relative border-b-2 -mb-px transition-colors",
+                        isActive
+                          ? "text-foreground font-semibold border-foreground"
+                          : "text-muted-foreground border-transparent hover:text-foreground",
+                      )}
+                    >
+                      <Icon size={14} />
+                      {label}
+                      {key === "signals" && signalCount > 0 && (
+                        <span className="text-[10px] font-semibold bg-surface-3 text-muted-foreground px-1.5 py-px rounded-full">
+                          {signalCount}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })
+              ) : (
+                ([
+                  { key: "discovery" as const, icon: Target, label: "Discovery" },
+                  { key: "stories" as const, icon: LayoutGrid, label: "Stories" },
+                ] as const).map(({ key, icon: Icon, label }) => {
+                  const storyCount = (entity.stories ?? []).length;
+                  const isActive = activeTab === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={(e) => { e.stopPropagation(); setActiveTab(key); }}
+                      className={cn(
+                        "cursor-pointer text-[13px] font-medium py-2.5 px-5 flex items-center gap-1.5 relative border-b-2 -mb-px transition-colors",
+                        isActive
+                          ? "text-foreground font-semibold border-foreground"
+                          : "text-muted-foreground border-transparent hover:text-foreground",
+                      )}
+                    >
+                      <Icon size={14} />
+                      {label}
+                      {key === "stories" && storyCount > 0 && (
+                        <span className="text-[10px] font-semibold bg-surface-3 text-muted-foreground px-1.5 py-px rounded-full">
+                          {storyCount}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })
+              )}
             </div>
           )}
 
@@ -597,6 +628,10 @@ export function EntityView() {
                 {entity.level === "product_outcome" && activeTab === "signals" ? (
                   <div className="px-[var(--spacing-content-px)] pb-[var(--spacing-content-py)] pt-[var(--spacing-content-py)]">
                     <SignalsTab entity={entity} />
+                  </div>
+                ) : entity.level === "solution" && activeTab === "stories" ? (
+                  <div className="px-[var(--spacing-content-px)] pb-[var(--spacing-content-py)] pt-[var(--spacing-content-py)]">
+                    <StoriesTab entity={entity} />
                   </div>
                 ) : (
                   <div className={cn(

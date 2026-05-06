@@ -30,6 +30,10 @@ export type AnalyticsEventMap = {
     value_format: string;
     signal_count: number;
   };
+  slicer_prompt_copied: {
+    solution_id: string;
+    persona_count: number;
+  };
 };
 
 type ListenerMap = { [K in keyof AnalyticsEventMap]?: Array<Listener<AnalyticsEventMap[K]>> };

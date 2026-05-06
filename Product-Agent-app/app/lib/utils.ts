@@ -347,6 +347,23 @@ export function buildPrototypeBuilderPrompt(
   return sections.join("\n\n---\n\n");
 }
 
+// ── User story slicer prompt for AI agents ───────────────────────────────
+
+export function buildUserStorySlicerPrompt(productLine: ProductLine, solutionId: string): string {
+  const entity = productLine.entities[solutionId];
+  if (!entity || entity.level !== "solution") return "";
+
+  const sections: string[] = [];
+  sections.push(`Use skill: ProductSkills/user-story-slicer/SKILL.md`);
+  sections.push([
+    `Product Line: ${productLine.name}`,
+    `Solution ID: ${solutionId}`,
+  ].join("\n"));
+  sections.push(`Data: Product-Agent-app/data/store.json`);
+
+  return sections.join("\n\n---\n\n");
+}
+
 // ── WIP briefing prompt for AI agents ────────────────────────────────────
 
 export function buildWipBriefingPrompt(productLineName: string): string {

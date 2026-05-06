@@ -60,4 +60,8 @@ export function startAnalyticsSubscribers(): void {
   analyticsEmitter.on("Signal Created", (props) => {
     trackEvent("Signal Created", props);
   });
+
+  analyticsEmitter.on("slicer_prompt_copied", (props) => {
+    trackEvent("SlicerPromptCopied", props);
+  });
 }
