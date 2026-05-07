@@ -31,7 +31,7 @@ export function StoryMapToolbar({ entityId, stories }: StoryMapToolbarProps) {
       solution_id: entityId,
       stories_without_ac: storiesWithoutAcCount,
     });
-    showToast({ message: "Prompt copied — paste into Claude Code", tone: "success" });
+    showToast({ message: "Prompt copied — paste into your agentic tool", tone: "success" });
   }
 
   return (

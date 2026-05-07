@@ -35,7 +35,7 @@ export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) 
       scope: "iteration",
       story_count: storyIds.length,
     });
-    showToast({ message: "Prompt copied — paste into Claude Code", tone: "success" });
+    showToast({ message: "Prompt copied — paste into your agentic tool", tone: "success" });
   }
 
   const { visibleStories, backbone } = useMemo(() => {

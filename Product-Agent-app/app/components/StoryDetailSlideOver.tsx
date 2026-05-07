@@ -86,7 +86,7 @@ function StoryDetailFooter({ story, solutionId }: FooterProps) {
       scope: "story",
       story_count: 1,
     });
-    showToast({ message: "Prompt copied — paste into Claude Code", tone: "success" });
+    showToast({ message: "Prompt copied — paste into your agentic tool", tone: "success" });
   }
 
   function handleToggleDone() {
