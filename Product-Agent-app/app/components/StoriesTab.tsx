@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { LayoutGrid, Copy, CheckCircle2 } from "lucide-react";
+import { LayoutGrid, Copy } from "lucide-react";
 import type { Entity } from "@/app/lib/schemas";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { buildUserStorySlicerPrompt } from "@/app/lib/utils";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
+import { showToast } from "@/components/ui/toast";
 import { PattonMap } from "./PattonMap";
 import { StoryMapToolbar } from "./StoryMapToolbar";
 
@@ -17,12 +16,6 @@ interface StoriesTabProps {
 export function StoriesTab({ entity }: StoriesTabProps) {
   const productLine = useProductLine();
   const stories = entity.stories ?? [];
-  const [copied, setCopied] = useState(false);
-  const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => () => {
-    if (dismissTimer.current) clearTimeout(dismissTimer.current);
-  }, []);
 
   if (stories.length > 0) {
     return (
@@ -40,9 +33,7 @@ export function StoriesTab({ entity }: StoriesTabProps) {
       solution_id: entity.id,
       persona_count: (productLine.personas ?? []).length,
     });
-    setCopied(true);
-    if (dismissTimer.current) clearTimeout(dismissTimer.current);
-    dismissTimer.current = setTimeout(() => setCopied(false), 2800);
+    showToast({ message: "Prompt copied — paste into Claude Code", tone: "success" });
   }
 
   return (
@@ -61,33 +52,14 @@ export function StoriesTab({ entity }: StoriesTabProps) {
           Slice the User Journey block on this solution into a Patton story map. Your co-worker will write structured stories, grouped by activity, task, and iteration.
         </p>
 
-        {/* CTA + inline copy confirmation */}
-        <div className="flex flex-col items-center gap-2">
-          <button
-            onClick={handleCopy}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-colors text-sm font-medium cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
-          >
-            <Copy size={14} />
-            Slice user journey into stories
-          </button>
-
-          <div className="h-7 flex items-center justify-center" aria-live="polite">
-            <AnimatePresence>
-              {copied && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[12px] font-medium text-emerald-700 dark:text-emerald-400"
-                >
-                  <CheckCircle2 size={12} />
-                  Slicer prompt copied — paste into Claude Code
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+        {/* CTA */}
+        <button
+          onClick={handleCopy}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-colors text-sm font-medium cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
+        >
+          <Copy size={14} />
+          Slice user journey into stories
+        </button>
 
         {/* Hint */}
         <div className="text-xs text-muted-foreground/70">

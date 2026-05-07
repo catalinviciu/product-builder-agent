@@ -287,6 +287,13 @@
           ]
         },
         {
+          "title": "Hand off a single story to the agent",
+          "stories": [
+            { "action": "Click 'Plan & Implement story' in the slide-over footer to copy a prompt containing only that story's ID and hand it off to the agent for fine-grained implementation", "components": ["StoryDetailSlideOver", "buildSolutionPlanningPrompt", "Toaster"] },
+            { "action": "See muted helper text instead of the button when the open story has no acceptance criteria, so only ready stories can be handed off", "components": ["StoryDetailSlideOver"] }
+          ]
+        },
+        {
           "title": "Add acceptance criteria + analytics events to stories",
           "stories": [
             { "action": "Click the toolbar 'Add acceptance criteria' button to copy the AC writer prompt; the skill writes Gherkin AC and analytics events directly to each story record", "components": ["StoryMapToolbar", "StoriesTab", "buildUserStoryAcWriterPrompt"] },

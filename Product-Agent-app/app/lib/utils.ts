@@ -381,6 +381,32 @@ export function buildUserStoryAcWriterPrompt(productLine: ProductLine, solutionI
   return sections.join("\n\n---\n\n");
 }
 
+// ── Plan & implement story prompt for AI agents ──────────────────────────
+
+export function buildPlanImplementStoryPrompt(storyId: string): string {
+  return [
+    `1. Plan the implementation of story ${storyId}`,
+    `   Data: Product-Agent-app/data/store.json`,
+    `2. Follow ProductSkills/story-map-updater/SKILL.md`,
+    `3. Ask clarifying questions before proceeding`,
+    `4. Use the .claude/skills/product-agent-design skill for frontend`,
+    `5. Follow existing patterns and conventions`,
+    `6. After plan is ready, dispatch sonnet subagents`,
+  ].join("\n");
+}
+
+export function buildPlanImplementIterationPrompt(storyIds: string[]): string {
+  return [
+    `1. Plan the implementation of stories: ${storyIds.join(", ")}`,
+    `   Data: Product-Agent-app/data/store.json`,
+    `2. Follow ProductSkills/story-map-updater/SKILL.md`,
+    `3. Ask clarifying questions before proceeding`,
+    `4. Use the .claude/skills/product-agent-design skill for frontend`,
+    `5. Follow existing patterns and conventions`,
+    `6. After plan is ready, dispatch sonnet subagents`,
+  ].join("\n");
+}
+
 // ── WIP briefing prompt for AI agents ────────────────────────────────────
 
 export function buildWipBriefingPrompt(productLineName: string): string {

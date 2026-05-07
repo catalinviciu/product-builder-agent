@@ -3,9 +3,10 @@
 import { useEffect, useMemo } from "react";
 import { Server } from "lucide-react";
 import { useAppStore } from "@/app/lib/store";
-import type { Story } from "@/app/lib/schemas";
-import { cn } from "@/app/lib/utils";
+import type { Story, StoryIteration } from "@/app/lib/schemas";
+import { cn, buildPlanImplementIterationPrompt } from "@/app/lib/utils";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
+import { showToast } from "@/components/ui/toast";
 import {
   ITERATION_ROWS,
   buildBackbone,
@@ -23,6 +24,18 @@ interface PattonMapProps {
 
 export function PattonMap({ entityId, stories }: PattonMapProps) {
   const openStoryDetail = useAppStore((s) => s.openStoryDetail);
+
+  async function handlePlanImplement(iterKey: StoryIteration, storyIds: string[]) {
+    const text = buildPlanImplementIterationPrompt(storyIds);
+    await navigator.clipboard.writeText(text);
+    analyticsEmitter.emit("plan_implement_prompt_copied", {
+      solution_id: entityId,
+      scope: "iteration",
+      story_count: storyIds.length,
+    });
+    showToast({ message: "Prompt copied — paste into Claude Code", tone: "success" });
+  }
+
   const { visibleStories, backbone } = useMemo(() => {
     const primary = resolvePrimaryPersona(stories);
     const visible = filterStoriesForPersona(stories, primary);
@@ -48,7 +61,20 @@ export function PattonMap({ entityId, stories }: PattonMapProps) {
   }
 
   const lastTask = backbone.tasks[backbone.tasks.length - 1];
-  const lastIter = ITERATION_ROWS[ITERATION_ROWS.length - 1].key;
+
+  const visibleIterationRows = ITERATION_ROWS.filter((iter) =>
+    visibleStories.some((s) => s.iteration === iter.key),
+  );
+
+  if (visibleIterationRows.length === 0) {
+    return (
+      <div className="rounded-xl border border-border-subtle bg-surface-1 px-6 py-10 text-center text-sm text-muted-foreground">
+        No stories for the active persona.
+      </div>
+    );
+  }
+
+  const lastIter = visibleIterationRows[visibleIterationRows.length - 1].key;
 
   return (
     <div className="rounded-xl border border-border-subtle bg-surface-1 overflow-hidden">
@@ -111,9 +137,10 @@ export function PattonMap({ entityId, stories }: PattonMapProps) {
             );
           })}
 
-          {/* Rows 3-5: iteration label + story cells */}
-          {ITERATION_ROWS.map((iter) => {
+          {/* Rows 3-5: iteration label + story cells — only rows with stories render */}
+          {visibleIterationRows.map((iter) => {
             const isLastRow = iter.key === lastIter;
+            const iterStoryIds = visibleStories.filter((s) => s.iteration === iter.key).map((s) => s.id);
             return (
               <div key={`row-${iter.key}`} className="contents">
                 <div
@@ -128,6 +155,13 @@ export function PattonMap({ entityId, stories }: PattonMapProps) {
                   <span className="text-[12px] font-semibold text-foreground leading-tight">
                     {iter.label}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => handlePlanImplement(iter.key, iterStoryIds)}
+                    className="mt-1.5 w-full inline-flex items-center justify-center gap-1.5 px-2 py-1 rounded-md border border-border-subtle bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-[10px] font-medium text-foreground transition-colors cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
+                  >
+                    Plan & Implement
+                  </button>
                 </div>
                 {backbone.tasks.map((task) => {
                   const cellStories = getStoriesAt(visibleStories, task, iter.key);

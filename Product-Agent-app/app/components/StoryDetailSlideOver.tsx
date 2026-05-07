@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/app/lib/store";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
+import { buildPlanImplementStoryPrompt } from "@/app/lib/utils";
+import { showToast } from "@/components/ui/toast";
 
 // ── Gherkin keyword highlighter ────────────────────────────────────────────
 const GHERKIN_KEYWORDS =
@@ -52,6 +54,44 @@ function renderGherkin(src: string) {
 // ── Iteration tag normaliser ───────────────────────────────────────────────
 function iterationTag(iteration: string): string {
   return iteration === "Enh" ? "EN" : iteration;
+}
+
+// ── Footer sub-component (isolated to satisfy TypeScript non-null story) ──
+import type { Story } from "@/app/lib/schemas";
+
+interface FooterProps {
+  story: Story;
+  solutionId: string | null;
+}
+
+function StoryDetailFooter({ story, solutionId }: FooterProps) {
+  const hasAc = !!(story.acceptanceCriteria && story.acceptanceCriteria.trim() !== "");
+
+  async function handleCopy() {
+    const text = buildPlanImplementStoryPrompt(story.id);
+    await navigator.clipboard.writeText(text);
+    analyticsEmitter.emit("plan_implement_prompt_copied", {
+      solution_id: solutionId ?? "",
+      scope: "story",
+      story_count: 1,
+    });
+    showToast({ message: "Prompt copied — paste into Claude Code", tone: "success" });
+  }
+
+  return (
+    <div className="sticky bottom-0 flex items-center justify-end gap-2 px-5 py-4 border-t border-border-subtle bg-surface-1">
+      {hasAc ? (
+        <button
+          onClick={handleCopy}
+          className="cursor-pointer inline-flex items-center gap-2 bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
+        >
+          Plan &amp; Implement story
+        </button>
+      ) : (
+        <p className="text-sm text-muted-foreground">Add AC first to enable this scope</p>
+      )}
+    </div>
+  );
 }
 
 // ── Component ─────────────────────────────────────────────────────────────
@@ -238,6 +278,9 @@ export function StoryDetailSlideOver() {
                 )}
               </section>
             </div>
+
+            {/* ── Footer ── */}
+            <StoryDetailFooter story={story} solutionId={solutionId} />
           </motion.div>
         </>
       )}

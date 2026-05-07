@@ -48,6 +48,11 @@ export type AnalyticsEventMap = {
     solution_id: string;
     stories_without_ac: number;
   };
+  plan_implement_prompt_copied: {
+    solution_id: string;
+    scope: "story" | "iteration" | "whole-map";
+    story_count: number;
+  };
   story_map_ac_enriched: {
     solution_id: string;
     stories_with_ac: number;
