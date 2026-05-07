@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import { Server } from "lucide-react";
+import { useAppStore } from "@/app/lib/store";
 import type { Story } from "@/app/lib/schemas";
 import { cn } from "@/app/lib/utils";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
@@ -9,7 +10,7 @@ import {
   ITERATION_ROWS,
   buildBackbone,
   filterStoriesForPersona,
-  getStoryAt,
+  getStoriesAt,
   isSystemTask,
   resolvePrimaryPersona,
 } from "@/app/lib/story-map-utils";
@@ -21,6 +22,7 @@ interface PattonMapProps {
 }
 
 export function PattonMap({ entityId, stories }: PattonMapProps) {
+  const openStoryDetail = useAppStore((s) => s.openStoryDetail);
   const { visibleStories, backbone } = useMemo(() => {
     const primary = resolvePrimaryPersona(stories);
     const visible = filterStoriesForPersona(stories, primary);
@@ -121,16 +123,16 @@ export function PattonMap({ entityId, stories }: PattonMapProps) {
                   )}
                 >
                   <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                    {iter.key === "Enh" ? "ENH" : iter.key}
+                    {iter.key === "Enh" ? "EN" : iter.key}
                   </span>
                   <span className="text-[12px] font-semibold text-foreground leading-tight">
                     {iter.label}
                   </span>
                 </div>
                 {backbone.tasks.map((task) => {
-                  const story = getStoryAt(visibleStories, task, iter.key);
+                  const cellStories = getStoriesAt(visibleStories, task, iter.key);
                   const isLastCol = task === lastTask;
-                  if (story) {
+                  if (cellStories.length > 0) {
                     return (
                       <div
                         key={`cell-${iter.key}-${task}`}
@@ -140,7 +142,13 @@ export function PattonMap({ entityId, stories }: PattonMapProps) {
                           !isLastRow && "border-b border-border-subtle",
                         )}
                       >
-                        <PattonMapCard story={story} />
+                        {cellStories.map((story) => (
+                          <PattonMapCard
+                            key={story.id}
+                            story={story}
+                            onClick={() => openStoryDetail(entityId, story.id)}
+                          />
+                        ))}
                       </div>
                     );
                   }

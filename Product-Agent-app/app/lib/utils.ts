@@ -364,6 +364,23 @@ export function buildUserStorySlicerPrompt(productLine: ProductLine, solutionId:
   return sections.join("\n\n---\n\n");
 }
 
+// ── User story AC writer prompt for AI agents ────────────────────────────
+
+export function buildUserStoryAcWriterPrompt(productLine: ProductLine, solutionId: string): string {
+  const entity = productLine.entities[solutionId];
+  if (!entity || entity.level !== "solution") return "";
+
+  const sections: string[] = [];
+  sections.push(`Use skill: ProductSkills/user-story-ac-writer/SKILL.md`);
+  sections.push([
+    `Product Line: ${productLine.name}`,
+    `Solution ID: ${solutionId}`,
+  ].join("\n"));
+  sections.push(`Data: Product-Agent-app/data/store.json`);
+
+  return sections.join("\n\n---\n\n");
+}
+
 // ── WIP briefing prompt for AI agents ────────────────────────────────────
 
 export function buildWipBriefingPrompt(productLineName: string): string {

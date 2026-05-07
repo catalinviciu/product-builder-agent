@@ -8,6 +8,7 @@ import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { buildUserStorySlicerPrompt } from "@/app/lib/utils";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { PattonMap } from "./PattonMap";
+import { StoryMapToolbar } from "./StoryMapToolbar";
 
 interface StoriesTabProps {
   entity: Entity;
@@ -25,7 +26,8 @@ export function StoriesTab({ entity }: StoriesTabProps) {
 
   if (stories.length > 0) {
     return (
-      <div className="px-[var(--spacing-content-px)] py-[var(--spacing-content-py)]">
+      <div className="px-[var(--spacing-content-px)] py-[var(--spacing-content-py)] flex flex-col gap-3">
+        <StoryMapToolbar entityId={entity.id} stories={stories} />
         <PattonMap entityId={entity.id} stories={stories} />
       </div>
     );

@@ -5,11 +5,27 @@ import { cn } from "@/app/lib/utils";
 
 interface PattonMapCardProps {
   story: Story;
+  onClick?: () => void;
 }
 
-export function PattonMapCard({ story }: PattonMapCardProps) {
+export function PattonMapCard({ story, onClick }: PattonMapCardProps) {
   return (
-    <div className="bg-card border border-border-default rounded-md px-2.5 py-2 flex flex-col gap-1">
+    <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className={cn(
+        "bg-card border border-border-default rounded-md px-2.5 py-2 flex flex-col gap-1",
+        onClick &&
+          "cursor-pointer hover:bg-surface-hover hover:border-border-strong transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
+      )}
+    >
       <span className="text-[9.5px] font-mono uppercase text-muted-foreground/70 tracking-wide">
         {story.id}
       </span>

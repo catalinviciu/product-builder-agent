@@ -39,6 +39,20 @@ export type AnalyticsEventMap = {
     story_count: number;
     activity_count: number;
   };
+  story_detail_opened: {
+    story_id: string;
+    iteration: "WS" | "EN" | "GA";
+    has_ac: boolean;
+  };
+  ac_writer_prompt_copied: {
+    solution_id: string;
+    stories_without_ac: number;
+  };
+  story_map_ac_enriched: {
+    solution_id: string;
+    stories_with_ac: number;
+    stories_total: number;
+  };
 };
 
 type ListenerMap = { [K in keyof AnalyticsEventMap]?: Array<Listener<AnalyticsEventMap[K]>> };

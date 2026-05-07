@@ -146,6 +146,9 @@
 | **Slice empty user journey to populate the map** | Copy the slicer prompt from a Solution's empty Stories tab to start populating the story map | `EntityView` · `StoriesTab` · `buildUserStorySlicerPrompt` · `Toaster` |
 |  | [system] Slicer skill writes structured Story records into solution.stories[] in store.json (replaces previous MD-file output) | `ProductSkills/user-story-slicer/SKILL.md` · `schemas.ts (Story, StoryIteration)` · `store.ts (hydrate backfill)` |
 | **Read the Patton story map for the active persona** | View activities, tasks, and iteration rows (WS / Enhancement / GA) as a Patton-style grid with story cards at each task × iteration intersection | `StoriesTab` · `PattonMap` · `PattonMapCard` |
+| **Open a story's details** | Open a story card from the Patton map to see its full details — id, title, iteration tag, activity → task crumb, acceptance criteria, and analytics events | `PattonMapCard` · `StoryDetailSlideOver` · `DashboardLayout` |
+| **Add acceptance criteria + analytics events to stories** | Click the toolbar 'Add acceptance criteria' button to copy the AC writer prompt; the skill writes Gherkin AC and analytics events directly to each story record | `StoryMapToolbar` · `StoriesTab` · `buildUserStoryAcWriterPrompt` |
+|  | [system] AC writer skill writes structured acceptance_criteria + analytics_events into solution.stories[] in store.json (replaces previous MD-file output) | `ProductSkills/user-story-ac-writer/SKILL.md` |
 
 
 ### Activity 8: Validate Assumptions

@@ -23,6 +23,11 @@ export interface AppStore {
   personaPanelId: string | null;
   openPersonaPanel: (id?: string) => void;
   closePersonaPanel: () => void;
+  storyDetailOpen: boolean;
+  storyDetailSolutionId: string | null;
+  storyDetailStoryId: string | null;
+  openStoryDetail: (solutionId: string, storyId: string) => void;
+  closeStoryDetail: () => void;
 
   // Persistence
   hydrate: () => Promise<void>;
@@ -125,6 +130,11 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
   personaPanelId: null,
   openPersonaPanel: (id) => set({ personaPanelOpen: true, personaPanelId: id ?? null }),
   closePersonaPanel: () => set({ personaPanelOpen: false, personaPanelId: null }),
+  storyDetailOpen: false,
+  storyDetailSolutionId: null,
+  storyDetailStoryId: null,
+  openStoryDetail: (solutionId, storyId) => set({ storyDetailOpen: true, storyDetailSolutionId: solutionId, storyDetailStoryId: storyId }),
+  closeStoryDetail: () => set({ storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null }),
 
   hydrate: async () => {
     const maxRetries = 3;
@@ -182,9 +192,9 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
 
   switchProductLine: (id) => {
     if (typeof window !== "undefined") localStorage.setItem("pa-current-pl", id);
-    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null, viewMode: "discovery", sidebarOpen: true });
+    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null, viewMode: "discovery", sidebarOpen: true, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null });
   },
-  navigateTo: (id) => set({ currentEntityId: id }),
+  navigateTo: (id) => set({ currentEntityId: id, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null }),
   navigateUp: () =>
     set((draft) => {
       if (!draft.currentEntityId) return;
@@ -193,7 +203,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
       const entity = pl.entities[draft.currentEntityId];
       draft.currentEntityId = entity ? (entity.parentId || null) : null;
     }),
-  navigateToChild: (childId) => set({ currentEntityId: childId }),
+  navigateToChild: (childId) => set({ currentEntityId: childId, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null }),
 
   navigateFromMetricTree: (entityId) => set((draft) => {
     draft.viewMode = "discovery";

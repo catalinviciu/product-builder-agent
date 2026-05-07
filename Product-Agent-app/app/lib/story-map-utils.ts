@@ -70,14 +70,15 @@ export function buildBackbone(stories: Story[]): MapBackbone {
 }
 
 /**
- * Returns the first story matching the given task and iteration, or null.
+ * Returns all stories matching the given task and iteration, in their array order.
+ * When more than one is present, the renderer stacks them vertically in the same cell.
  */
-export function getStoryAt(
+export function getStoriesAt(
   stories: Story[],
   task: string,
   iteration: StoryIteration
-): Story | null {
-  return stories.find((s) => s.task === task && s.iteration === iteration) ?? null;
+): Story[] {
+  return stories.filter((s) => s.task === task && s.iteration === iteration);
 }
 
 /**

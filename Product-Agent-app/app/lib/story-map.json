@@ -279,6 +279,19 @@
           "stories": [
             { "action": "View activities, tasks, and iteration rows (WS / Enhancement / GA) as a Patton-style grid with story cards at each task × iteration intersection", "components": ["StoriesTab", "PattonMap", "PattonMapCard"] }
           ]
+        },
+        {
+          "title": "Open a story's details",
+          "stories": [
+            { "action": "Open a story card from the Patton map to see its full details — id, title, iteration tag, activity → task crumb, acceptance criteria, and analytics events", "components": ["PattonMapCard", "StoryDetailSlideOver", "DashboardLayout"] }
+          ]
+        },
+        {
+          "title": "Add acceptance criteria + analytics events to stories",
+          "stories": [
+            { "action": "Click the toolbar 'Add acceptance criteria' button to copy the AC writer prompt; the skill writes Gherkin AC and analytics events directly to each story record", "components": ["StoryMapToolbar", "StoriesTab", "buildUserStoryAcWriterPrompt"] },
+            { "action": "[system] AC writer skill writes structured acceptance_criteria + analytics_events into solution.stories[] in store.json (replaces previous MD-file output)", "components": ["ProductSkills/user-story-ac-writer/SKILL.md"] }
+          ]
         }
       ]
     },

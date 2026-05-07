@@ -68,4 +68,55 @@ export function startAnalyticsSubscribers(): void {
   analyticsEmitter.on("story_map_rendered", (props) => {
     trackEvent("StoryMapRendered", props);
   });
+
+  analyticsEmitter.on("story_detail_opened", (props) => {
+    trackEvent("StoryDetailOpened", props);
+  });
+
+  analyticsEmitter.on("ac_writer_prompt_copied", (props) => {
+    trackEvent("AcWriterPromptCopied", props);
+  });
+
+  analyticsEmitter.on("story_map_ac_enriched", (props) => {
+    trackEvent("StoryMapAcEnriched", props);
+  });
+
+  // Diff subscription: emit story_map_ac_enriched when a solution's
+  // stories_with_ac count increases compared to the previous snapshot.
+  // First snapshot after hydration is the silent baseline.
+  let acCountBaseline: Record<string, number> | null = null;
+  useAppStore.subscribe(
+    (state) => state.productLines,
+    (current) => {
+      if (Object.keys(current).length === 0) return; // hydration guard
+
+      const next: Record<string, number> = {};
+      const totals: Record<string, number> = {};
+      for (const pl of Object.values(current)) {
+        for (const e of Object.values(pl.entities)) {
+          if (e.level !== "solution" || !e.stories?.length) continue;
+          const withAc = e.stories.filter((s) => !!s.acceptanceCriteria).length;
+          next[e.id] = withAc;
+          totals[e.id] = e.stories.length;
+        }
+      }
+
+      if (acCountBaseline === null) {
+        acCountBaseline = next;
+        return;
+      }
+
+      for (const [solutionId, withAc] of Object.entries(next)) {
+        const prev = acCountBaseline[solutionId] ?? 0;
+        if (withAc > prev) {
+          analyticsEmitter.emit("story_map_ac_enriched", {
+            solution_id: solutionId,
+            stories_with_ac: withAc,
+            stories_total: totals[solutionId],
+          });
+        }
+      }
+      acCountBaseline = next;
+    },
+  );
 }

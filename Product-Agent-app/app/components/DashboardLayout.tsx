@@ -5,6 +5,7 @@ import { SectionNav } from "./SectionNav";
 import { EntityView } from "./EntityView";
 import { MetricTreeView } from "./MetricTreeView";
 import { PersonaSlideOver } from "./PersonaSlideOver";
+import { StoryDetailSlideOver } from "./StoryDetailSlideOver";
 import { AccountMenu } from "./AccountMenu";
 import { useAppStore } from "@/app/lib/store";
 import { Menu, ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -124,6 +125,7 @@ export function DashboardLayout() {
         </main>
 
         <PersonaSlideOver />
+        <StoryDetailSlideOver />
         <ConsentBanner />
         <Toaster />
       </div>
