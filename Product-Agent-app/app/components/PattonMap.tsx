@@ -21,9 +21,10 @@ import { PattonMapCard } from "./PattonMapCard";
 interface PattonMapProps {
   entityId: string;
   stories: Story[];
+  activePersona?: string;
 }
 
-export function PattonMap({ entityId, stories }: PattonMapProps) {
+export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) {
   const openStoryDetail = useAppStore((s) => s.openStoryDetail);
 
   async function handlePlanImplement(_row: IterationRow, storyIds: string[]) {
@@ -38,10 +39,10 @@ export function PattonMap({ entityId, stories }: PattonMapProps) {
   }
 
   const { visibleStories, backbone } = useMemo(() => {
-    const primary = resolvePrimaryPersona(stories);
+    const primary = activePersona ?? resolvePrimaryPersona(stories);
     const visible = filterStoriesForPersona(stories, primary);
     return { visibleStories: visible, backbone: buildBackbone(visible) };
-  }, [stories]);
+  }, [stories, activePersona]);
 
   useEffect(() => {
     analyticsEmitter.emit("story_map_rendered", {

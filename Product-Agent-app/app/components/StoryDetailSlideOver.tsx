@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { X, ChevronRight, CheckCircle2, Circle } from "lucide-react";
+import { X, ChevronRight, CheckCircle2, Circle, User, Server } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/app/lib/store";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { buildPlanImplementStoryPrompt } from "@/app/lib/utils";
 import { showToast } from "@/components/ui/toast";
+import { SYSTEM_PERSONA } from "@/app/lib/story-map-utils";
 
 // ── Gherkin keyword highlighter ────────────────────────────────────────────
 const GHERKIN_KEYWORDS =
@@ -232,6 +233,16 @@ export function StoryDetailSlideOver() {
                 <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-surface-2 border border-border-subtle text-foreground">
                   {story.iteration.label}
                 </span>
+                {story.persona && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md bg-surface-2 border border-border-subtle text-muted-foreground">
+                    {story.persona === SYSTEM_PERSONA ? (
+                      <Server size={10} className="shrink-0" />
+                    ) : (
+                      <User size={10} className="shrink-0" />
+                    )}
+                    {story.persona}
+                  </span>
+                )}
                 {story.done && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md bg-[color-mix(in_oklch,var(--accent-green)_12%,transparent)] border border-[color-mix(in_oklch,var(--accent-green)_30%,transparent)] text-[var(--accent-green)]">
                     <CheckCircle2 size={11} />

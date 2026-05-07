@@ -1,12 +1,15 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { LayoutGrid, Copy } from "lucide-react";
 import type { Entity } from "@/app/lib/schemas";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { buildUserStorySlicerPrompt } from "@/app/lib/utils";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { showToast } from "@/components/ui/toast";
+import { listPersonasWithStories } from "@/app/lib/story-map-utils";
 import { PattonMap } from "./PattonMap";
+import { PersonaStrip } from "./PersonaStrip";
 import { StoryMapToolbar } from "./StoryMapToolbar";
 
 interface StoriesTabProps {
@@ -17,11 +20,33 @@ export function StoriesTab({ entity }: StoriesTabProps) {
   const productLine = useProductLine();
   const stories = entity.stories ?? [];
 
+  const personasWithStories = listPersonasWithStories(stories);
+  const [activePersona, setActivePersona] = useState<string | null>(
+    personasWithStories[0]?.name ?? null,
+  );
+
+  // Reset activePersona if the previously selected persona disappears from the list
+  useEffect(() => {
+    if (activePersona === null || personasWithStories.some((p) => p.name === activePersona)) return;
+    setActivePersona(personasWithStories[0]?.name ?? null);
+  }, [personasWithStories, activePersona]);
+
   if (stories.length > 0) {
     return (
       <div className="px-[var(--spacing-content-px)] py-[var(--spacing-content-py)] flex flex-col gap-3">
         <StoryMapToolbar entityId={entity.id} stories={stories} />
-        <PattonMap entityId={entity.id} stories={stories} />
+        {personasWithStories.length > 0 && (
+          <PersonaStrip
+            personas={personasWithStories}
+            activePersona={activePersona ?? personasWithStories[0].name}
+            onSelect={setActivePersona}
+          />
+        )}
+        <PattonMap
+          entityId={entity.id}
+          stories={stories}
+          activePersona={activePersona ?? undefined}
+        />
       </div>
     );
   }

@@ -278,7 +278,8 @@
         {
           "title": "Read the Patton story map for the active persona",
           "stories": [
-            { "action": "View activities, tasks, and iteration rows (one Walking Skeleton row, one or more Enhancement rows, one GA row — each with the team's chosen label) as a Patton-style grid with story cards at each task × iteration intersection", "components": ["StoriesTab", "PattonMap", "PattonMapCard"] }
+            { "action": "View activities, tasks, and iteration rows (one Walking Skeleton row, one or more Enhancement rows, one GA row — each with the team's chosen label) as a Patton-style grid with story cards at each task × iteration intersection", "components": ["StoriesTab", "PattonMap", "PattonMapCard"] },
+            { "action": "Switch between persona-specific backbones via the persona strip when a solution covers multiple personas", "components": ["StoriesTab", "PersonaStrip", "listPersonasWithStories"] }
           ]
         },
         {

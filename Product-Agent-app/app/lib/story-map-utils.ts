@@ -114,3 +114,23 @@ export function isSystemTask(stories: Story[], task: string): boolean {
   if (forTask.length === 0) return false;
   return forTask.every((s) => s.persona === SYSTEM_PERSONA);
 }
+
+/**
+ * Returns ordered list of personas that have at least one story, excluding SYSTEM_PERSONA.
+ * Count = number of stories whose persona field exactly equals the persona name.
+ * System stories that render inside a persona's backbone are NOT counted here to avoid double-counting.
+ * Order is first-seen.
+ */
+export function listPersonasWithStories(stories: Story[]): { name: string; count: number }[] {
+  const order: string[] = [];
+  const counts = new Map<string, number>();
+  for (const s of stories) {
+    if (!s.persona || s.persona === SYSTEM_PERSONA) continue;
+    if (!counts.has(s.persona)) {
+      order.push(s.persona);
+      counts.set(s.persona, 0);
+    }
+    counts.set(s.persona, counts.get(s.persona)! + 1);
+  }
+  return order.map((name) => ({ name, count: counts.get(name)! }));
+}
