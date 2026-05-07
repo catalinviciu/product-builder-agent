@@ -1,4 +1,4 @@
-import type { Story, StoryIteration } from "@/app/lib/schemas";
+import type { Story, StoryIterationKind } from "@/app/lib/schemas";
 
 export const SYSTEM_PERSONA = "System";
 
@@ -7,11 +7,34 @@ export interface MapBackbone {
   tasks: string[]; // flat, first-seen order across activities
 }
 
-export const ITERATION_ROWS: { key: StoryIteration; label: string }[] = [
-  { key: "WS", label: "Walking Skeleton" },
-  { key: "Enh", label: "Enhancement" },
-  { key: "GA", label: "GA" },
-];
+export interface IterationRow {
+  kind: StoryIterationKind;
+  label: string;
+}
+
+/**
+ * Returns ordered iteration rows derived from the given stories:
+ *   1. The single WS row (label taken from the first WS story)
+ *   2. Enhancement rows in first-seen order, grouped by label
+ *   3. The single GA row (label taken from the first GA story)
+ * Rows with zero stories are omitted.
+ */
+export function deriveIterationRows(stories: Story[]): IterationRow[] {
+  let ws: IterationRow | null = null;
+  const enhMap = new Map<string, IterationRow>();
+  let ga: IterationRow | null = null;
+  for (const s of stories) {
+    const { kind, label } = s.iteration;
+    if (kind === "ws") {
+      if (!ws) ws = { kind, label };
+    } else if (kind === "ga") {
+      if (!ga) ga = { kind, label };
+    } else if (!enhMap.has(label)) {
+      enhMap.set(label, { kind, label });
+    }
+  }
+  return [...(ws ? [ws] : []), ...enhMap.values(), ...(ga ? [ga] : [])];
+}
 
 /** Returns the first persona name that is non-empty and not "System". */
 export function resolvePrimaryPersona(stories: Story[]): string | null {
@@ -70,15 +93,17 @@ export function buildBackbone(stories: Story[]): MapBackbone {
 }
 
 /**
- * Returns all stories matching the given task and iteration, in their array order.
+ * Returns all stories matching the given task and iteration row, in their array order.
  * When more than one is present, the renderer stacks them vertically in the same cell.
  */
 export function getStoriesAt(
   stories: Story[],
   task: string,
-  iteration: StoryIteration
+  row: IterationRow
 ): Story[] {
-  return stories.filter((s) => s.task === task && s.iteration === iteration);
+  return stories.filter(
+    (s) => s.task === task && s.iteration.kind === row.kind && s.iteration.label === row.label
+  );
 }
 
 /**

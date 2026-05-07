@@ -324,7 +324,12 @@ export const TEST_TYPE_META: Record<TestType, TestTypeMeta> = {
 
 // ── User Stories ──────────────────────────────────────────────────────────
 
-export type StoryIteration = "WS" | "Enh" | "GA";
+export type StoryIterationKind = "ws" | "enh" | "ga";
+
+export interface StoryIteration {
+  kind: StoryIterationKind;
+  label: string;
+}
 
 export interface AnalyticsEventDef {
   name: string;
@@ -345,6 +350,8 @@ export interface Story {
   humanVerification?: string;
   acceptanceCriteria?: string;             // gherkin block; populated by AC writer skill
   analyticsEvents?: AnalyticsEventDef[];   // populated by AC writer skill
+  done?: boolean;
+  doneAt?: string;                         // ISO timestamp; set when done flips true
 }
 
 // ── Unified entity ────────────────────────────────────────────────────────

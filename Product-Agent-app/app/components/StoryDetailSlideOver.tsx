@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { X, ChevronRight } from "lucide-react";
+import { X, ChevronRight, CheckCircle2, Circle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/app/lib/store";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
@@ -51,9 +51,17 @@ function renderGherkin(src: string) {
   );
 }
 
-// ── Iteration tag normaliser ───────────────────────────────────────────────
-function iterationTag(iteration: string): string {
-  return iteration === "Enh" ? "EN" : iteration;
+// ── Iteration kind badge ───────────────────────────────────────────────────
+function iterationKindBadge(kind: "ws" | "enh" | "ga"): string {
+  return kind === "enh" ? "EN" : kind.toUpperCase();
+}
+
+function formatDoneAt(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString();
+  } catch {
+    return iso;
+  }
 }
 
 // ── Footer sub-component (isolated to satisfy TypeScript non-null story) ──
@@ -66,6 +74,8 @@ interface FooterProps {
 
 function StoryDetailFooter({ story, solutionId }: FooterProps) {
   const hasAc = !!(story.acceptanceCriteria && story.acceptanceCriteria.trim() !== "");
+  const setStoryDone = useAppStore((s) => s.setStoryDone);
+  const isDone = !!story.done;
 
   async function handleCopy() {
     const text = buildPlanImplementStoryPrompt(story.id);
@@ -78,17 +88,43 @@ function StoryDetailFooter({ story, solutionId }: FooterProps) {
     showToast({ message: "Prompt copied — paste into Claude Code", tone: "success" });
   }
 
+  function handleToggleDone() {
+    if (!solutionId) return;
+    const next = !isDone;
+    setStoryDone(solutionId, story.id, next);
+    showToast({
+      message: next ? "Story marked as done" : "Marked as not done",
+      tone: "success",
+    });
+  }
+
   return (
-    <div className="sticky bottom-0 flex items-center justify-end gap-2 px-5 py-4 border-t border-border-subtle bg-surface-1">
+    <div className="sticky bottom-0 flex flex-col items-stretch gap-2 px-5 py-4 border-t border-border-subtle bg-surface-1">
+      <button
+        onClick={handleToggleDone}
+        className="cursor-pointer inline-flex items-center justify-center gap-2 bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
+      >
+        {isDone ? (
+          <CheckCircle2 size={15} className="text-[var(--accent-green)] shrink-0" />
+        ) : (
+          <Circle size={15} className="text-muted-foreground shrink-0" />
+        )}
+        {isDone ? "Mark as not done" : "Mark as done"}
+      </button>
+      {isDone && story.doneAt && (
+        <span className="text-[11px] text-muted-foreground text-center">
+          Done · {formatDoneAt(story.doneAt)}
+        </span>
+      )}
       {hasAc ? (
         <button
           onClick={handleCopy}
-          className="cursor-pointer inline-flex items-center gap-2 bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
+          className="cursor-pointer inline-flex items-center justify-center gap-2 bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
         >
           Plan &amp; Implement story
         </button>
       ) : (
-        <p className="text-sm text-muted-foreground">Add AC first to enable this scope</p>
+        <p className="text-sm text-muted-foreground text-center">Add AC first to enable this scope</p>
       )}
     </div>
   );
@@ -131,7 +167,7 @@ export function StoryDetailSlideOver() {
     if (open && story) {
       analyticsEmitter.emit("story_detail_opened", {
         story_id: story.id,
-        iteration: story.iteration === "Enh" ? "EN" : story.iteration,
+        iteration_kind: story.iteration.kind,
         has_ac: !!story.acceptanceCriteria,
       });
     }
@@ -189,10 +225,19 @@ export function StoryDetailSlideOver() {
               </h2>
 
               {/* Pills row */}
-              <div className="flex gap-1.5 items-center mt-0.5">
+              <div className="flex gap-1.5 items-center mt-0.5 flex-wrap">
                 <span className="text-[10px] font-mono font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-surface-2 border border-border-subtle text-muted-foreground">
-                  {iterationTag(story.iteration)}
+                  {iterationKindBadge(story.iteration.kind)}
                 </span>
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-surface-2 border border-border-subtle text-foreground">
+                  {story.iteration.label}
+                </span>
+                {story.done && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md bg-[color-mix(in_oklch,var(--accent-green)_12%,transparent)] border border-[color-mix(in_oklch,var(--accent-green)_30%,transparent)] text-[var(--accent-green)]">
+                    <CheckCircle2 size={11} />
+                    Done
+                  </span>
+                )}
               </div>
             </div>
 

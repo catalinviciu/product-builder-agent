@@ -214,6 +214,18 @@ Do NOT write stories yet. Just the structure. Each row = one User Task. The tabl
 
 **Before writing:** Read `assets/story-template.md` and `assets/invest-and-slices.md`.
 
+### Iteration slice labels
+
+Before classifying stories, ask the builder:
+
+> "Do you want to rename any of the iteration slices? Defaults are **'Walking Skeleton'**, **'Enhancement'**, and **'GA'**. You can use any names — for example 'Beta' + 'GA', or 'Walking Skeleton' + 'Beta' + 'Public Beta' + 'GA'."
+
+Rules:
+- There is always **exactly 1 WS slice** (the smallest end-to-end thin slice) and **exactly 1 GA slice**.
+- There can be **0 or more Enhancement slices** in between, each with its own label, ordered by release intent.
+- Use the builder's confirmed labels when emitting the `iteration` object (see Phase 5 schema).
+- Stories sharing the same `kind` + `label` group into the same Patton map row.
+
 ### Slicing approach
 
 1. Walk through the journey/process step by step
@@ -350,7 +362,10 @@ Present the stories and ask for feedback. During this phase:
   persona: string;                         // resolved persona name (e.g. "Molly (Dispatcher)")
   activity: string;                        // Activity from the story map backbone
   task: string;                            // User Task this story maps to
-  iteration: "WS" | "Enh" | "GA";         // Walking Skeleton | Enhancement | GA
+  iteration: { kind: "ws" | "enh" | "ga"; label: string };
+  // kind: "ws" = Walking Skeleton row, "enh" = Enhancement row, "ga" = GA row
+  // label: the builder's confirmed name for that row (e.g. "Walking Skeleton", "Beta", "GA")
+  // All stories sharing the same kind + label group into the same Patton map row
   narrative?: { role: string; action: string; benefit: string };  // parsed from "As a / I / so that"
   context?: string;                        // Context section content (markdown)
   outOfScope?: string[];                   // Out of Scope bullets (one string per bullet)
@@ -358,8 +373,14 @@ Present the stories and ask for feedback. During this phase:
   humanVerification?: string;             // Human Verification section content
   acceptanceCriteria?: string;             // Leave undefined — populated by AC writer skill
   analyticsEvents?: AnalyticsEventDef[];   // Leave undefined — populated by AC writer skill
+  // done and doneAt are user-toggled via the UI — NEVER set or modify them here
 }
 ```
+
+**Example `iteration` values:**
+- `{ kind: "ws", label: "Walking Skeleton" }` — default WS row
+- `{ kind: "enh", label: "Beta" }` — enhancement row the builder named "Beta"
+- `{ kind: "ga", label: "GA" }` — default GA row
 
 Story IDs are `story-1`, `story-2`, etc. — numbered in the same priority-layer order used in Phase 3 (WS first, Enh next, GA last). IDs must be sequential and stable so later skills (AC writer, Plan & Implement) can reference them.
 
@@ -386,6 +407,7 @@ Story IDs are `story-1`, `story-2`, etc. — numbered in the same priority-layer
 10. **Slice for AI precision.** Apply all 9 splitting patterns against each story. Optimize for the minimum size AI can build independently -- no overlapping component state, no rework. Too big = AI loses precision. Too small = overlapping context forces rework.
 11. **Cover every detail from the input.** Every behavioral detail, constraint, interaction rule, and edge case documented in the user journey MUST appear in exactly one story's Context/Constraints or Human Verification section. After drafting all stories, do a completeness check: walk the input line by line and verify each detail landed somewhere. If a detail is missing, add it to the appropriate story. Nothing from the input should be lost or summarized away -- if the journey says "selections are not persistent across page refresh," that exact constraint must appear in a story.
 12. **A reusable component is NOT a system story.** Building a `Toaster`, `Modal`, `Button`, or any UI primitive used by exactly one user story is part of that story's implementation, not a separate system story. System stories are reserved for technical enablers with no user-facing UI of their own (schema migrations, skill rewrites that change data contracts, backfills, infra changes). See "Bad: Treating a UI primitive as a system story" below.
+13. **Never set `done` or `doneAt` on any story.** These fields are user-toggled via the UI. The slicer must not set, modify, or even reference them.
 
 ---
 

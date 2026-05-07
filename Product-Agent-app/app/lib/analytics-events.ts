@@ -41,8 +41,14 @@ export type AnalyticsEventMap = {
   };
   story_detail_opened: {
     story_id: string;
-    iteration: "WS" | "EN" | "GA";
+    iteration_kind: "ws" | "enh" | "ga";
     has_ac: boolean;
+  };
+  story_marked_done: {
+    solution_id: string;
+    story_id: string;
+    done: boolean;
+    iteration_kind: "ws" | "enh" | "ga";
   };
   ac_writer_prompt_copied: {
     solution_id: string;

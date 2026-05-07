@@ -32,9 +32,24 @@ The user provides a prompt with:
 - `Solution ID: <uuid>`
 - `Data: Product-Agent-app/data/store.json`
 
-The target solution holds an array of structured `Story` records under `entity.stories[]`. Each record carries: `id` (e.g. `story-1`), `title`, `persona`, `activity`, `task`, `iteration` (`WS` / `Enh` / `GA`), `narrative` (`role` / `action` / `benefit`), `context`, `outOfScope`, `dependencies`, `humanVerification`, and possibly already-populated `acceptanceCriteria` + `analyticsEvents`.
+The target solution holds an array of structured `Story` records under `entity.stories[]`. Each record carries:
+- `id` (e.g. `story-1`)
+- `title`
+- `persona`
+- `activity`
+- `task`
+- `iteration: { kind: "ws" | "enh" | "ga"; label: string }` — structured object (not a string enum). `kind` is the slot ("ws" = Walking Skeleton, "enh" = Enhancement, "ga" = GA); `label` is the builder's chosen name for that row (e.g. "Beta", "GA").
+- `narrative` (`role` / `action` / `benefit`)
+- `context`
+- `outOfScope`
+- `dependencies`
+- `humanVerification`
+- `acceptanceCriteria` (possibly already populated)
+- `analyticsEvents` (possibly already populated)
 
 The story records ARE the primary context. Each record carries all the grounding information needed to write AC.
+
+**Fields the AC writer must NEVER modify:** `iteration`, `done`, `doneAt`. These are set by the slicer skill or toggled by the user via the UI. Do not read, set, or reference them during AC generation.
 
 ---
 
@@ -49,8 +64,8 @@ Complete each phase fully before moving to the next. Never skip phases.
 **Step 1:** Read `Product-Agent-app/data/store.json`. Locate the target solution by walking `productLines[*].entities[<solutionId>]`. The solution lives at the first product line whose `entities` map contains the given `Solution ID`. If no product line contains it, stop and tell the user: *"Solution `<id>` was not found in store.json. Confirm the Solution ID and try again."* Do NOT write anything.
 
 **Step 2:** Read `entity.stories` directly. The slicer has already INVEST-checked the story set; do not re-derive structure. From the records, build:
-- A small story map table (Activity / Task / Story id / Iteration) for the user's reference
-- Iteration counts (WS / Enh / GA)
+- A small story map table (Activity / Task / Story id / Iteration label) for the user's reference
+- Iteration counts (WS / Enh / GA, using the `iteration.label` value for display)
 - Persona summary (unique non-`"System"` personas + count of system tasks if any)
 - Counts of stories already with vs. without `acceptanceCriteria`
 
@@ -167,11 +182,11 @@ Output goes back into `Product-Agent-app/data/store.json` as structured fields o
 
 **Step 1:** For each confirmed story, build:
 - `acceptanceCriteria: string` — the full Gherkin block for that story (Scenarios with Given / When / Then / And / But, separated by blank lines). Plain text — preserve indentation. Embed analytics events as `# Mixpanel:` comments inline within scenarios where they fire.
-- `analyticsEvents: { name: string; properties: Record<string, string> }[]` — one entry per confirmed event for that story. Each `properties` value is a short type/description string (e.g. `"string"`, `"number"`, `"WS|Enh|GA"`).
+- `analyticsEvents: { name: string; properties: Record<string, string> }[]` — one entry per confirmed event for that story. Each `properties` value is a short type/description string (e.g. `"string"`, `"number"`, `"ws|enh|ga"`).
 
 **Step 2:** Read the current `Product-Agent-app/data/store.json`.
 
-**Step 3:** Locate the target solution again (same walk as Phase 1). For each story by `id`, set `entity.stories[i].acceptanceCriteria` and `entity.stories[i].analyticsEvents` on the matching record. **Match by `id` only.** Preserve all other fields on every story (title, persona, activity, task, iteration, narrative, context, outOfScope, dependencies, humanVerification). Preserve every other entity, product line, and top-level field byte-for-byte.
+**Step 3:** Locate the target solution again (same walk as Phase 1). For each story by `id`, set `entity.stories[i].acceptanceCriteria` and `entity.stories[i].analyticsEvents` on the matching record. **Match by `id` only.** Preserve all other fields on every story (title, persona, activity, task, iteration, narrative, context, outOfScope, dependencies, humanVerification, done, doneAt). Preserve every other entity, product line, and top-level field byte-for-byte.
 
 **Step 4:** Write the JSON back with 2-space indent and a trailing newline.
 
@@ -200,6 +215,7 @@ Output goes back into `Product-Agent-app/data/store.json` as structured fields o
 10. **Do not invent scope.** If a behavior isn't in the story card (Context, Constraints, Human Verification), don't write a scenario for it. Ask first.
 11. **Output goes to `store.json`, never to MD files.** Use the Solution ID from the prompt to locate the target solution; do not ask the user for a file path.
 12. **Match stories by stable `id`.** Story IDs (`story-1`, `story-2`, ...) are stable contracts. When writing AC and analytics events, locate the record by `id` and update only `acceptanceCriteria` and `analyticsEvents`. Do not modify any other field.
+13. **Never modify `iteration`, `done`, or `doneAt`.** These fields are managed by the slicer skill or toggled by the user via the UI. The AC writer must not set, overwrite, or even read them during output.
 
 ---
 

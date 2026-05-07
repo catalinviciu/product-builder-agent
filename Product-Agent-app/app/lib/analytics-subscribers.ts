@@ -81,6 +81,10 @@ export function startAnalyticsSubscribers(): void {
     trackEvent("PlanImplementPromptCopied", payload);
   });
 
+  analyticsEmitter.on("story_marked_done", (payload) => {
+    trackEvent("StoryMarkedDone", payload);
+  });
+
   analyticsEmitter.on("story_map_ac_enriched", (props) => {
     trackEvent("StoryMapAcEnriched", props);
   });

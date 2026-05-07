@@ -3,17 +3,18 @@
 import { useEffect, useMemo } from "react";
 import { Server } from "lucide-react";
 import { useAppStore } from "@/app/lib/store";
-import type { Story, StoryIteration } from "@/app/lib/schemas";
+import type { Story } from "@/app/lib/schemas";
 import { cn, buildPlanImplementIterationPrompt } from "@/app/lib/utils";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { showToast } from "@/components/ui/toast";
 import {
-  ITERATION_ROWS,
   buildBackbone,
+  deriveIterationRows,
   filterStoriesForPersona,
   getStoriesAt,
   isSystemTask,
   resolvePrimaryPersona,
+  type IterationRow,
 } from "@/app/lib/story-map-utils";
 import { PattonMapCard } from "./PattonMapCard";
 
@@ -25,7 +26,7 @@ interface PattonMapProps {
 export function PattonMap({ entityId, stories }: PattonMapProps) {
   const openStoryDetail = useAppStore((s) => s.openStoryDetail);
 
-  async function handlePlanImplement(iterKey: StoryIteration, storyIds: string[]) {
+  async function handlePlanImplement(_row: IterationRow, storyIds: string[]) {
     const text = buildPlanImplementIterationPrompt(storyIds);
     await navigator.clipboard.writeText(text);
     analyticsEmitter.emit("plan_implement_prompt_copied", {
@@ -62,9 +63,7 @@ export function PattonMap({ entityId, stories }: PattonMapProps) {
 
   const lastTask = backbone.tasks[backbone.tasks.length - 1];
 
-  const visibleIterationRows = ITERATION_ROWS.filter((iter) =>
-    visibleStories.some((s) => s.iteration === iter.key),
-  );
+  const visibleIterationRows = deriveIterationRows(visibleStories);
 
   if (visibleIterationRows.length === 0) {
     return (
@@ -74,7 +73,7 @@ export function PattonMap({ entityId, stories }: PattonMapProps) {
     );
   }
 
-  const lastIter = visibleIterationRows[visibleIterationRows.length - 1].key;
+  const lastIterRow = visibleIterationRows[visibleIterationRows.length - 1];
 
   return (
     <div className="rounded-xl border border-border-subtle bg-surface-1 overflow-hidden">
@@ -137,12 +136,16 @@ export function PattonMap({ entityId, stories }: PattonMapProps) {
             );
           })}
 
-          {/* Rows 3-5: iteration label + story cells — only rows with stories render */}
+          {/* Rows 3+: iteration label + story cells — only rows with stories render */}
           {visibleIterationRows.map((iter) => {
-            const isLastRow = iter.key === lastIter;
-            const iterStoryIds = visibleStories.filter((s) => s.iteration === iter.key).map((s) => s.id);
+            const rowKey = `${iter.kind}-${iter.label}`;
+            const isLastRow = iter.kind === lastIterRow.kind && iter.label === lastIterRow.label;
+            const iterStoryIds = visibleStories
+              .filter((s) => s.iteration.kind === iter.kind && s.iteration.label === iter.label)
+              .map((s) => s.id);
+            const kindBadge = iter.kind === "enh" ? "EN" : iter.kind.toUpperCase();
             return (
-              <div key={`row-${iter.key}`} className="contents">
+              <div key={`row-${rowKey}`} className="contents">
                 <div
                   className={cn(
                     "bg-surface-2 border-r border-border-default px-3 py-3.5 flex flex-col gap-1 items-start",
@@ -150,26 +153,26 @@ export function PattonMap({ entityId, stories }: PattonMapProps) {
                   )}
                 >
                   <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                    {iter.key === "Enh" ? "EN" : iter.key}
+                    {kindBadge}
                   </span>
                   <span className="text-[12px] font-semibold text-foreground leading-tight">
                     {iter.label}
                   </span>
                   <button
                     type="button"
-                    onClick={() => handlePlanImplement(iter.key, iterStoryIds)}
+                    onClick={() => handlePlanImplement(iter, iterStoryIds)}
                     className="mt-1.5 w-full inline-flex items-center justify-center gap-1.5 px-2 py-1 rounded-md border border-border-subtle bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-[10px] font-medium text-foreground transition-colors cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
                   >
                     Plan & Implement
                   </button>
                 </div>
                 {backbone.tasks.map((task) => {
-                  const cellStories = getStoriesAt(visibleStories, task, iter.key);
+                  const cellStories = getStoriesAt(visibleStories, task, iter);
                   const isLastCol = task === lastTask;
                   if (cellStories.length > 0) {
                     return (
                       <div
-                        key={`cell-${iter.key}-${task}`}
+                        key={`cell-${rowKey}-${task}`}
                         className={cn(
                           "p-2.5 flex flex-col gap-2 min-h-[86px]",
                           !isLastCol && "border-r border-border-subtle",
@@ -188,7 +191,7 @@ export function PattonMap({ entityId, stories }: PattonMapProps) {
                   }
                   return (
                     <div
-                      key={`cell-${iter.key}-${task}`}
+                      key={`cell-${rowKey}-${task}`}
                       className={cn(
                         "min-h-[86px] opacity-60",
                         !isLastCol && "border-r border-border-subtle",

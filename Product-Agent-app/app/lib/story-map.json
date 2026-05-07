@@ -271,19 +271,21 @@
           "title": "Slice empty user journey to populate the map",
           "stories": [
             { "action": "Copy the slicer prompt from a Solution's empty Stories tab to start populating the story map", "components": ["EntityView", "StoriesTab", "buildUserStorySlicerPrompt", "Toaster"] },
+            { "action": "Choose custom labels for the iteration slices (Walking Skeleton, Enhancement, GA) during the slicer interview so the story map rows reflect the team's release naming", "components": ["ProductSkills/user-story-slicer/SKILL.md"] },
             { "action": "[system] Slicer skill writes structured Story records into solution.stories[] in store.json (replaces previous MD-file output)", "components": ["ProductSkills/user-story-slicer/SKILL.md", "schemas.ts (Story, StoryIteration)", "store.ts (hydrate backfill)"] }
           ]
         },
         {
           "title": "Read the Patton story map for the active persona",
           "stories": [
-            { "action": "View activities, tasks, and iteration rows (WS / Enhancement / GA) as a Patton-style grid with story cards at each task × iteration intersection", "components": ["StoriesTab", "PattonMap", "PattonMapCard"] }
+            { "action": "View activities, tasks, and iteration rows (one Walking Skeleton row, one or more Enhancement rows, one GA row — each with the team's chosen label) as a Patton-style grid with story cards at each task × iteration intersection", "components": ["StoriesTab", "PattonMap", "PattonMapCard"] }
           ]
         },
         {
           "title": "Open a story's details",
           "stories": [
-            { "action": "Open a story card from the Patton map to see its full details — id, title, iteration tag, activity → task crumb, acceptance criteria, and analytics events", "components": ["PattonMapCard", "StoryDetailSlideOver", "DashboardLayout"] }
+            { "action": "Open a story card from the Patton map to see its full details — id, title, iteration kind + label, activity → task crumb, acceptance criteria, and analytics events", "components": ["PattonMapCard", "StoryDetailSlideOver", "DashboardLayout"] },
+            { "action": "Mark a story as done from the story detail slide-over so the Patton map card reflects shipped progress with a green check", "components": ["StoryDetailSlideOver", "PattonMapCard", "setStoryDone"] }
           ]
         },
         {

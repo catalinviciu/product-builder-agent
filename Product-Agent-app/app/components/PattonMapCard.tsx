@@ -1,5 +1,6 @@
 "use client";
 
+import { CheckCircle2 } from "lucide-react";
 import type { Story } from "@/app/lib/schemas";
 import { cn } from "@/app/lib/utils";
 
@@ -32,15 +33,22 @@ export function PattonMapCard({ story, onClick }: PattonMapCardProps) {
       <span className="text-[12px] font-medium text-foreground leading-snug tracking-tight">
         {story.title}
       </span>
-      <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground">
-        <span
-          className={cn(
-            "w-1.5 h-1.5 rounded-full",
-            story.acceptanceCriteria ? "bg-emerald-500" : "bg-border-default"
-          )}
-        />
-        <span>{story.acceptanceCriteria ? "AC defined" : "No AC yet"}</span>
-      </div>
+      {story.done ? (
+        <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-[var(--accent-green)]">
+          <CheckCircle2 size={11} className="shrink-0" />
+          <span>Done</span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground">
+          <span
+            className={cn(
+              "w-1.5 h-1.5 rounded-full",
+              story.acceptanceCriteria ? "bg-emerald-500" : "bg-border-default"
+            )}
+          />
+          <span>{story.acceptanceCriteria ? "AC defined" : "No AC yet"}</span>
+        </div>
+      )}
     </div>
   );
 }

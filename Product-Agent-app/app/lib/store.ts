@@ -28,6 +28,7 @@ export interface AppStore {
   storyDetailStoryId: string | null;
   openStoryDetail: (solutionId: string, storyId: string) => void;
   closeStoryDetail: () => void;
+  setStoryDone: (solutionId: string, storyId: string, done: boolean) => void;
 
   // Persistence
   hydrate: () => Promise<void>;
@@ -135,6 +136,26 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
   storyDetailStoryId: null,
   openStoryDetail: (solutionId, storyId) => set({ storyDetailOpen: true, storyDetailSolutionId: solutionId, storyDetailStoryId: storyId }),
   closeStoryDetail: () => set({ storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null }),
+  setStoryDone: (solutionId, storyId, done) => {
+    let iterationKind: "ws" | "enh" | "ga" | null = null;
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      const solution = pl?.entities[solutionId];
+      const story = solution?.stories?.find((s) => s.id === storyId);
+      if (!story) return;
+      story.done = done;
+      story.doneAt = done ? new Date().toISOString() : undefined;
+      iterationKind = story.iteration.kind;
+    });
+    if (iterationKind) {
+      analyticsEmitter.emit("story_marked_done", {
+        solution_id: solutionId,
+        story_id: storyId,
+        done,
+        iteration_kind: iterationKind,
+      });
+    }
+  },
 
   hydrate: async () => {
     const maxRetries = 3;
@@ -159,6 +180,17 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
               }
               if (!entity.signals) entity.signals = [];
               if (entity.level === "solution" && !entity.stories) entity.stories = [];
+              // Migrate iteration string enum → structured { kind, label }
+              if (entity.stories) {
+                for (const story of entity.stories) {
+                  const iter = story.iteration as unknown;
+                  if (typeof iter === "string") {
+                    if (iter === "WS") story.iteration = { kind: "ws", label: "Walking Skeleton" };
+                    else if (iter === "Enh") story.iteration = { kind: "enh", label: "Enhancement" };
+                    else if (iter === "GA") story.iteration = { kind: "ga", label: "GA" };
+                  }
+                }
+              }
             }
           }
           set({ productLines: data, currentProductLineId, isHydrated: true });
