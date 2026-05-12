@@ -135,6 +135,18 @@ export function buildBlockAnchor(
   ].join("\n");
 }
 
+export function buildStoryAnchor(
+  store: EntityStore,
+  productLineName: string,
+  entityId: string,
+  storyId: string,
+  storyTitle: string,
+): string {
+  const base = buildEntityAnchor(store, productLineName, entityId);
+  if (!base) return "";
+  return base + `\nStory: ${storyId} — "${storyTitle}"`;
+}
+
 // ── Block serialization for AI prompts ──────────────────────────────────
 
 export function serializeBlocksToText(blocks: Block[]): string {
