@@ -49,7 +49,17 @@ export class HttpStoreAdapter implements StoreAdapter {
     };
     if (this.authToken) headers["authorization"] = `Bearer ${this.authToken}`;
 
-    const res = await fetch(`${this.baseUrl}${path}`, { ...init, headers });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+    let res: Response;
+    try {
+      res = await fetch(`${this.baseUrl}${path}`, { ...init, headers, signal: controller.signal });
+    } catch (err) {
+      const isTimeout = err instanceof Error && err.name === "AbortError";
+      throw new Error(`${path}: ${isTimeout ? "timed out (is the Product Agent app running?)" : String(err)}`);
+    } finally {
+      clearTimeout(timeout);
+    }
     const body = (await res.json().catch(() => null)) as ApiOk<T> | ApiErr | null;
     if (!res.ok || !body || body.ok === false) {
       const msg = body && "error" in body ? body.error : `HTTP ${res.status}`;
