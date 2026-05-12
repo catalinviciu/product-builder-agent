@@ -276,6 +276,12 @@
           ]
         },
         {
+          "title": "Add a single story to a task cell",
+          "stories": [
+            { "action": "Click the '+' affordance in a task cell to create a new story inline without re-running the full slicer", "components": ["PattonMap", "AddStoryCell", "addStoryToCell"] }
+          ]
+        },
+        {
           "title": "Read the Patton story map for the active persona",
           "stories": [
             { "action": "View activities, tasks, and iteration rows (one Walking Skeleton row, one or more Enhancement rows, one GA row — each with the team's chosen label) as a Patton-style grid with story cards at each task × iteration intersection", "components": ["StoriesTab", "PattonMap", "PattonMapCard"] },

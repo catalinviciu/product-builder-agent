@@ -17,6 +17,7 @@ import {
   type IterationRow,
 } from "@/app/lib/story-map-utils";
 import { PattonMapCard } from "./PattonMapCard";
+import { AddStoryCell } from "./AddStoryCell";
 
 interface PattonMapProps {
   entityId: string;
@@ -38,10 +39,13 @@ export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) 
     showToast({ message: "Prompt copied — paste into your agentic tool", tone: "success" });
   }
 
-  const { visibleStories, backbone } = useMemo(() => {
+  const { visibleStories, backbone, taskActivityMap } = useMemo(() => {
     const primary = activePersona ?? resolvePrimaryPersona(stories);
     const visible = filterStoriesForPersona(stories, primary);
-    return { visibleStories: visible, backbone: buildBackbone(visible) };
+    const bb = buildBackbone(visible);
+    const tam = new Map<string, string>();
+    for (const a of bb.activities) for (const t of a.tasks) tam.set(t, a.name);
+    return { visibleStories: visible, backbone: bb, taskActivityMap: tam };
   }, [stories, activePersona]);
 
   useEffect(() => {
@@ -170,12 +174,16 @@ export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) 
                 {backbone.tasks.map((task) => {
                   const cellStories = getStoriesAt(visibleStories, task, iter);
                   const isLastCol = task === lastTask;
+                  const cellPersona = isSystemTask(visibleStories, task)
+                    ? "System"
+                    : (activePersona ?? "Product Builder");
+                  const cellActivity = taskActivityMap.get(task) ?? "";
                   if (cellStories.length > 0) {
                     return (
                       <div
                         key={`cell-${rowKey}-${task}`}
                         className={cn(
-                          "p-2.5 flex flex-col gap-2 min-h-[86px]",
+                          "relative group p-2.5 flex flex-col gap-2 min-h-[86px]",
                           !isLastCol && "border-r border-border-subtle",
                           !isLastRow && "border-b border-border-subtle",
                         )}
@@ -187,6 +195,14 @@ export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) 
                             onClick={() => openStoryDetail(entityId, story.id)}
                           />
                         ))}
+                        <AddStoryCell
+                          solutionId={entityId}
+                          activity={cellActivity}
+                          task={task}
+                          iteration={iter}
+                          persona={cellPersona}
+                          hasStories
+                        />
                       </div>
                     );
                   }
@@ -194,7 +210,7 @@ export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) 
                     <div
                       key={`cell-${rowKey}-${task}`}
                       className={cn(
-                        "min-h-[86px] opacity-60",
+                        "relative min-h-[86px] opacity-60",
                         !isLastCol && "border-r border-border-subtle",
                         !isLastRow && "border-b border-border-subtle",
                       )}
@@ -202,8 +218,16 @@ export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) 
                         backgroundImage:
                           "repeating-linear-gradient(45deg, transparent 0 6px, var(--surface-1) 6px 12px)",
                       }}
-                      aria-hidden
-                    />
+                    >
+                      <AddStoryCell
+                        solutionId={entityId}
+                        activity={cellActivity}
+                        task={task}
+                        iteration={iter}
+                        persona={cellPersona}
+                        hasStories={false}
+                      />
+                    </div>
                   );
                 })}
               </div>

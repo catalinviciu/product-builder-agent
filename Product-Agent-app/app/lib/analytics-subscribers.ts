@@ -85,6 +85,10 @@ export function startAnalyticsSubscribers(): void {
     trackEvent("StoryMarkedDone", payload);
   });
 
+  analyticsEmitter.on("story_added_manually", (payload) => {
+    trackEvent("StoryAddedManually", { solution_id: payload.solution_id, iteration: payload.iteration_kind });
+  });
+
   analyticsEmitter.on("story_map_ac_enriched", (props) => {
     trackEvent("StoryMapAcEnriched", props);
   });

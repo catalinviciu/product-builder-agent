@@ -50,6 +50,10 @@ export type AnalyticsEventMap = {
     done: boolean;
     iteration_kind: "ws" | "enh" | "ga";
   };
+  story_added_manually: {
+    solution_id: string;
+    iteration_kind: "ws" | "enh" | "ga";
+  };
   ac_writer_prompt_copied: {
     solution_id: string;
     stories_without_ac: number;

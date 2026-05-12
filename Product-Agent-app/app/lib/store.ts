@@ -29,6 +29,11 @@ export interface AppStore {
   openStoryDetail: (solutionId: string, storyId: string) => void;
   closeStoryDetail: () => void;
   setStoryDone: (solutionId: string, storyId: string, done: boolean) => void;
+  addStoryToCell: (
+    solutionId: string,
+    cell: { activity: string; task: string; iteration: import("./schemas").StoryIteration; persona: string },
+    title: string
+  ) => string | null;
 
   // Persistence
   hydrate: () => Promise<void>;
@@ -155,6 +160,52 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
         iteration_kind: iterationKind,
       });
     }
+  },
+
+  addStoryToCell: (solutionId, cell, title) => {
+    const trimmed = title.trim();
+    if (!trimmed) return null;
+
+    let newId: string | null = null;
+    let emitKind: 'ws' | 'enh' | 'ga' | null = null;
+
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      const solution = pl?.entities[solutionId];
+      if (!solution || solution.level !== 'solution') return;
+      if (!solution.stories) solution.stories = [];
+
+      let max = 0;
+      for (const s of solution.stories) {
+        const m = /^story-(\d+)$/.exec(s.id);
+        if (m) {
+          const n = parseInt(m[1], 10);
+          if (n > max) max = n;
+        }
+      }
+      const id = `story-${max + 1}`;
+
+      solution.stories.push({
+        id,
+        title: trimmed,
+        persona: cell.persona,
+        activity: cell.activity,
+        task: cell.task,
+        iteration: cell.iteration,
+      });
+
+      newId = id;
+      emitKind = cell.iteration.kind;
+    });
+
+    if (newId && emitKind) {
+      analyticsEmitter.emit('story_added_manually', {
+        solution_id: solutionId,
+        iteration_kind: emitKind,
+      });
+    }
+
+    return newId;
   },
 
   hydrate: async () => {
