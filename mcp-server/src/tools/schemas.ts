@@ -106,7 +106,23 @@ export const EntityPatchSchema = z.object({
     e: z.number(),
     rationale: z.string().optional(),
   }).optional(),
-  stories: z.array(z.any()).optional(),
+  stories: z.array(z.object({
+    id: z.string(),
+    title: z.string(),
+    persona: z.string(),
+    activity: z.string(),
+    task: z.string(),
+    iteration: z.object({ kind: z.enum(["ws", "enh", "ga"]), label: z.string() }),
+    narrative: z.object({ role: z.string(), action: z.string(), benefit: z.string() }).optional(),
+    context: z.string().optional(),
+    outOfScope: z.array(z.string()).optional(),
+    dependencies: z.array(z.string()).optional(),
+    humanVerification: z.string().optional(),
+    acceptanceCriteria: z.string().optional(),
+    analyticsEvents: z.array(z.object({ name: z.string(), properties: z.record(z.string()) })).optional(),
+    done: z.boolean().optional(),
+    doneAt: z.string().optional(),
+  })).optional(),
 });
 
 export const BlockPatchSchema = z.object({
