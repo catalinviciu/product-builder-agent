@@ -1,7 +1,7 @@
 ---
 name: user-story-slicer
-version: 2.0.0
-description: Takes a user journey or system process and produces a first draft of vertically-sliced user stories following INVEST criteria. Use when the team needs to break a solution into implementable stories. Does NOT write acceptance criteria -- that is a separate skill.
+version: 3.0.0
+description: Takes a user journey or system process and produces a first draft of vertically-sliced user stories following INVEST criteria. Use when the team needs to break a solution into implementable stories. Does NOT write acceptance criteria -- that is a separate skill. Reads entity data and writes stories via MCP tools.
 ---
 
 # ROLE AND PURPOSE
@@ -45,12 +45,17 @@ Data: Product-Agent-app/data/store.json
 ```
 
 **How to resolve:**
-1. Read `Product-Agent-app/data/store.json`
-2. Navigate using the JSONPath to find the block
-3. Read the block's `content` field (markdown)
-4. Also read the parent entity's `title`, `description`, and any sibling blocks for context (e.g., "Solution Description", "Prototype UI/UX Guidance")
-5. Walk up the parent chain (entity → parent entity → grandparent, etc.) using `parentId` fields. Note each ancestor's `title` and `level` to understand the strategic context (Solution → Opportunity → Product Outcome → Business Outcome)
-6. Resolve the primary persona: check the solution entity for `personaId`; if absent, check the parent Opportunity entity. Use the first `personaId` found. Then look up that ID in the product line's `personas` array (top-level field on the product line object) to get the persona's `name` and `description`. Use this resolved persona name (e.g., "Molly (Dispatcher)") in all stories. If no `personaId` exists anywhere in the parent chain, ask the user in Phase 2.
+
+> The `Data:` line in the anchor (e.g. `Data: Product-Agent-app/data/store.json`) is ignored in this version — all data is read via MCP tools.
+
+1. Extract the `entityId` from the anchor (the UUID on the `Entity:` line, e.g. `Entity: "Livemap filtering with attributes" (fd5aab02-...)`).
+2. Extract the `blockIndex` from the `JSONPath` line — it's the number in `.blocks[N]` (0-based).
+3. Call `pa_get_entity(entityId)` — returns the entity with its `blocks` array. Read `blocks[blockIndex].content` for the journey text.
+4. Also read `entity.title`, `entity.description`, and other sibling blocks for context (e.g., "Solution Description", "Prototype UI/UX Guidance").
+5. Call `pa_get_context(entityId, { ancestors: true, productLineMeta: true })` — returns `{ productLine, ancestors }`.
+   - Walk `ancestors` to note each level's title (Solution → Opportunity → Product Outcome → Business Outcome).
+   - `productLine.personas` = the personas array for persona resolution.
+6. Resolve the primary persona: check `entity.personaId`; if absent, check each ancestor entity's `personaId` in order (closest first). Use the first `personaId` found, then look it up in `productLine.personas` to get the persona's `name` and `description`. If no `personaId` exists anywhere in the chain, ask the user in Phase 2.
 
 ## Option B: Markdown file
 
@@ -348,12 +353,10 @@ Present the stories and ask for feedback. During this phase:
 
 **Step 1:** Resolve the `Solution ID` from the prompt header (the line `Solution ID: <id>`).
 
-**Step 2:** Read `Product-Agent-app/data/store.json`.
+**Step 2:** Call `pa_get_entity(solutionId)` to confirm the solution exists. If not found, stop and tell the user:
+> "Could not find solution ID `<solutionId>` via the MCP server. Please verify the ID and try again."
 
-**Step 3:** Locate the solution entity by walking `productLines[*].entities[<solutionId>]`. Search every product line until found. If not found in any product line, stop and tell the user:
-> "Could not find solution ID `<solutionId>` in store.json. Please verify the ID and try again."
-
-**Step 4:** For each confirmed story (in priority-layer order: WS first, then Enh, then GA), build a `Story` record matching this schema:
+**Step 3:** For each confirmed story (in priority-layer order: WS first, then Enh, then GA), build a `Story` record matching this schema:
 
 ```ts
 {
@@ -384,11 +387,9 @@ Present the stories and ask for feedback. During this phase:
 
 Story IDs are `story-1`, `story-2`, etc. — numbered in the same priority-layer order used in Phase 3 (WS first, Enh next, GA last). IDs must be sequential and stable so later skills (AC writer, Plan & Implement) can reference them.
 
-**Step 5:** Set `entities[solutionId].stories = [...]` — overwrite the array with the full set of confirmed stories. (There are no prior stories at this stage; re-slicing is handled separately.)
+**Step 4:** Call `pa_update_entity({ entityId: solutionId, patch: { stories: [...] } })` — this replaces the entity's stories array with the full set of confirmed stories.
 
-**Step 6:** Write the modified JSON back to `Product-Agent-app/data/store.json`. Preserve all other content. Use 2-space indentation.
-
-**Step 7:** Tell the builder:
+**Step 5:** Tell the builder:
 > "Done. Refresh Product Agent to see your stories on the Solution's Stories tab."
 
 ---
@@ -396,7 +397,7 @@ Story IDs are `story-1`, `story-2`, etc. — numbered in the same priority-layer
 # RULES (NON-NEGOTIABLE)
 
 1. **Never write acceptance criteria.** That's a separate skill.
-2. **Output goes to `store.json`, never to MD files.** Story IDs are `story-<n>` and must be sequential and stable so later skills (AC writer, Plan & Implement) can reference them.
+2. **Output goes to the entity via `pa_update_entity`, never to MD files.** Story IDs are `story-<n>` and must be sequential and stable so later skills (AC writer, Plan & Implement) can reference them.
 3. **Never skip the clarification and assumptions phases.** Even if the journey seems clear.
 4. **Always produce vertical slices.** Never horizontal.
 5. **Always use specific personas.** Never "a user" or "a developer."

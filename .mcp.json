@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "product-agent": {
+      "command": "node",
+      "args": ["./mcp-server/dist/mcp-server/src/server.js"],
+      "env": {
+        "PA_API_URL": "http://localhost:3000"
+      }
+    }
+  }
+}

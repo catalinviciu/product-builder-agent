@@ -93,16 +93,16 @@ export function buildEntityAnchor(
     `Product Line: ${productLineName}`,
     `Path: ${pathLabels.join(" > ")}`,
     `Entity: "${entity.title}" (${entity.id})`,
-    `Data: Product-Agent-app/data/store.json`,
+    `Data: pa_get_entity("${entityId}")`,
   ].join("\n");
 }
 
-export function buildRootAnchor(productLineName: string): string {
+export function buildRootAnchor(productLineName: string, productLineId: string): string {
   return [
     `[Product Agent Context]`,
     `Product Line: ${productLineName}`,
     `View: Overview (full tree)`,
-    `Data: Product-Agent-app/data/store.json`,
+    `Data: pa_get_product_line("${productLineId}")`,
   ].join("\n");
 }
 
@@ -131,7 +131,7 @@ export function buildBlockAnchor(
     `Entity: "${entity.title}" (${entity.id})`,
     `Block: "${blockLabel}" [${block.type}] (${block.id})`,
     `JSONPath: ["${productLineId}"].entities["${entityId}"].blocks[${blockIndex}]`,
-    `Data: Product-Agent-app/data/store.json`,
+    `Data: pa_get_entity("${entityId}")`,
   ].join("\n");
 }
 

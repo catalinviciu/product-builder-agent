@@ -5,11 +5,21 @@
 !README.md
 !/Product-Agent-app/
 !/ProductSkills/
+!/mcp-server/
+!/.github/
+!/.mcp.json
+!/.vscode/
 
 # Inside Product-Agent-app, ignore these
 Product-Agent-app/node_modules/
 Product-Agent-app/.next/
 Product-Agent-app/data/
+Product-Agent-app/app/lib/schemas.js
+Product-Agent-app/app/lib/schemas.js.map
+
+# Inside mcp-server, ignore build output
+mcp-server/node_modules/
+mcp-server/dist/
 
 
 .env

@@ -1,7 +1,7 @@
 ---
 name: new-product-line-setup
-description: Interviews a product builder in plain language and creates the initial product line structure — Business Outcome, Product Outcome, and optional first Opportunities — in store.json. Follows the OST framework from pm-context. Read + write skill.
-version: 1.0
+description: Interviews a product builder in plain language and creates the initial product line structure — Business Outcome, Product Outcome, and optional first Opportunities — via MCP tool calls. Follows the OST framework from pm-context. Read + write skill.
+version: 2.0
 ---
 
 # ROLE AND PURPOSE
@@ -21,10 +21,13 @@ Before starting, read `ProductSkills/pm-context/SKILL.md` to load the PM framewo
 
 | File | Role |
 |:-----|:-----|
-| `Product-Agent-app/data/store.json` | **Read + write.** Always read fresh before writing. |
-| `Product-Agent-app/app/lib/schemas.ts` | **Reference.** Confirm Entity and Block schema shapes. |
 | `ProductSkills/pm-context/SKILL.md` | **Read before interviewing.** OST framework, level definitions, problem-space rules. |
-| `ProductSkills/new-product-line-setup/inject_setup.py` | **Injection tool.** Writes BO, PO, and Opportunities to store.json. |
+
+## HOW YOU READ DATA
+
+You access Product Agent data **exclusively through the local Product Agent MCP server**. Never read `Product-Agent-app/data/store.json` directly.
+
+To identify the target product line, call `pa_list_product_lines` and match by name if the user didn't provide the ID directly.
 
 ---
 
@@ -107,8 +110,8 @@ Before proposing the PO metric, mentally check: "If the PO metric hits its targe
 ## Phase 1: Read Context
 
 1. Read `ProductSkills/pm-context/SKILL.md` — load the full OST framework
-2. Read `Product-Agent-app/data/store.json` — locate the target product line by name or ID (provided in the invoking prompt)
-3. Check if the product line already has entities — if BO/PO exist, ask the builder if they want to continue from where they left off or start fresh
+2. Call `pa_list_product_lines` — find the target product line by name or ID. If the user didn't specify one, list them and ask.
+3. Call `pa_get_product_line(productLineId)` — if `tree.rootChildren` is non-empty, check if BO/PO entities already exist and ask the builder if they want to continue from where they left off or start fresh.
 4. Check if the product line folder has any documentation files the builder may have placed there
 
 ## Phase 2: Interview
@@ -248,60 +251,94 @@ Ask: "Does this capture what you're going for? Any changes before I write it?"
 
 Wait for confirmation or corrections. Apply changes and re-present if significant edits were made.
 
-## Phase 4: Inject
+## Phase 4: Write via MCP
 
-Use `ProductSkills/new-product-line-setup/inject_setup.py`.
+Use these MCP tools to write the structure. Call them in order — each step depends on the ID returned by the previous step.
 
-### Write input file `_setup_input.json` in the repo root:
+### Step 1: Create Business Outcome
 
+Call `pa_create_entity`:
+- `productLineId`: the product line ID from Phase 1
+- `level`: "business_outcome"
+- `title`: the BO title
+- `description`: the BO description
+- `status`: "draft"
+
+The tool returns the created entity. Save the returned `id` as `boId`.
+
+### Step 2: Add BO blocks
+
+For each block in order, call `pa_add_block({ entityId: boId, block: { ... } })`:
+
+**Metric block:**
 ```json
 {
-  "productLineId": "<product-line-key>",
-  "businessOutcome": {
-    "title": "...",
-    "description": "...",
-    "blocks": [
-      { "type": "metric", "metric": "...", "frequency": "monthly", "valueFormat": "number", "initialValue": 0, "numericTarget": 100, "startDate": "2026-04-01", "endDate": "2026-09-30" },
-      { "type": "accordion", "label": "Strategic Alignment", "content": "..." },
-      { "type": "accordion", "label": "Why Now", "content": "..." },
-      { "type": "accordion", "label": "Risk of Inaction", "content": "..." }
-    ]
-  },
-  "productOutcome": {
-    "title": "...",
-    "description": "...",
-    "personaId": "<optional — omit if not identified>",
-    "blocks": [
-      { "type": "metric", "metric": "...", "frequency": "weekly", "valueFormat": "number", "initialValue": 0, "numericTarget": 50, "startDate": "2026-04-01", "endDate": "2026-07-31" },
-      { "type": "accordion", "label": "Strategic Alignment", "content": "..." },
-      { "type": "accordion", "label": "Constraints", "content": "..." },
-      { "type": "accordion", "label": "Trade-offs", "content": "..." }
-    ]
-  },
-  "opportunities": [
-    {
-      "title": "...",
-      "description": "...",
-      "blocks": [
-        { "label": "Trigger", "content": "..." },
-        { "label": "Current Workaround", "content": "..." }
-      ]
-    }
-  ]
+  "type": "metric",
+  "metric": "<metric name>",
+  "currentValue": "0",
+  "targetValue": "0",
+  "frequency": "daily|weekly|monthly",
+  "valueFormat": "number|currency_usd|currency_eur|currency_gbp|percentage",
+  "initialValue": 0,
+  "numericTarget": 0,
+  "startDate": "YYYY-MM-DD",
+  "endDate": "YYYY-MM-DD",
+  "dataSeries": []
 }
 ```
 
-`opportunities` is optional — omit the key entirely if none were surfaced.
-
-### Run the script:
-```bash
-python ProductSkills/new-product-line-setup/inject_setup.py _setup_input.json
+**Accordion blocks (one call each):**
+```json
+{ "type": "accordion", "label": "Strategic Alignment", "content": "..." }
+{ "type": "accordion", "label": "Why Now", "content": "..." }
+{ "type": "accordion", "label": "Risk of Inaction", "content": "..." }
 ```
 
-### Clean up:
-```bash
-rm _setup_input.json
-```
+Note: the `id` field is auto-generated by the server — do not pass it.
+
+### Step 3: Create Product Outcome
+
+Call `pa_create_entity`:
+- `productLineId`: same product line ID
+- `level`: "product_outcome"
+- `title`: the PO title
+- `description`: the PO description
+- `parentId`: `boId` (returned in Step 1)
+- `personaId`: optional — include only if a persona was identified
+- `status`: "draft"
+
+Save the returned `id` as `poId`.
+
+### Step 4: Add PO blocks
+
+Same pattern as Step 2, using `entityId: poId`. Blocks:
+- Metric block (same shape)
+- `{ "type": "accordion", "label": "Strategic Alignment", "content": "..." }`
+- `{ "type": "accordion", "label": "Constraints", "content": "..." }`
+- `{ "type": "accordion", "label": "Trade-offs", "content": "..." }`
+
+### Step 5: Create Opportunities (if any)
+
+For each opportunity, call `pa_create_entity`:
+- `productLineId`: same product line ID
+- `level`: "opportunity"
+- `title`: the opportunity title
+- `description`: the opportunity description
+- `parentId`: `poId`
+- `status`: "draft"
+
+Then `pa_add_block` for each block:
+- `{ "type": "accordion", "label": "Trigger", "content": "..." }`
+- `{ "type": "accordion", "label": "Current Workaround", "content": "..." }`
+
+### Verification
+
+After all writes, print a confirmation summary:
+- Business Outcome created: [title] (id: [boId])
+- Product Outcome created: [title] (id: [poId])
+- Opportunities created: [count] (if any)
+
+The Next.js app polls for changes every 3s — the builder will see the new entities in the UI within moments.
 
 ---
 
@@ -320,5 +357,5 @@ rm _setup_input.json
    - Use sensible defaults for missing fields: `frequency: "monthly"`, `valueFormat: "number"`, `initialValue: 0`, `numericTarget: 0`, `startDate: today's date`, `endDate: ""`.
    - After injection, print a clear warning listing which fields used defaults and need refinement:
      > "Heads up — I created your metrics in tracking format, but these need your input: **[list of defaulted fields]**. The metrics won't chart properly until you set a target and end date. Open them in Product Agent to refine."
-10. **Never rewrite the entire store.json** — use inject_setup.py for targeted writes only.
+10. **Never read `Product-Agent-app/data/store.json` directly.** All reads and writes go through MCP tools.
 11. **Field limits:** title ≤120 chars, description ≤800 chars, block label ≤40 chars, block content ≤3000 chars.

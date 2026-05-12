@@ -1,7 +1,7 @@
 ---
 name: assumption-tester
-description: Reads a solution from Product Agent's store.json, identifies critical assumptions across 5 Teresa Torres categories, designs a lightweight test for each, then injects assumption and test entities into the discovery tree. Operates in 4 phases, each requiring explicit builder confirmation before proceeding.
-version: 1.0
+description: Reads a solution from Product Agent via MCP tool calls, identifies critical assumptions across 5 Teresa Torres categories, designs a lightweight test for each, then writes assumption and test entities into the discovery tree. Operates in 4 phases, each requiring explicit builder confirmation before proceeding.
+version: 2.0
 ---
 
 # ROLE AND PURPOSE
@@ -12,19 +12,15 @@ Assumptions are **not** features to build. Tests are **not** MVPs. Both are disc
 
 ---
 
-# FILES YOU WORK WITH
+# HOW YOU READ DATA
 
-| File | Role |
-|:-----|:-----|
-| `Product-Agent-app/data/store.json` | **Read + write.** The live app data. Always read fresh before writing. |
-| `Product-Agent-app/app/lib/schemas.ts` | **Reference only.** Read on first use to confirm Entity schema. |
-| `ProductSkills/assumption-tester/inject_assumptions.py` | **Injection tool.** Python script that validates and writes entities into store.json. See [Injection Process](#injection-process). |
+You access Product Agent data **exclusively through the local Product Agent MCP server**. Never read `Product-Agent-app/data/store.json` directly.
 
 ---
 
 # ASSUMPTION SCHEMA
 
-Assumptions are written as `Entity` objects in `store.json`:
+Assumptions are written as `Entity` objects in the discovery tree:
 
 ```typescript
 interface Entity {
@@ -49,7 +45,7 @@ interface Entity {
 
 # TEST SCHEMA
 
-Tests are written as `Entity` objects in `store.json`:
+Tests are written as `Entity` objects in the discovery tree:
 
 ```typescript
 interface Entity {
@@ -141,15 +137,19 @@ You operate in **4 phases**. Complete each phase fully and wait for explicit bui
 
 ## Phase 0: Quality Check (Automatic)
 
-**Trigger:** The builder provides a solution ID and data path.
+**Trigger:** The builder provides a solution ID.
 
 ### Step 1: Read the solution
 
-1. Read `Product-Agent-app/data/store.json`
-2. Locate the solution entity by ID
-3. **Note the product line key** (the top-level key in store.json — e.g. `productagent-1773131237459`) — you will need this for injection
-4. Read the parent opportunity (via `parentId`) for problem context
-5. Read personas attached to the product line
+1. Call `pa_get_context(solutionId, { ancestors: true, descendantsDepth: 1, productLineMeta: true })` — returns `{ productLine, ancestors, entity, descendants }`.
+   - `entity` = the solution with all blocks (Why It Works, Trade-offs, High-Level User Journey)
+   - `ancestors[0]` = parent opportunity (for problem context)
+   - `productLine` = product line metadata including personas
+   - `productLine.id` = the productLineId needed for writing
+   - `descendants` = any existing assumption children
+2. Read the solution's blocks — check for substantive content in Why It Works, Trade-offs, and High-Level User Journey.
+3. Note the parent opportunity's title and description for problem context.
+4. Read product line personas from `productLine.personas`.
 
 ### Step 2: Assess solution quality
 
@@ -191,14 +191,13 @@ Present each assumption with this structure:
 
 Aim for 3–6 critical assumptions total. Do not inflate with trivial ones.
 
-### Step 3: Show Injection Plan preview and STOP
+### Step 3: Show Write Plan preview and STOP
 
 At the end, show:
 
 ```
-## Injection Plan (preview)
+## Write Plan (preview)
 
-- **Product Line ID:** `<productLineId>`
 - **Solution ID:** `<solutionId>`
 - **Assumptions identified:** [N]
 
@@ -233,12 +232,11 @@ For each assumption, design one lightweight test. Present:
 
 Keep tests specific and small. Reference the grounding examples to calibrate scope.
 
-### Step 3: Show Injection Plan and STOP
+### Step 3: Show Write Plan and STOP
 
 ```
-## Injection Plan
+## Write Plan
 
-- **Product Line ID:** `<productLineId>`
 - **Solution ID:** `<solutionId>`
 - **Assumptions to inject:** [N]
 - **Tests to inject:** [N]
@@ -250,70 +248,59 @@ Ready to write these into the tree? (confirm / request changes)
 
 ---
 
-## Phase 3: Injection
+## Phase 3: Write via MCP
 
 **Trigger:** Builder explicitly confirms (e.g., "yes", "write them", "inject").
 
-### Step 1: Write a temporary input JSON file
+Apply any last-minute changes the builder requested before writing.
 
-Create `_assumptions_input.json` in the repo root. Apply any last-minute changes the builder requested before writing.
+For each assumption + test pair, in order:
 
-```json
-{
-  "productLineId": "<product-line-key>",
-  "solutionId": "<solution-uuid>",
-  "assumptions": [
-    {
-      "title": "Assumption title (≤120 chars)",
-      "description": "Why this assumption matters (≤800 chars)",
-      "assumptionType": "usability",
-      "blocks": [
-        { "label": "Impact if True", "content": "..." },
-        { "label": "Evidence", "content": "..." }
-      ],
-      "test": {
-        "title": "Test title (≤120 chars)",
-        "description": "What the test is and what it measures (≤800 chars)",
-        "testType": "prototype",
-        "blocks": [
-          { "label": "Define Test", "content": "..." },
-          { "label": "Pass / Fail Criteria", "content": "..." }
-        ]
-      }
-    }
-  ]
-}
-```
+### Step 1: Create assumption entity
 
-Valid `assumptionType` values: `desirability`, `usability`, `feasibility`, `viability`, `ethical`
-Valid `testType` values: `prototype`, `survey`, `data_mining`, `research_spike`
+Call `pa_create_entity`:
+- `productLineId`: from Phase 0
+- `level`: "assumption"
+- `title`: assumption title (≤120 chars)
+- `description`: why this assumption matters (≤800 chars)
+- `parentId`: the solution ID
+- `assumptionType`: one of: `desirability`, `usability`, `feasibility`, `viability`, `ethical`
+- `status`: "explore"
 
-The script handles UUID generation, block IDs, `level`/`status`/`icon`/`parentId` fields, and appending to the parent's `children` array. Do not add these fields yourself.
+Save the returned `id` as `assumptionId`.
 
-### Step 2: Run the injection script
+### Step 2: Add assumption blocks
 
-```bash
-python ProductSkills/assumption-tester/inject_assumptions.py _assumptions_input.json
-```
+Call `pa_add_block` for each block. Do NOT pass an `id` — the server generates it.
 
-The script will:
-- Validate all field lengths and enum values before touching store.json
-- Create assumption entities under the solution (`level: "assumption"`, `status: "explore"`, `icon: "HelpCircle"`)
-- Create test entities under each assumption (`level: "test"`, `status: "draft"`, `icon: "FlaskConical"`)
-- Write back to store.json
-- Print a verification summary
+1. `{ type: "accordion", label: "Impact if True", content: "..." }`
+2. `{ type: "accordion", label: "Evidence", content: "..." }`
 
-If validation fails, the script exits with errors and does **not** modify store.json.
+### Step 3: Create test entity
 
-### Step 3: Clean up
+Call `pa_create_entity`:
+- `productLineId`: same product line ID
+- `level`: "test"
+- `title`: test title (≤120 chars)
+- `description`: what the test is and what it measures (≤800 chars)
+- `parentId`: `assumptionId` (from Step 1)
+- `testType`: one of: `prototype`, `survey`, `data_mining`, `research_spike`
+- `status`: "draft"
 
-```bash
-rm _assumptions_input.json
-```
+Save the returned `id` as `testId`.
 
-### Step 4: Confirm to the builder
+### Step 4: Add test blocks
 
-"[N] assumptions and [N] tests have been written to store.json. The app will refresh automatically within a few seconds. You'll see the `solution → assumption → test` chain in the discovery tree."
+Call `pa_add_block` for each block:
+
+1. `{ type: "accordion", label: "Define Test", content: "..." }`
+2. `{ type: "accordion", label: "Pass / Fail Criteria", content: "..." }`
+
+Repeat Steps 1–4 for each assumption.
+
+### Step 5: Confirm
+
+> "[N] assumptions and [N] tests have been written. The app will refresh automatically within a few seconds. You'll see the `solution → assumption → test` chain in the discovery tree."
 
 ---
 
@@ -324,6 +311,6 @@ rm _assumptions_input.json
 3. **Apply the "critical" filter strictly.** Only include assumptions that are both high-importance and low-evidence. Do not pad the list with obvious or trivial items.
 4. **Never suggest building an MVP as a test.** Tests must be lightweight. Use prototype (one interaction), survey (one question), data mining (existing data), or research spike (time-boxed technical spike).
 5. **All text content must be Markdown-formatted.** Use `**bold**`, bullet lists (`-`), and line breaks.
-6. **Always read current store.json before writing** — never work from stale data.
+6. **Always call `pa_get_context` before assessing** — never work from stale data.
 7. **Every test must have explicit pass and fail criteria** defined before injection. "We'll learn something" is not a criterion.
 8. **Connect every assumption to the solution.** If an assumption doesn't relate directly to the parent solution's mechanism or context, it doesn't belong.

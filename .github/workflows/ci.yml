@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build-app:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: Product-Agent-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: Product-Agent-app
+        run: npm ci
+
+      - name: Lint
+        working-directory: Product-Agent-app
+        run: npm run lint
+
+      - name: Build
+        working-directory: Product-Agent-app
+        run: npm run build
+
+  build-mcp:
+    runs-on: ubuntu-latest
+    # Run on every push/PR — the MCP server imports types directly from
+    # Product-Agent-app/app/lib/schemas.ts, so any schema change that breaks
+    # the type contract will fail here. Fast feedback beats path filtering.
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mcp-server/package-lock.json
+
+      - name: Install dependencies
+        working-directory: mcp-server
+        run: npm ci
+
+      - name: Build (schema drift check)
+        working-directory: mcp-server
+        run: npm run build
+        # If this fails after a schemas.ts change: update Zod schemas in
+        # mcp-server/src/tools/schemas.ts to match. Never relax the
+        # compile-time Exact<> assertions to make this pass.

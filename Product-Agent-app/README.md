@@ -7,13 +7,14 @@ Built with Next.js 16, React 19, and Zustand. Runs entirely on your machine. You
 ## What It Does
 
 - **Discovery Tree Dashboard** — manage your product thinking from business outcomes down to assumptions and tests in a single interactive tree
-- **AI Actions** — context-aware AI skill invocations at every entity level. One click copies a prompt, paste it into Claude Code, and the AI works with your full product context
+- **AI Actions** — context-aware AI skill invocations at every entity level. One click copies a prompt, paste it into your AI agent, and the AI works with your full product context
 - **Metric Tracking** — track outcome metrics with time-series data, targets, runway dates, and trend indicators
 - **Personas** — define and assign user personas to opportunities and product outcomes
 - **WIP Briefing** — AI reads your entire discovery tree and generates a structured health report per product outcome: metric health, management signals, critical proposals, shipped solution impact analysis
 - **Solutions Brainstorming** — AI researches your opportunity and generates 5 distinct solution approaches using first-principles thinking
 - **Assumption Testing** — AI surfaces critical assumptions behind your solutions and designs lightweight tests
-- **Planning Prompts** — generate rich implementation prompts for Claude Code that include opportunity context, solution details, persona, and codebase path
+- **Story Map** — AI slices solutions into INVEST-compliant user stories organised in a Jeff Patton-style story map, with walking skeleton, enhancement, and GA iterations. Each story gets Gherkin acceptance criteria and analytics events written directly into it
+- **Planning Prompts** — generate rich implementation prompts for your AI agent that include opportunity context, solution details, persona, and codebase path
 
 ## Prerequisites
 
@@ -43,9 +44,12 @@ Verify:
 git --version
 ```
 
-### 3. Claude Code (for AI workflow)
+### 3. AI agent (optional, for the AI workflow)
 
-Install from [docs.anthropic.com](https://docs.anthropic.com/en/docs/claude-code). This is optional but required for the AI skills workflow.
+Product Agent works with two AI coding tools. Both are optional — you can use the app without them — but you need one to run the AI skills workflow.
+
+- **Claude Code** — install from [docs.anthropic.com](https://docs.anthropic.com/en/docs/claude-code). See [SETUP.md](./SETUP.md) for setup.
+- **GitHub Copilot in VS Code** — requires VS Code 1.99+ with the GitHub Copilot extension. See [SETUP-COPILOT.md](./SETUP-COPILOT.md) for setup.
 
 ## Getting Started
 
@@ -71,7 +75,17 @@ You should see output like:
 - Local: http://localhost:3000
 ```
 
-### Step 3: Open in your browser
+### Step 3: Build the MCP server
+
+```bash
+cd mcp-server
+npm ci
+npm run build
+```
+
+> **Note:** You only need to do this once. Claude Code will start the MCP server automatically when you run it in this folder. If you're using VS Code / GitHub Copilot, the server starts automatically when you open Copilot Chat in Agent mode.
+
+### Step 4: Open in your browser
 
 Go to [http://localhost:3000](http://localhost:3000)
 
@@ -88,15 +102,22 @@ Run these from the `Product-Agent-app/` folder:
 | `npm start` | Serve the production build (run `npm run build` first) |
 | `npm run lint` | Run the linter to check for code issues |
 
+Run these from the `mcp-server/` folder:
+
+| Command | What it does |
+|---------|-------------|
+| `npm ci && npm run build` | Build the MCP server (run once, or after `src/` changes) |
+
 ## How It Works
 
 - **All data is stored locally** in `Product-Agent-app/data/store.json` (auto-generated on first use)
 - The app runs entirely on your machine — no external database or cloud services needed
 - Changes you make in the UI are automatically saved to the local JSON file
+- The **MCP server** (`mcp-server/`) is a local bridge between your AI agent and the app — skills read and write through it instead of accessing `data/store.json` directly
 
 ## Using Product Agent with Your Codebase
 
-Product Agent is designed to sit alongside your application code and help you plan features using AI agents like Claude Code. Here's the full workflow, step by step.
+Product Agent is designed to sit alongside your application code and help you plan features using AI agents like Claude Code or GitHub Copilot. Here's the full workflow, step by step.
 
 ### 1. Set up your workspace folder
 
@@ -106,8 +127,9 @@ Place your codebase in the same parent folder as Product Agent:
 your-workspace/
 ├── Product-Agent-app/      # This app
 ├── ProductSkills/          # Agent skills (AI capabilities)
+├── mcp-server/             # MCP server (bridge between AI agent and app)
 ├── your-app/               # Your application code
-└── CLAUDE.md / .agent/     # Agent context (created during setup)
+└── CLAUDE.md / .github/    # Agent context (created during setup)
 ```
 
 If you don't have a codebase yet, just create an empty folder — you can start building your product thinking first and add code later.
@@ -117,7 +139,7 @@ If you don't have a codebase yet, just create an empty folder — you can start 
 Open your AI agent in the workspace root folder (the parent that contains both `Product-Agent-app/` and your codebase). Then follow the setup guide for your tool:
 
 - **Claude Code** — follow **[SETUP.md](./SETUP.md)**
-- **Google Antigravity** — follow **[SETUP-ANTIGRAVITY.md](./SETUP-ANTIGRAVITY.md)**
+- **GitHub Copilot / VS Code** — follow **[SETUP-COPILOT.md](./SETUP-COPILOT.md)**
 
 These guides will help you:
 
@@ -132,7 +154,7 @@ In the Product Agent UI:
 
 1. **Create a Product Line** — give it a name. This is the top-level container for your product.
 2. **Set the code path** — edit the product line and fill in your codebase folder name (e.g. `your-app/`). If you don't have a codebase yet, leave it blank for now.
-3. **Use your AI co-worker to set up the structure** — in the empty product line, click the **AI Actions** button and select **Set up product line with co-worker**. A prompt is copied to your clipboard — paste it into Claude Code or GitHub Copilot. Your AI co-worker will interview you in plain language and create the initial Business Outcome, Product Outcome, and first Opportunities for you. You don't need to know any product management terminology.
+3. **Use your AI co-worker to set up the structure** — in the empty product line, click the **AI Actions** button and select **Set up product line with co-worker**. A prompt is copied to your clipboard — paste it into your AI agent (Claude Code or GitHub Copilot). Your AI co-worker will interview you in plain language and create the initial Business Outcome, Product Outcome, and first Opportunities for you. You don't need to know any product management terminology.
 
    > **Don't fill in the tree manually.** Product Agent is built around the co-worker model: your AI agent does the thinking and writing, the app shows you what you built together. The manual fields exist for edits — not for first entry.
 
@@ -141,7 +163,7 @@ In the Product Agent UI:
 
 ### 4. Use AI Actions
 
-Every entity in the tree has an **AI Actions** dropdown menu with context-aware actions. Click an action, and a prompt is copied to your clipboard — paste it into Claude Code.
+Every entity in the tree has an **AI Actions** dropdown menu with context-aware actions. Click an action, and a prompt is copied to your clipboard — paste it into your AI agent (Claude Code or GitHub Copilot).
 
 **At the product line level:**
 - **Copy AI context anchor** — reference the product line in any AI conversation
@@ -175,10 +197,12 @@ The `ProductSkills/` folder contains AI agent skills — behavioral instructions
 | **opportunity-writer** | Writes structured opportunities from unstructured input, keeping content strictly in problem space |
 | **solutions-brainstormer** | Researches an opportunity and generates 5 distinct solution approaches using first-principles thinking |
 | **assumption-tester** | Surfaces critical assumptions behind solutions and designs lightweight validation tests |
+| **prototype-builder** | Builds working prototypes from solution context |
 | **wip-briefing** | Reads your full discovery tree and generates a WIP health report per active product outcome |
 | **story-map-updater** | Keeps a Jeff Patton-style User Story Map in sync as features are planned and shipped |
-| **prototype-builder** | Builds working prototypes from solution context |
-| **linkedin-post-writer** | Generates LinkedIn posts for shipping announcements and build-in-public updates |
+| **user-story-slicer** | Slices a user journey or system process into INVEST-compliant story cards |
+| **user-story-ac-writer** | Writes Gherkin acceptance criteria and analytics events per story |
+| **vocabulary-miner** | Mines emotional vocabulary from online communities for audience research |
 
 These skills are invoked through the AI Actions menu in the UI — you don't need to reference them manually.
 

@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "product-agent": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${workspaceFolder}/mcp-server/dist/mcp-server/src/server.js"],
+      "env": {
+        "PA_API_URL": "http://localhost:3000"
+      }
+    }
+  }
+}

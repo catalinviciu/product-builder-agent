@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022"],
+    "outDir": "dist",
+    "rootDir": "..",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": false,
+    "sourceMap": true,
+    "isolatedModules": true,
+    "paths": {
+      "@app-schemas": ["../Product-Agent-app/app/lib/schemas.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "../Product-Agent-app/app/lib/schemas.ts"],
+  "exclude": ["node_modules", "dist"]
+}

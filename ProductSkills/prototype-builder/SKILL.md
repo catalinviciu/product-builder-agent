@@ -1,7 +1,7 @@
 ---
 name: prototype-builder
 description: Takes a solution or test (prototype type) entity, determines whether the feature touches an existing app screen or needs a new one, designs a lightweight HTML prototype using the app's real design system, builds it as a self-contained file, then links it back to the entity in the discovery tree.
-version: 2.0
+version: 3.0
 ---
 
 # ROLE AND PURPOSE
@@ -16,12 +16,14 @@ You use the app's exact design system so the prototype feels real to the person 
 
 | File | Role |
 |:-----|:-----|
-| `Product-Agent-app/data/store.json` | **Read + write.** The live app data. Always read fresh before writing. |
 | `{codePath}/` | **Reference only.** The product line's codebase. Resolved dynamically — see [Resolving the codebase](#resolving-the-codebase). |
 | `Product-Agent-app/public/prototypes/{productLineSlug}/[filename].html` | **Write directly.** Claude writes this file using the Write tool. The folder is created automatically if it doesn't exist. Served by Next.js at `localhost:3000/prototypes/{productLineSlug}/[filename].html`. |
-| `ProductSkills/prototype-builder/inject_prototype.py` | **Injection tool.** Adds Prototype block to the entity in store.json. |
 
 > `productLineSlug` is the product line's `name` field, slugified (lowercased, spaces → hyphens, special chars removed). Example: product line "Product Builder" → `product-builder` → file saved at `Product-Agent-app/public/prototypes/product-builder/my-proto.html`.
+
+**HOW YOU READ DATA**
+
+> You access Product Agent data **exclusively through the local Product Agent MCP server**. Never read `Product-Agent-app/data/store.json` directly.
 
 ---
 
@@ -48,12 +50,15 @@ You operate in **3 phases**. Complete Phase 0 automatically, then stop for expli
 
 ### Step 1: Read the entity
 
-1. Read `Product-Agent-app/data/store.json`
-2. Locate the entity by ID
-3. **Note the product line key**, **name** (for the slug), and **`codePath`** — you need these for all file paths and design system discovery
-4. If `level: "test"` — read the test, its parent assumption, and the grandparent solution
-5. If `level: "solution"` — read the solution and its parent opportunity
-6. Read product line personas if available
+1. Call `pa_get_context(entityId, { ancestors: true, productLineMeta: true })` — returns `{ productLine, ancestors, entity }`.
+   - `entity` = the solution or test entity
+   - `ancestors` = parent chain for context (assumption → solution → opportunity → PO, etc.)
+   - `productLine` = product line with `codePath` and `name` fields
+2. If `level: "test"` — the entity is the test; read its parent assumption and grandparent solution from `ancestors`.
+3. If `level: "solution"` — the entity is the solution; read its parent opportunity from `ancestors`.
+4. Read product line personas from `productLine.personas` if available.
+5. Resolve `codePath` from `productLine.codePath`. If not set, ask the builder which codebase this maps to.
+6. Derive `productLineSlug` from `productLine.name` (lowercased, spaces → hyphens, special chars removed).
 
 ### Step 2: Derive what to prototype
 
@@ -175,41 +180,46 @@ Ready to link this to the entity in the discovery tree? (confirm / request chang
 
 ---
 
-## Phase 3: Inject
+## Phase 3: Link to discovery tree
 
 **Trigger:** Builder explicitly confirms (e.g., "yes", "inject", "link it").
 
-### Step 1: Write input JSON
+### Step 1: Check for existing Prototype block
 
-Create `_prototype_input.json` at the repo root:
+Call `pa_get_entity(entityId)` and check if a block with `label: "Prototype"` already exists. Note its index (0-based) if found.
 
+### Step 2: Write or update the block
+
+**If no Prototype block exists:**
+
+Call `pa_add_block`:
 ```json
 {
-  "productLineId": "<product-line-key>",
-  "entityId": "<entity-uuid>",
-  "prototypeFilename": "<filename>.html",
-  "blockContent": "**[Prototype name](http://localhost:3000/prototypes/<productLineSlug>/<filename>.html)**\n\n<One sentence: what this prototype tests and what we're observing.>"
+  "entityId": "<entityId>",
+  "block": {
+    "type": "accordion",
+    "label": "Prototype",
+    "content": "**[Prototype name](http://localhost:3000/prototypes/<productLineSlug>/<filename>.html)**\n\n<One sentence: what this prototype tests and what we're observing.>"
+  }
 }
 ```
 
-### Step 2: Run the injection script
+**If a Prototype block already exists (index N):**
 
-```bash
-python ProductSkills/prototype-builder/inject_prototype.py _prototype_input.json
+Call `pa_update_block`:
+```json
+{
+  "entityId": "<entityId>",
+  "blockIndex": <N>,
+  "patch": {
+    "content": "**[Prototype name](http://localhost:3000/prototypes/<productLineSlug>/<filename>.html)**\n\n<One sentence: what this prototype tests and what we're observing.>"
+  }
+}
 ```
 
-The script will:
-- Add or update a `"Prototype"` accordion block on the entity in store.json
+### Step 3: Confirm to the builder
 
-### Step 3: Clean up
-
-```bash
-rm _prototype_input.json
-```
-
-### Step 4: Confirm to the builder
-
-"Prototype linked. Open it at `http://localhost:3000/prototypes/{productLineSlug}/[filename].html`. It's also now referenced in the entity's Prototype block in the discovery tree."
+"Prototype linked. Open it at `http://localhost:3000/prototypes/{productLineSlug}/{filename}.html`. It's also now referenced in the entity's Prototype block in the discovery tree."
 
 ---
 
@@ -222,4 +232,4 @@ rm _prototype_input.json
 5. **New screen = codebase's design system only.** No invented styles, no generic UI patterns. Every color, spacing value, border, and radius must come from the design tokens extracted in Phase 0 Step 3. If you can't find the right token or pattern in the codebase, ask before guessing.
 6. **Always include a Facilitator Note panel** in the prototype. It must be clearly labelled and contain the facilitator script from Phase 1.
 7. **Prototypes test one moment, not a whole product.** If the scope feels like it requires more than 3 screens, push back and narrow it down with the builder.
-8. **Always read current store.json before writing** — never work from stale data.
+8. **Always call `pa_get_context` at the start of Phase 0** — never work from stale data.

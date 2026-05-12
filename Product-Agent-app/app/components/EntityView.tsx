@@ -211,7 +211,7 @@ function RootView() {
       label: "Copy AI context anchor",
       description: "Reference this product line in an AI conversation",
       icon: Copy,
-      getText: () => buildRootAnchor(productLine.name),
+      getText: () => buildRootAnchor(productLine.name, productLine.id),
     },
     {
       id: "wip-briefing",
