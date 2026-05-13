@@ -25,6 +25,8 @@ export type Store = Record<string, ProductLine>;
 const DATA_DIR = path.join(process.cwd(), "data");
 const STORE_FILE = path.join(DATA_DIR, "store.json");
 const STORE_FILE_TMP = STORE_FILE + ".tmp";
+const BACKUPS_DIR = path.join(DATA_DIR, ".backups");
+const MAX_BACKUPS = 5;
 
 // ── Migration (shared with existing GET /api/store) ──────────────────
 
@@ -65,6 +67,24 @@ export async function readStore(): Promise<Store> {
 
 export async function writeStore(store: Store): Promise<void> {
   await fs.mkdir(DATA_DIR, { recursive: true });
+
+  try {
+    await fs.mkdir(BACKUPS_DIR, { recursive: true });
+    await fs.access(STORE_FILE);
+    const ts = new Date().toISOString().replace(/[:.]/g, "-");
+    await fs.copyFile(STORE_FILE, path.join(BACKUPS_DIR, `store-${ts}.json`));
+    const entries = await fs.readdir(BACKUPS_DIR);
+    const backups = entries
+      .filter((f) => f.startsWith("store-") && f.endsWith(".json"))
+      .sort()
+      .reverse();
+    for (const old of backups.slice(MAX_BACKUPS)) {
+      await fs.unlink(path.join(BACKUPS_DIR, old));
+    }
+  } catch (err) {
+    console.error("[store-backup]", err);
+  }
+
   const serialized = JSON.stringify(store, null, 2);
   await fs.writeFile(STORE_FILE_TMP, serialized, "utf-8");
   await fs.rename(STORE_FILE_TMP, STORE_FILE);
@@ -239,6 +259,13 @@ export class EntityHasChildrenError extends Error {
   }
 }
 
+export class EntityHasContentError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "EntityHasContentError";
+  }
+}
+
 export function deleteEntity(store: Store, entityId: string): void {
   const found = findEntity(store, entityId);
   if (!found) throw new Error(`Entity not found: ${entityId}`);
@@ -246,6 +273,18 @@ export function deleteEntity(store: Store, entityId: string): void {
 
   if (entity.children.length > 0) {
     throw new EntityHasChildrenError(entity.children);
+  }
+
+  if (entity.blocks.length > 0) {
+    throw new EntityHasContentError(
+      `Cannot delete: entity has ${entity.blocks.length} block${entity.blocks.length === 1 ? "" : "s"}. Clear the blocks first.`
+    );
+  }
+
+  if (entity.stories && entity.stories.length > 0) {
+    throw new EntityHasContentError(
+      `Cannot delete: entity has ${entity.stories.length} ${entity.stories.length === 1 ? "story" : "stories"}. Clear the stories first.`
+    );
   }
 
   // Unlink from parent (or root)

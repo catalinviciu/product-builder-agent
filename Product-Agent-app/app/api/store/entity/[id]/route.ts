@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { Entity } from "@/app/lib/schemas";
-import { findEntity, patchEntity, readStore, deleteEntity, EntityHasChildrenError, withStoreMutex } from "@/app/lib/storeAccess";
+import { findEntity, patchEntity, readStore, deleteEntity, EntityHasChildrenError, EntityHasContentError, withStoreMutex } from "@/app/lib/storeAccess";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -51,6 +51,9 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
         { ok: false, error: err.message, blockedBy: err.childIds },
         { status: 409 }
       );
+    }
+    if (err instanceof EntityHasContentError) {
+      return NextResponse.json({ ok: false, error: err.message }, { status: 409 });
     }
     const msg = err instanceof Error ? err.message : String(err);
     const status = msg.startsWith("Entity not found") ? 404 : 500;

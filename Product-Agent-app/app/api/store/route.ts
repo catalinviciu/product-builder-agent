@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
-import { migrateData, type Store } from "@/app/lib/storeAccess";
+import { migrateData, writeStore, type Store } from "@/app/lib/storeAccess";
 import { PRODUCT_LINES } from "@/app/lib/mock-data";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const STORE_FILE = path.join(DATA_DIR, "store.json");
-const STORE_FILE_TMP = STORE_FILE + ".tmp";
 const MAX_BODY_BYTES = 10 * 1024 * 1024; // 10 MB
 
 export async function GET() {
@@ -41,9 +40,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Payload too large" }, { status: 413 });
     }
 
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    await fs.writeFile(STORE_FILE_TMP, serialized, "utf-8");
-    await fs.rename(STORE_FILE_TMP, STORE_FILE);
+    await writeStore(body as Store);
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
