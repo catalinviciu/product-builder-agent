@@ -27,14 +27,25 @@ interface PattonMapProps {
 
 export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) {
   const openStoryDetail = useAppStore((s) => s.openStoryDetail);
+  const productLines = useAppStore((s) => s.productLines);
+  const currentProductLineId = useAppStore((s) => s.currentProductLineId);
+  const productLine = Object.values(productLines).find((pl) => pl.id === currentProductLineId);
+  const entityStore = productLine?.entities ?? {};
+  const productLineName = productLine?.name ?? "";
 
-  async function handlePlanImplement(_row: IterationRow, storyIds: string[]) {
-    const text = buildPlanImplementIterationPrompt(storyIds);
+  async function handlePlanImplement(row: IterationRow, iterStories: { id: string; title: string }[]) {
+    const text = buildPlanImplementIterationPrompt(
+      entityStore,
+      productLineName,
+      entityId,
+      row.label,
+      iterStories,
+    );
     await navigator.clipboard.writeText(text);
     analyticsEmitter.emit("plan_implement_prompt_copied", {
       solution_id: entityId,
       scope: "iteration",
-      story_count: storyIds.length,
+      story_count: iterStories.length,
     });
     showToast({ message: "Prompt copied — paste into your agentic tool", tone: "success" });
   }
@@ -145,9 +156,9 @@ export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) 
           {visibleIterationRows.map((iter) => {
             const rowKey = `${iter.kind}-${iter.label}`;
             const isLastRow = iter.kind === lastIterRow.kind && iter.label === lastIterRow.label;
-            const iterStoryIds = visibleStories
+            const iterStoriesFull = visibleStories
               .filter((s) => s.iteration.kind === iter.kind && s.iteration.label === iter.label)
-              .map((s) => s.id);
+              .map((s) => ({ id: s.id, title: s.title }));
             const kindBadge = iter.kind === "enh" ? "EN" : iter.kind.toUpperCase();
             return (
               <div key={`row-${rowKey}`} className="contents">
@@ -165,7 +176,7 @@ export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) 
                   </span>
                   <button
                     type="button"
-                    onClick={() => handlePlanImplement(iter, iterStoryIds)}
+                    onClick={() => handlePlanImplement(iter, iterStoriesFull)}
                     className="mt-1.5 w-full inline-flex items-center justify-center gap-1.5 px-2 py-1 rounded-md border border-border-subtle bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-[10px] font-medium text-foreground transition-colors cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
                   >
                     Plan & Implement

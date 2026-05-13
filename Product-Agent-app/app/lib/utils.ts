@@ -393,30 +393,103 @@ export function buildUserStoryAcWriterPrompt(productLine: ProductLine, solutionI
   return sections.join("\n\n---\n\n");
 }
 
-// ── Plan & implement story prompt for AI agents ──────────────────────────
+// ── Refine story prompt for AI agents ───────────────────────────────────
 
-export function buildPlanImplementStoryPrompt(storyId: string): string {
-  return [
-    `1. Plan the implementation of story ${storyId}`,
-    `   Data: Product-Agent-app/data/store.json`,
-    `2. Follow ProductSkills/story-map-updater/SKILL.md`,
-    `3. Ask clarifying questions before proceeding`,
-    `4. Use the .claude/skills/product-agent-design skill for frontend`,
-    `5. Follow existing patterns and conventions`,
-    `6. After plan is ready, dispatch sonnet subagents`,
+export function buildRefineStoryPrompt(
+  store: EntityStore,
+  productLineName: string,
+  solutionId: string,
+  story: { id: string; title: string; persona: string; activity: string; task: string; iteration: { kind: string; label: string } },
+): string {
+  const anchor = buildStoryAnchor(store, productLineName, solutionId, story.id, story.title);
+
+  const positional = [
+    `id: ${story.id}`,
+    `title: ${story.title}`,
+    `persona: ${story.persona}`,
+    `activity: ${story.activity}`,
+    `task: ${story.task}`,
+    `iteration: ${story.iteration.label} (${story.iteration.kind})`,
   ].join("\n");
+
+  const definitionRules = [
+    `## Story Definition Rules`,
+    ``,
+    `Fields to write on the story record:`,
+    `- narrative: { role, action, benefit } — INVEST-compliant: one user, one action, one benefit; small enough for one iteration`,
+    `- context: existing system description + relevant constraints, written as prose (not bullets)`,
+    `- outOfScope: items explicitly excluded; may reference other story numbers in this solution`,
+    `- dependencies: other stories or systems this story depends on`,
+    `- humanVerification: what the builder will check manually after the story ships`,
+    ``,
+    `Rules:`,
+    `- narrative must be testable and deliverable in a single iteration`,
+    `- context describes what exists today, not what will be built`,
+    `- outOfScope sets clear boundaries to prevent scope creep`,
+  ].join("\n");
+
+  const workflow = [
+    `## Workflow`,
+    ``,
+    `1. Confirm the slot context with the user: does the persona / activity / task / iteration feel right?`,
+    `2. Draft the definition fields; ask one clarifying question at a time on genuine ambiguities`,
+    `3. Write back via pa_update_entity({ entityId: "${solutionId}", patch: { stories: <updated array> } }) — match by story.id, preserve all other story fields`,
+    `4. Immediately continue into ProductSkills/user-story-ac-writer/SKILL.md scoped to story id: ${story.id}`,
+  ].join("\n");
+
+  const sections = [
+    anchor,
+    `Action: REFINE this manually-added story`,
+    `## Story Positional Data\n\n${positional}`,
+    definitionRules,
+    workflow,
+  ];
+
+  return sections.join("\n\n---\n\n");
 }
 
-export function buildPlanImplementIterationPrompt(storyIds: string[]): string {
-  return [
-    `1. Plan the implementation of stories: ${storyIds.join(", ")}`,
-    `   Data: Product-Agent-app/data/store.json`,
+// ── Plan & implement story prompt for AI agents ──────────────────────────
+
+export function buildPlanImplementStoryPrompt(
+  store: EntityStore,
+  productLineName: string,
+  solutionId: string,
+  storyId: string,
+  storyTitle: string,
+): string {
+  const anchor = buildStoryAnchor(store, productLineName, solutionId, storyId, storyTitle);
+  const instructions = [
+    `1. Plan the implementation of the story above`,
     `2. Follow ProductSkills/story-map-updater/SKILL.md`,
     `3. Ask clarifying questions before proceeding`,
     `4. Use the .claude/skills/product-agent-design skill for frontend`,
     `5. Follow existing patterns and conventions`,
     `6. After plan is ready, dispatch sonnet subagents`,
   ].join("\n");
+  return anchor ? `${anchor}\n\n${instructions}` : instructions;
+}
+
+export function buildPlanImplementIterationPrompt(
+  store: EntityStore,
+  productLineName: string,
+  solutionId: string,
+  iterationLabel: string,
+  stories: { id: string; title: string }[],
+): string {
+  const anchor = buildEntityAnchor(store, productLineName, solutionId);
+  const storyLines = stories.map((s) => `- ${s.id} — "${s.title}"`).join("\n");
+  const header = anchor
+    ? `${anchor}\nIteration: ${iterationLabel}\nStories:\n${storyLines}`
+    : `Iteration: ${iterationLabel}\nStories:\n${storyLines}`;
+  const instructions = [
+    `1. Plan the implementation of the stories above`,
+    `2. Follow ProductSkills/story-map-updater/SKILL.md`,
+    `3. Ask clarifying questions before proceeding`,
+    `4. Use the .claude/skills/product-agent-design skill for frontend`,
+    `5. Follow existing patterns and conventions`,
+    `6. After plan is ready, dispatch sonnet subagents`,
+  ].join("\n");
+  return `${header}\n\n${instructions}`;
 }
 
 // ── WIP briefing prompt for AI agents ────────────────────────────────────

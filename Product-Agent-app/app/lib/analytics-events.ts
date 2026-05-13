@@ -68,6 +68,14 @@ export type AnalyticsEventMap = {
     stories_with_ac: number;
     stories_total: number;
   };
+  refine_story_prompt_copied: {
+    solution_id: string;
+    story_id: string;
+  };
+  story_enriched: {
+    solution_id: string;
+    story_id: string;
+  };
 };
 
 type ListenerMap = { [K in keyof AnalyticsEventMap]?: Array<Listener<AnalyticsEventMap[K]>> };

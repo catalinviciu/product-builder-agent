@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/app/lib/store";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
-import { buildPlanImplementStoryPrompt } from "@/app/lib/utils";
+import { buildPlanImplementStoryPrompt, buildRefineStoryPrompt } from "@/app/lib/utils";
 import { showToast } from "@/components/ui/toast";
 import { SYSTEM_PERSONA } from "@/app/lib/story-map-utils";
 
@@ -75,11 +75,36 @@ interface FooterProps {
 
 function StoryDetailFooter({ story, solutionId }: FooterProps) {
   const hasAc = !!(story.acceptanceCriteria && story.acceptanceCriteria.trim() !== "");
+  const isManual = !story.narrative;
   const setStoryDone = useAppStore((s) => s.setStoryDone);
   const isDone = !!story.done;
 
+  const productLines = useAppStore((s) => s.productLines);
+  const currentProductLineId = useAppStore((s) => s.currentProductLineId);
+  const productLine = Object.values(productLines).find((pl) => pl.id === currentProductLineId);
+  const entityStore = productLine?.entities ?? {};
+  const productLineName = productLine?.name ?? "";
+
+  async function handleRefine() {
+    if (!solutionId) return;
+    const text = buildRefineStoryPrompt(entityStore, productLineName, solutionId, story);
+    await navigator.clipboard.writeText(text);
+    analyticsEmitter.emit("refine_story_prompt_copied", {
+      solution_id: solutionId,
+      story_id: story.id,
+    });
+    showToast({ message: "Refine prompt copied — paste into your agentic tool", tone: "success" });
+  }
+
   async function handleCopy() {
-    const text = buildPlanImplementStoryPrompt(story.id);
+    if (!solutionId) return;
+    const text = buildPlanImplementStoryPrompt(
+      entityStore,
+      productLineName,
+      solutionId,
+      story.id,
+      story.title,
+    );
     await navigator.clipboard.writeText(text);
     analyticsEmitter.emit("plan_implement_prompt_copied", {
       solution_id: solutionId ?? "",
@@ -99,6 +124,21 @@ function StoryDetailFooter({ story, solutionId }: FooterProps) {
     });
   }
 
+  // Manually-added stories (no narrative yet): show only the Refine story button
+  if (isManual) {
+    return (
+      <div className="sticky bottom-0 flex flex-col items-stretch gap-2 px-5 py-4 border-t border-border-subtle bg-surface-1">
+        <button
+          onClick={handleRefine}
+          className="cursor-pointer inline-flex items-center justify-center gap-2 bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
+        >
+          Refine story
+        </button>
+      </div>
+    );
+  }
+
+  // Refined stories: show Mark as done + Plan & Implement (or helper text if no AC)
   return (
     <div className="sticky bottom-0 flex flex-col items-stretch gap-2 px-5 py-4 border-t border-border-subtle bg-surface-1">
       <button

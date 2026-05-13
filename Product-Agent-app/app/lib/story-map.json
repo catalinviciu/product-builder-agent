@@ -306,7 +306,8 @@
           "title": "Add acceptance criteria + analytics events to stories",
           "stories": [
             { "action": "Click the toolbar 'Add acceptance criteria' button to copy the AC writer prompt; the skill writes Gherkin AC and analytics events directly to each story record", "components": ["StoryMapToolbar", "StoriesTab", "buildUserStoryAcWriterPrompt"] },
-            { "action": "[system] AC writer skill writes structured acceptance_criteria + analytics_events into solution.stories[] in store.json (replaces previous MD-file output)", "components": ["ProductSkills/user-story-ac-writer/SKILL.md"] }
+            { "action": "[system] AC writer skill writes structured acceptance_criteria + analytics_events into solution.stories[] in store.json (replaces previous MD-file output)", "components": ["ProductSkills/user-story-ac-writer/SKILL.md"] },
+            { "action": "Click 'Refine story' in the slide-over footer to copy a single prompt that fills the story definition and AC for a manually-added story", "components": ["StoryDetailSlideOver", "buildRefineStoryPrompt", "Toaster"] }
           ]
         }
       ]

@@ -93,10 +93,22 @@ export function startAnalyticsSubscribers(): void {
     trackEvent("StoryMapAcEnriched", props);
   });
 
+  analyticsEmitter.on("refine_story_prompt_copied", (props) => {
+    trackEvent("RefineStoryPromptCopied", props);
+  });
+
+  analyticsEmitter.on("story_enriched", (props) => {
+    trackEvent("StoryEnriched", props);
+  });
+
   // Diff subscription: emit story_map_ac_enriched when a solution's
   // stories_with_ac count increases compared to the previous snapshot.
-  // First snapshot after hydration is the silent baseline.
+  // Also emit story_enriched when a manually-added story (wasManual = !narrative)
+  // transitions from no-AC to has-AC.
+  // First snapshot after hydration is the silent baseline for both.
   let acCountBaseline: Record<string, number> | null = null;
+  let storyEnrichedBaseline: Record<string, { wasManual: boolean; hadAc: boolean }> | null = null;
+
   useAppStore.subscribe(
     (state) => state.productLines,
     (current) => {
@@ -104,20 +116,31 @@ export function startAnalyticsSubscribers(): void {
 
       const next: Record<string, number> = {};
       const totals: Record<string, number> = {};
+      const nextStoryState: Record<string, { wasManual: boolean; hadAc: boolean }> = {};
+
       for (const pl of Object.values(current)) {
         for (const e of Object.values(pl.entities)) {
           if (e.level !== "solution" || !e.stories?.length) continue;
           const withAc = e.stories.filter((s) => !!s.acceptanceCriteria).length;
           next[e.id] = withAc;
           totals[e.id] = e.stories.length;
+          for (const s of e.stories) {
+            const key = `${e.id}::${s.id}`;
+            nextStoryState[key] = {
+              wasManual: !s.narrative,
+              hadAc: !!s.acceptanceCriteria,
+            };
+          }
         }
       }
 
       if (acCountBaseline === null) {
         acCountBaseline = next;
+        storyEnrichedBaseline = nextStoryState;
         return;
       }
 
+      // story_map_ac_enriched diff
       for (const [solutionId, withAc] of Object.entries(next)) {
         const prev = acCountBaseline[solutionId] ?? 0;
         if (withAc > prev) {
@@ -129,6 +152,26 @@ export function startAnalyticsSubscribers(): void {
         }
       }
       acCountBaseline = next;
+
+      // story_enriched diff — fires when a wasManual story gains AC for the first time
+      if (storyEnrichedBaseline !== null) {
+        for (const [key, nextState] of Object.entries(nextStoryState)) {
+          const prev = storyEnrichedBaseline[key];
+          if (!prev) {
+            // New story — record its initial state, don't emit
+            storyEnrichedBaseline[key] = nextState;
+            continue;
+          }
+          if (prev.wasManual && !prev.hadAc && nextState.hadAc) {
+            const [solutionId, storyId] = key.split("::");
+            analyticsEmitter.emit("story_enriched", { solution_id: solutionId, story_id: storyId });
+            // Update so it only fires once
+            storyEnrichedBaseline[key] = { ...nextState, wasManual: prev.wasManual };
+          } else {
+            storyEnrichedBaseline[key] = nextState;
+          }
+        }
+      }
     },
   );
 }

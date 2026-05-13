@@ -14,12 +14,14 @@ interface StoryMapToolbarProps {
 
 export function StoryMapToolbar({ entityId, stories }: StoryMapToolbarProps) {
   const productLine = useProductLine();
-  const storiesWithoutAcCount = stories.filter((s) => !s.acceptanceCriteria).length;
-  const hasAnyMissingAc = storiesWithoutAcCount > 0;
+  // Only sliced stories (with narrative) are eligible for the AC writer.
+  // Manual stories (no narrative) need refining first — they're handled via the slide-over.
+  const slicedStoriesWithoutAcCount = stories.filter(
+    (s) => !!s.narrative && !s.acceptanceCriteria,
+  ).length;
+  const hasAnyMissingAc = slicedStoriesWithoutAcCount > 0;
 
-  const title = hasAnyMissingAc
-    ? `${stories.length} ${stories.length === 1 ? "story" : "stories"} sliced`
-    : `${stories.length} stories · all AC defined`;
+  const title = `${stories.length} ${stories.length === 1 ? "story" : "stories"}`;
   const subtitle = hasAnyMissingAc
     ? "No acceptance criteria yet. Add AC before you plan & implement."
     : "Pick a scope to plan & implement: whole map, an iteration row, or a single story.";
@@ -29,7 +31,7 @@ export function StoryMapToolbar({ entityId, stories }: StoryMapToolbarProps) {
     await navigator.clipboard.writeText(text);
     analyticsEmitter.emit("ac_writer_prompt_copied", {
       solution_id: entityId,
-      stories_without_ac: storiesWithoutAcCount,
+      stories_without_ac: slicedStoriesWithoutAcCount,
     });
     showToast({ message: "Prompt copied — paste into your agentic tool", tone: "success" });
   }

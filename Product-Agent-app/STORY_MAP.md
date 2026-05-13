@@ -155,6 +155,7 @@
 |  | See muted helper text instead of the button when the open story has no acceptance criteria, so only ready stories can be handed off | `StoryDetailSlideOver` |
 | **Add acceptance criteria + analytics events to stories** | Click the toolbar 'Add acceptance criteria' button to copy the AC writer prompt; the skill writes Gherkin AC and analytics events directly to each story record | `StoryMapToolbar` · `StoriesTab` · `buildUserStoryAcWriterPrompt` |
 |  | [system] AC writer skill writes structured acceptance_criteria + analytics_events into solution.stories[] in store.json (replaces previous MD-file output) | `ProductSkills/user-story-ac-writer/SKILL.md` |
+|  | Click 'Refine story' in the slide-over footer to copy a single prompt that fills the story definition and AC for a manually-added story | `StoryDetailSlideOver` · `buildRefineStoryPrompt` · `Toaster` |
 
 
 ### Activity 8: Validate Assumptions
