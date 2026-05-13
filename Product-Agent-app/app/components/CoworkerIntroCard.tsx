@@ -87,7 +87,7 @@ export function CoworkerIntroCard({ onDismiss }: CoworkerIntroCardProps) {
             <div className="flex gap-3">
               <div className="flex-shrink-0 w-6 h-6 rounded-full bg-surface-3 flex items-center justify-center text-xs font-semibold text-foreground mt-0.5">3</div>
               <div>
-                <p className="text-sm font-medium text-foreground">Come back when they're done</p>
+                <p className="text-sm font-medium text-foreground">Come back when they&apos;re done</p>
                 <p className="text-sm text-muted-foreground leading-relaxed mt-1">
                   After the conversation, your co-worker will automatically fill in your Business Outcome, Product Outcome, and first Opportunities — right here in this app. Come back once the session is complete and your tree will be ready.
                 </p>
