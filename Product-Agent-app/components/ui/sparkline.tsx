@@ -31,6 +31,8 @@ function buildPath(values: number[], width: number, height: number): { area: str
 }
 
 export function Sparkline({ dataSeries, color = DEFAULT_COLOR, height = 40, className }: SparklineProps) {
+  const gradientId = React.useId();
+
   if (dataSeries.length < 2) {
     return <div style={{ height }} className={cn("w-full", className)} />;
   }
@@ -38,7 +40,6 @@ export function Sparkline({ dataSeries, color = DEFAULT_COLOR, height = 40, clas
   const values = dataSeries.map((d) => d.value);
   const viewWidth = 120;
   const { area, line } = buildPath(values, viewWidth, height);
-  const gradientId = React.useId();
 
   return (
     <svg
