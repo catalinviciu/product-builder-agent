@@ -180,6 +180,9 @@ export function validateParentChild(parentLevel: EntityLevel | null, childLevel:
     }
     return null;
   }
+  if (parentLevel === "product_outcome" && childLevel === "product_outcome") {
+    return null;
+  }
   const expected = CHILD_LEVEL[parentLevel];
   if (expected !== childLevel) {
     return `A ${parentLevel} cannot have a ${childLevel} child (expected ${expected ?? "none"}).`;

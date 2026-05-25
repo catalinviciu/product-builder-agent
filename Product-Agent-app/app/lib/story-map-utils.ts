@@ -107,6 +107,30 @@ export function getStoriesAt(
 }
 
 /**
+ * Returns a flat ordered list of stories in map reading order:
+ *   iteration rows top-to-bottom (WS → ENH → GA),
+ *   then backbone tasks left-to-right within each row,
+ *   then stories in cell-array order within each cell.
+ *
+ * Callers must scope `stories` to the active persona before passing in
+ * (same shape as how PattonMap.tsx builds `visibleStories`).
+ */
+export function orderStoriesForTraversal(
+  stories: Story[],
+  backbone: MapBackbone,
+): Story[] {
+  const rows = deriveIterationRows(stories);
+  const result: Story[] = [];
+  for (const row of rows) {
+    for (const task of backbone.tasks) {
+      const cell = getStoriesAt(stories, task, row);
+      for (const s of cell) result.push(s);
+    }
+  }
+  return result;
+}
+
+/**
  * Returns true if every story for the given task column has persona === "System".
  */
 export function isSystemTask(stories: Story[], task: string): boolean {
