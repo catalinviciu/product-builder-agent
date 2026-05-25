@@ -29,10 +29,16 @@ export function PattonMapCard({ story, onClick }: PattonMapCardProps) {
     <div
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
-      onClick={onClick}
+      onClick={(e) => {
+        if (onClick) {
+          (e.currentTarget as HTMLElement).focus();
+          onClick();
+        }
+      }}
       onKeyDown={(e) => {
         if (onClick && (e.key === "Enter" || e.key === " ")) {
           e.preventDefault();
+          (e.currentTarget as HTMLElement).focus();
           onClick();
         }
       }}
