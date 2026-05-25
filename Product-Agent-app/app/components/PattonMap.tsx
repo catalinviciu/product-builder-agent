@@ -173,6 +173,9 @@ export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) 
                   </span>
                   <span className="text-[12px] font-semibold text-foreground leading-tight">
                     {iter.label}
+                    <span className="ml-1.5 font-normal text-muted-foreground">
+                      · {iterStoriesFull.length} {iterStoriesFull.length === 1 ? "story" : "stories"}
+                    </span>
                   </span>
                   <button
                     type="button"

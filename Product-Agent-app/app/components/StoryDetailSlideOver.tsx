@@ -1,14 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
-import { X, ChevronRight, CheckCircle2, Circle, User, Server } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { X, ChevronRight, ChevronLeft, CheckCircle2, Circle, User, Server } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import { useAppStore } from "@/app/lib/store";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { buildPlanImplementStoryPrompt, buildRefineStoryPrompt } from "@/app/lib/utils";
 import { showToast } from "@/components/ui/toast";
-import { SYSTEM_PERSONA } from "@/app/lib/story-map-utils";
+import {
+  SYSTEM_PERSONA,
+  buildBackbone,
+  filterStoriesForPersona,
+  orderStoriesForTraversal,
+  resolvePrimaryPersona,
+} from "@/app/lib/story-map-utils";
 
 // ── Gherkin keyword highlighter ────────────────────────────────────────────
 const GHERKIN_KEYWORDS =
@@ -71,9 +78,12 @@ import type { Story } from "@/app/lib/schemas";
 interface FooterProps {
   story: Story;
   solutionId: string | null;
+  prev: Story | null;
+  next: Story | null;
+  navigateStoryDetail: (storyId: string) => void;
 }
 
-function StoryDetailFooter({ story, solutionId }: FooterProps) {
+function StoryDetailFooter({ story, solutionId, prev, next, navigateStoryDetail }: FooterProps) {
   const hasAc = !!(story.acceptanceCriteria && story.acceptanceCriteria.trim() !== "");
   const isManual = !story.narrative;
   const setStoryDone = useAppStore((s) => s.setStoryDone);
@@ -116,24 +126,51 @@ function StoryDetailFooter({ story, solutionId }: FooterProps) {
 
   function handleToggleDone() {
     if (!solutionId) return;
-    const next = !isDone;
-    setStoryDone(solutionId, story.id, next);
+    const nowDone = !isDone;
+    setStoryDone(solutionId, story.id, nowDone);
     showToast({
-      message: next ? "Story marked as done" : "Marked as not done",
+      message: nowDone ? "Story marked as done" : "Marked as not done",
       tone: "success",
     });
   }
+
+  // Shared prev/next nav row
+  const navButtons = (
+    <div className="flex items-center gap-1.5">
+      <button
+        type="button"
+        aria-label="Previous story"
+        disabled={!prev}
+        onClick={() => prev && navigateStoryDetail(prev.id)}
+        className="cursor-pointer w-9 h-9 rounded-md border border-border-default bg-surface-2 hover:bg-surface-hover text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)] disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <ChevronLeft size={16} />
+      </button>
+      <button
+        type="button"
+        aria-label="Next story"
+        disabled={!next}
+        onClick={() => next && navigateStoryDetail(next.id)}
+        className="cursor-pointer w-9 h-9 rounded-md border border-border-default bg-surface-2 hover:bg-surface-hover text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)] disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <ChevronRight size={16} />
+      </button>
+    </div>
+  );
 
   // Manually-added stories (no narrative yet): show only the Refine story button
   if (isManual) {
     return (
       <div className="sticky bottom-0 flex flex-col items-stretch gap-2 px-5 py-4 border-t border-border-subtle bg-surface-1">
-        <button
-          onClick={handleRefine}
-          className="cursor-pointer inline-flex items-center justify-center gap-2 bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
-        >
-          Refine story
-        </button>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          {navButtons}
+          <button
+            onClick={handleRefine}
+            className="cursor-pointer inline-flex items-center justify-center gap-2 bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
+          >
+            Refine story
+          </button>
+        </div>
       </div>
     );
   }
@@ -141,31 +178,36 @@ function StoryDetailFooter({ story, solutionId }: FooterProps) {
   // Refined stories: show Mark as done + Plan & Implement (or helper text if no AC)
   return (
     <div className="sticky bottom-0 flex flex-col items-stretch gap-2 px-5 py-4 border-t border-border-subtle bg-surface-1">
-      <button
-        onClick={handleToggleDone}
-        className="cursor-pointer inline-flex items-center justify-center gap-2 bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
-      >
-        {isDone ? (
-          <CheckCircle2 size={15} className="text-[var(--accent-green)] shrink-0" />
-        ) : (
-          <Circle size={15} className="text-muted-foreground shrink-0" />
-        )}
-        {isDone ? "Mark as not done" : "Mark as done"}
-      </button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {navButtons}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleToggleDone}
+            className="cursor-pointer inline-flex items-center justify-center gap-2 bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
+          >
+            {isDone ? (
+              <CheckCircle2 size={15} className="text-[var(--accent-green)] shrink-0" />
+            ) : (
+              <Circle size={15} className="text-muted-foreground shrink-0" />
+            )}
+            {isDone ? "Mark as not done" : "Mark as done"}
+          </button>
+          {hasAc ? (
+            <button
+              onClick={handleCopy}
+              className="cursor-pointer inline-flex items-center justify-center gap-2 bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
+            >
+              Plan &amp; Implement story
+            </button>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center">Add AC first to enable this scope</p>
+          )}
+        </div>
+      </div>
       {isDone && story.doneAt && (
         <span className="text-[11px] text-muted-foreground text-center">
           Done · {formatDoneAt(story.doneAt)}
         </span>
-      )}
-      {hasAc ? (
-        <button
-          onClick={handleCopy}
-          className="cursor-pointer inline-flex items-center justify-center gap-2 bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
-        >
-          Plan &amp; Implement story
-        </button>
-      ) : (
-        <p className="text-sm text-muted-foreground text-center">Add AC first to enable this scope</p>
       )}
     </div>
   );
@@ -177,12 +219,72 @@ export function StoryDetailSlideOver() {
   const solutionId = useAppStore((s) => s.storyDetailSolutionId);
   const storyId = useAppStore((s) => s.storyDetailStoryId);
   const close = useAppStore((s) => s.closeStoryDetail);
+  const navigateStoryDetail = useAppStore((s) => s.navigateStoryDetail);
+  const openStoryDetail = useAppStore((s) => s.openStoryDetail);
+  const navigateTo = useAppStore((s) => s.navigateTo);
+  const productLines = useAppStore((s) => s.productLines);
 
   const productLine = useProductLine();
 
   // Resolve story from the active product line
   const solution = solutionId ? productLine.entities?.[solutionId] : null;
   const story = solution?.stories?.find((s) => s.id === storyId) ?? null;
+
+  // Derive prev/next for traversal (active persona only)
+  const { prev, next } = useMemo(() => {
+    if (!solution?.stories || solution.stories.length === 0) {
+      return { prev: null, next: null };
+    }
+    // Mirror PattonMap's activePersona derivation
+    const activePersona = resolvePrimaryPersona(solution.stories);
+    const visible = filterStoriesForPersona(solution.stories, activePersona);
+    const backbone = buildBackbone(visible);
+    const ordered = orderStoriesForTraversal(visible, backbone);
+    const idx = ordered.findIndex((s) => s.id === storyId);
+    return {
+      prev: idx > 0 ? ordered[idx - 1] : null,
+      next: idx >= 0 && idx < ordered.length - 1 ? ordered[idx + 1] : null,
+    };
+  }, [solution?.stories, storyId]);
+
+  // URL write: reflect open story in URL without triggering a Next.js navigation
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (open && storyId) {
+      url.searchParams.set("story", storyId);
+    } else {
+      url.searchParams.delete("story");
+    }
+    window.history.replaceState(null, "", url.toString());
+  }, [open, storyId]);
+
+  // URL read: hydrate panel from ?story=<id> on mount / when URL changes
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const urlStoryId = searchParams.get("story");
+    if (!urlStoryId || urlStoryId === storyId) return;
+    // Search across all product lines for the story's owning solution
+    let foundSolutionId: string | null = null;
+    outer: for (const pl of Object.values(productLines)) {
+      for (const entity of Object.values(pl.entities ?? {})) {
+        if (entity.stories?.some((s) => s.id === urlStoryId)) {
+          foundSolutionId = entity.id;
+          break outer;
+        }
+      }
+    }
+    if (!foundSolutionId) {
+      // Story not found — strip the param silently
+      const url = new URL(window.location.href);
+      url.searchParams.delete("story");
+      window.history.replaceState(null, "", url.toString());
+      return;
+    }
+    navigateTo(foundSolutionId);
+    openStoryDetail(foundSolutionId, urlStoryId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Auto-close if story can't be resolved (race / stale state)
   useEffect(() => {
@@ -191,12 +293,17 @@ export function StoryDetailSlideOver() {
     }
   }, [open, solution, story, close]);
 
-  // Escape key handler (mirrors PersonaSlideOver.tsx)
+  // Keyboard handler: Escape to close, ←/→ to navigate (guarded against input fields)
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === "Escape" && open) close();
+      if (!open) return;
+      if (e.key === "Escape") { close(); return; }
+      const target = e.target as HTMLElement;
+      if (target.matches("input, textarea, [contenteditable='true']")) return;
+      if (e.key === "ArrowRight" && next) { e.preventDefault(); navigateStoryDetail(next.id); }
+      if (e.key === "ArrowLeft" && prev) { e.preventDefault(); navigateStoryDetail(prev.id); }
     },
-    [open, close]
+    [open, close, prev, next, navigateStoryDetail]
   );
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);
@@ -396,7 +503,7 @@ export function StoryDetailSlideOver() {
             </div>
 
             {/* ── Footer ── */}
-            <StoryDetailFooter story={story} solutionId={solutionId} />
+            <StoryDetailFooter story={story} solutionId={solutionId} prev={prev} next={next} navigateStoryDetail={navigateStoryDetail} />
           </motion.div>
         </>
       )}

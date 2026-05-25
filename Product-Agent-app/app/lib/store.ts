@@ -28,6 +28,7 @@ export interface AppStore {
   storyDetailStoryId: string | null;
   openStoryDetail: (solutionId: string, storyId: string) => void;
   closeStoryDetail: () => void;
+  navigateStoryDetail: (storyId: string) => void;
   setStoryDone: (solutionId: string, storyId: string, done: boolean) => void;
   addStoryToCell: (
     solutionId: string,
@@ -141,6 +142,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
   storyDetailStoryId: null,
   openStoryDetail: (solutionId, storyId) => set({ storyDetailOpen: true, storyDetailSolutionId: solutionId, storyDetailStoryId: storyId }),
   closeStoryDetail: () => set({ storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null }),
+  navigateStoryDetail: (storyId) => set({ storyDetailStoryId: storyId }),
   setStoryDone: (solutionId, storyId, done) => {
     let iterationKind: "ws" | "enh" | "ga" | null = null;
     set((draft) => {
