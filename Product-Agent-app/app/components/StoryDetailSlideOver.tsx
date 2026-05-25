@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { X, ChevronRight, CheckCircle2, Circle, User, Server } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/app/lib/store";
@@ -214,6 +214,26 @@ export function StoryDetailSlideOver() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, story?.id]);
+
+  // Capture the opener once when the panel opens; restore focus when it closes.
+  // Captured once at open so prev/next navigation doesn't overwrite the originator.
+  const originatingElementRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (open) {
+      if (!originatingElementRef.current) {
+        originatingElementRef.current = document.activeElement as HTMLElement | null;
+      }
+      return;
+    }
+    const el = originatingElementRef.current;
+    if (!el) return;
+    originatingElementRef.current = null;
+    if (document.contains(el)) {
+      el.focus();
+    } else {
+      (document.getElementById("story-map-header") as HTMLElement | null)?.focus();
+    }
+  }, [open]);
 
   return (
     <AnimatePresence>

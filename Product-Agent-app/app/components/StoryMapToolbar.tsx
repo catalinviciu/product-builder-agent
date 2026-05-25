@@ -37,7 +37,7 @@ export function StoryMapToolbar({ entityId, stories }: StoryMapToolbarProps) {
   }
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface-1 px-3.5 py-3 flex items-center justify-between gap-3 flex-wrap">
+    <div id="story-map-header" tabIndex={-1} className="rounded-xl border border-border-subtle bg-surface-1 px-3.5 py-3 flex items-center justify-between gap-3 flex-wrap">
       <div className="flex flex-col gap-0.5">
         <span className="text-[13px] font-semibold text-foreground">{title}</span>
         <span className="text-[11px] text-muted-foreground">{subtitle}</span>
