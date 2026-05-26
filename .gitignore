@@ -10,6 +10,11 @@
 !/.mcp.json
 !/.vscode/
 
+# Allow only the shared hooks/permissions file inside .claude/
+!/.claude/
+/.claude/*
+!/.claude/settings.json
+
 # Inside Product-Agent-app, ignore these
 Product-Agent-app/node_modules/
 Product-Agent-app/.next/

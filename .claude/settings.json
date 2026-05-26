@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -d mcp-server/dist || (cd mcp-server && npm ci && npm run build)",
+            "timeout": 180,
+            "statusMessage": "Ensuring product-agent MCP server is built"
+          }
+        ]
+      }
+    ]
+  }
+}
