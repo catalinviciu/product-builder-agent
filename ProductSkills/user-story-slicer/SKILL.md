@@ -466,3 +466,40 @@ Both got written up as "System Story S1" and "System Story S2."
 **Why S1 is right:** S1 changes the skill's data contract. It has no UI of its own, multiple downstream stories (Story 1, Story 4 AC writer, Stories 5/6/7 Plan & Implement) depend on the new contract, and it could in principle be built and validated against `store.json` independently of any one user-facing flow. That's a system story.
 
 **The rule:** A system story is justified only when (a) it has no user-facing UI of its own, AND (b) it changes a data contract, schema, or infra dependency that survives independent of any single user story. If the only reason it exists is to fulfill one user story's UI requirement, fold it into that story's Constraints. The litmus test: *"Could this be shipped in isolation and still be true after Story N is reverted?"* If yes → system story. If no → implementation detail of Story N.
+
+## Good: Showing the full backbone of an existing Activity that's being extended
+
+When the solution **extends an existing Activity** (rather than introducing a new one), the backbone should display the existing Activity's full set of Tasks — including the unchanged ones — and pin new stories only under the Tasks where new work lands.
+
+**Pattern:**
+
+```markdown
+| Activity | Task | Type | Layer | New? |
+|----------|------|------|-------|------|
+| Plan and Implement | Trigger Plan & Implement on a Solution | User | WS | YES — settings wiring |
+| Plan and Implement | Trigger Plan & Implement on a Story (Stories tab) | User | WS | YES — settings wiring |
+| Plan and Implement | [System] AI action settings contract | System | WS | NEW |
+| Plan and Implement | *(other existing Tasks — no new stories)* | User | — | no |
+```
+
+**Why:** Preserves narrative context for stakeholders ("here's the full Activity, this is what we're touching") without bloating the story set with no-op cards for unchanged Tasks. Keeps the slice focused on actual work while keeping the map honest.
+
+**The rule:** When a Task already exists and the solution adds behavior to it, add a NEW story under it. When a Task is itself new, mark it NEW in the backbone. When a Task exists and the solution doesn't touch it, show it as italicized "no new stories" so the map's narrative stays intact. Never invent stories for unchanged Tasks just to populate columns.
+
+## Bad: Padding story names with scope or implementation notes
+
+Story names are read at-a-glance in maps, tables, and lists. Adding "— adds X" or "+ Y" or "reads settings + redirects" appendages bloats the column, repeats what's in the body, and obscures the user intent.
+
+**Bad:**
+- "Pick a codebase (or skip) — adds settings schema + hydrate migration"
+- "Detect from codebase — adds pa_update_product_line_settings MCP tool"
+- "Plan & Implement (Solution) reads settings + redirects on missing"
+- "Settings page renders missing-field banner with scroll-to-field"
+
+**Good:**
+- "Pick a codebase"
+- "Detect from codebase"
+- "Plan & Implement wiring (Solution)"
+- "Missing-settings redirect banner"
+
+**The rule:** Story names are **noun-phrase-style**, capturing **intent only** — never scope, never implementation details, never "+ X / and Y / with Z" tacks. The body is where scope, context, and constraints live. Disambiguators in parentheses (e.g., `(Solution)` vs `(Stories tab)`) are OK when they distinguish two sibling stories — but never describe what the story includes.
