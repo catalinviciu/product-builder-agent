@@ -188,9 +188,8 @@ export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) 
                 {backbone.tasks.map((task) => {
                   const cellStories = getStoriesAt(visibleStories, task, iter);
                   const isLastCol = task === lastTask;
-                  const cellPersona = isSystemTask(visibleStories, task)
-                    ? "System"
-                    : (activePersona ?? "Product Builder");
+                  const cellTaskType = isSystemTask(visibleStories, task) ? "system" : "user";
+                  const cellPersona = activePersona ?? "Product Builder";
                   const cellActivity = taskActivityMap.get(task) ?? "";
                   if (cellStories.length > 0) {
                     return (
@@ -215,6 +214,7 @@ export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) 
                           task={task}
                           iteration={iter}
                           persona={cellPersona}
+                          taskType={cellTaskType}
                           hasStories
                         />
                       </div>
@@ -239,6 +239,7 @@ export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) 
                         task={task}
                         iteration={iter}
                         persona={cellPersona}
+                        taskType={cellTaskType}
                         hasStories={false}
                       />
                     </div>

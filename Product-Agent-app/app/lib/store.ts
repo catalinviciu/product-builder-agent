@@ -32,7 +32,7 @@ export interface AppStore {
   setStoryDone: (solutionId: string, storyId: string, done: boolean) => void;
   addStoryToCell: (
     solutionId: string,
-    cell: { activity: string; task: string; iteration: import("./schemas").StoryIteration; persona: string },
+    cell: { activity: string; task: string; iteration: import("./schemas").StoryIteration; persona: string; taskType: "user" | "system" },
     title: string
   ) => string | null;
 
@@ -194,6 +194,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
         activity: cell.activity,
         task: cell.task,
         iteration: cell.iteration,
+        taskType: cell.taskType,
       });
 
       newId = id;
@@ -241,6 +242,10 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
                     if (iter === "WS") story.iteration = { kind: "ws", label: "Walking Skeleton" };
                     else if (iter === "Enh") story.iteration = { kind: "enh", label: "Enhancement" };
                     else if (iter === "GA") story.iteration = { kind: "ga", label: "GA" };
+                  }
+                  // Backfill taskType for stories that pre-date the field
+                  if (story.taskType === undefined) {
+                    story.taskType = story.persona === "System" ? "system" : "user";
                   }
                 }
               }

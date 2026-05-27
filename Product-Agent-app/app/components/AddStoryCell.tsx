@@ -12,6 +12,7 @@ interface AddStoryCellProps {
   task: string;
   iteration: StoryIteration;
   persona: string;
+  taskType: "user" | "system";
   hasStories: boolean;
 }
 
@@ -21,6 +22,7 @@ export function AddStoryCell({
   task,
   iteration,
   persona,
+  taskType,
   hasStories,
 }: AddStoryCellProps) {
   const [mode, setMode] = useState<"idle" | "editing">("idle");
@@ -37,7 +39,7 @@ export function AddStoryCell({
     e?.stopPropagation();
     const result = useAppStore.getState().addStoryToCell(
       solutionId,
-      { activity, task, iteration, persona },
+      { activity, task, iteration, persona, taskType },
       title,
     );
     if (result !== null) {

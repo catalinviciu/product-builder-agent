@@ -350,6 +350,7 @@ export interface Story {
   humanVerification?: string;
   acceptanceCriteria?: string;             // gherkin block; populated by AC writer skill
   analyticsEvents?: AnalyticsEventDef[];   // populated by AC writer skill
+  taskType?: "user" | "system";            // defaults to "user" when absent
   done?: boolean;
   doneAt?: string;                         // ISO timestamp; set when done flips true
 }

@@ -131,12 +131,12 @@ export function orderStoriesForTraversal(
 }
 
 /**
- * Returns true if every story for the given task column has persona === "System".
+ * Returns true if every story for the given task column has taskType === "system".
  */
 export function isSystemTask(stories: Story[], task: string): boolean {
   const forTask = stories.filter((s) => s.task === task);
   if (forTask.length === 0) return false;
-  return forTask.every((s) => s.persona === SYSTEM_PERSONA);
+  return forTask.every((s) => s.taskType === "system");
 }
 
 /**

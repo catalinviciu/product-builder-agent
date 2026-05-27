@@ -10,7 +10,6 @@ import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { buildPlanImplementStoryPrompt, buildRefineStoryPrompt } from "@/app/lib/utils";
 import { showToast } from "@/components/ui/toast";
 import {
-  SYSTEM_PERSONA,
   buildBackbone,
   filterStoriesForPersona,
   orderStoriesForTraversal,
@@ -402,7 +401,7 @@ export function StoryDetailSlideOver() {
                 </span>
                 {story.persona && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md bg-surface-2 border border-border-subtle text-muted-foreground">
-                    {story.persona === SYSTEM_PERSONA ? (
+                    {story.taskType === "system" ? (
                       <Server size={10} className="shrink-0" />
                     ) : (
                       <User size={10} className="shrink-0" />

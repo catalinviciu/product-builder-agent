@@ -167,7 +167,7 @@ A **System Task** is a backbone element where the actor is an automated process,
 
 **Tagging:** System Tasks are tagged `[System]` in the backbone table to visually distinguish them from human-actor tasks.
 
-**Stories under System Tasks:** Still use a human persona -- the downstream beneficiary of the system's output. The "so that" clause connects the system work to user value. The story scope is building the pipeline/workflow that produces the output the user needs.
+**Stories under System Tasks:** Still use a human persona -- the downstream beneficiary of the system's output. The "so that" clause connects the system work to user value. The story scope is building the pipeline/workflow that produces the output the user needs. The system-ness is carried in the `taskType` field, not the persona.
 
 **Detecting missing System Tasks:** When building the backbone, actively look for gaps:
 - The journey starts with the user viewing computed/AI-generated results → ask: "What produces these results?"
@@ -279,6 +279,7 @@ so that [benefit/value]
 
 Stories under a System Task follow the same format but with adjusted framing:
 
+- **`taskType`:** Set `taskType: "system"` on every story whose backbone Task is a System Task. The `persona` field still holds the human downstream beneficiary — not `"System"`.
 - **Persona:** The downstream user who benefits from the system's output -- not "the system" or "a developer"
 - **Action:** Describes the observable outcome the system produces for the user
 - **Vertical slice:** The thinnest pipeline depth that produces usable output. Walking skeleton = simplest version of the pipeline; Enhancement = richer processing, more data sources, better accuracy
@@ -376,6 +377,7 @@ Present the stories and ask for feedback. During this phase:
   humanVerification?: string;             // Human Verification section content
   acceptanceCriteria?: string;             // Leave undefined — populated by AC writer skill
   analyticsEvents?: AnalyticsEventDef[];   // Leave undefined — populated by AC writer skill
+  taskType?: "user" | "system";            // Set to "system" for stories under a System Task in the backbone. Omit (or "user") for normal user stories.
   // done and doneAt are user-toggled via the UI — NEVER set or modify them here
 }
 ```
