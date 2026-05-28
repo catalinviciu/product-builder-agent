@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
-import { migrateData, writeStore, type Store } from "@/app/lib/storeAccess";
+import { migrateData, withStoreMutex, type Store } from "@/app/lib/storeAccess";
 import { PRODUCT_LINES } from "@/app/lib/mock-data";
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -40,7 +40,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Payload too large" }, { status: 413 });
     }
 
-    await writeStore(body as Store);
+    // Serialize the full-store save against scoped mutations (entity/settings
+    // PATCHes) so they can't race on the file and tear it.
+    await withStoreMutex(async () => ({ store: body as Store, result: undefined }));
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });

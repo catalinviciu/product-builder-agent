@@ -117,6 +117,69 @@ export function startAnalyticsSubscribers(): void {
     trackEvent("ManualSettingSaved", props);
   });
 
+  analyticsEmitter.on("DetectionPromptCopied", (props) => {
+    trackEvent("DetectionPromptCopied", props);
+  });
+
+  // Diff subscription: emit DetectionCompleted when a product line's
+  // designSystem.source transitions to "detected".
+  // First snapshot after hydration is the silent baseline.
+  let detectionBaseline: Record<string, { dsSource: string | undefined; apMode: string | undefined; apConfidence: string | undefined }> | null = null;
+
+  useAppStore.subscribe(
+    (state) => state.productLines,
+    (current) => {
+      if (Object.keys(current).length === 0) return; // hydration guard
+
+      const nextState: Record<string, { dsSource: string | undefined; apMode: string | undefined; apConfidence: string | undefined }> = {};
+
+      for (const pl of Object.values(current)) {
+        const ds = pl.settings?.designSystem;
+        const ap = pl.settings?.analyticsPlatform;
+        nextState[pl.id] = {
+          dsSource: ds && ds.mode === "designMd" ? ds.source : undefined,
+          apMode: ap?.mode,
+          apConfidence: ap && ap.mode === "detected" ? ap.confidence : undefined,
+        };
+      }
+
+      if (detectionBaseline === null) {
+        detectionBaseline = nextState;
+        return;
+      }
+
+      for (const [plId, next] of Object.entries(nextState)) {
+        const prev = detectionBaseline[plId];
+        // Fire when designSystem.source transitions to "detected"
+        if (next.dsSource === "detected" && prev?.dsSource !== "detected") {
+          const pl = current[plId];
+          const ds = pl?.settings?.designSystem;
+          const ap = pl?.settings?.analyticsPlatform;
+
+          const dsConfidence: "high" | "medium" | "low" | "none-found" =
+            ds && ds.mode === "designMd" && ds.confidence
+              ? ds.confidence
+              : "none-found";
+
+          const apConfidence: "high" | "medium" | "low" | "none-found" =
+            ap && ap.mode === "detected" && ap.confidence
+              ? ap.confidence
+              : "none-found";
+
+          analyticsEmitter.emit("DetectionCompleted", {
+            DesignSystemConfidence: dsConfidence,
+            AnalyticsPlatformConfidence: apConfidence,
+          });
+        }
+      }
+      detectionBaseline = nextState;
+    },
+  );
+
+  analyticsEmitter.on("DetectionCompleted", (props) => {
+    trackEvent("DetectionCompleted", props);
+  });
+
   // Diff subscription: emit story_map_ac_enriched when a solution's
   // stories_with_ac count increases compared to the previous snapshot.
   // Also emit story_enriched when a manually-added story (wasManual = !narrative)

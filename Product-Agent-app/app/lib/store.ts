@@ -283,6 +283,8 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
                 ap.otherName = null;
               }
             }
+            // Backfill detectionError (added Story 3)
+            pl.settings.detectionError ??= null;
           }
           set({ productLines: data, currentProductLineId, isHydrated: true });
           return;

@@ -6,8 +6,9 @@ import {
   CreateEntityInputSchema,
   EntityPatchSchema,
   BlockPatchSchema,
+  ProductLineSettingsPatchSchema,
 } from "./schemas.js";
-import type { Block, Entity } from "../types.js";
+import type { Block, Entity, ProductLineSettings } from "../types.js";
 
 /**
  * Registers all Product Agent MCP tools on the given server.
@@ -177,5 +178,16 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
     },
     async ({ entityId, blockIndex, patch }) =>
       ok(await adapter.updateBlock(entityId, blockIndex, patch as Partial<Block>))
+  );
+
+  server.registerTool(
+    "pa_update_product_line_settings",
+    {
+      title: "Update product line settings",
+      description: "Partial update of settings fields on a product line (codebasePath, designSystem, analyticsPlatform, storyMap, detectionError). Does NOT touch the entity tree, personas, or blocks.",
+      inputSchema: { productLineId: z.string(), patch: ProductLineSettingsPatchSchema },
+    },
+    async ({ productLineId, patch }) =>
+      ok(await adapter.updateProductLineSettings(productLineId, patch as Partial<ProductLineSettings>))
   );
 }

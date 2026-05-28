@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
-import { FolderOpen, Pencil, X } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { FolderOpen, Pencil, X, Check } from "lucide-react";
 import { useAppStore } from "@/app/lib/store";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
+import { trackEvent } from "@/app/lib/analytics";
 import { cn } from "@/app/lib/utils";
+import { buildCodebaseDetectionPrompt } from "@/app/lib/utils";
 import type { AnalyticsPlatform } from "@/app/lib/schemas";
 
 const ANALYTICS_OPTIONS: { label: string; value: AnalyticsPlatform }[] = [
@@ -14,6 +16,8 @@ const ANALYTICS_OPTIONS: { label: string; value: AnalyticsPlatform }[] = [
   { label: "Google Analytics", value: "google_analytics" },
   { label: "Other", value: "other" },
 ];
+
+const STUCK_TIMEOUT_MS = 90_000;
 
 export function ProductLineSettingsView() {
   const settingsProductLineId = useAppStore((s) => s.settingsProductLineId);
@@ -42,6 +46,40 @@ export function ProductLineSettingsView() {
     settings?.analyticsPlatform?.mode === "manual" ? (settings.analyticsPlatform.otherName ?? null) : null;
   const [apExpanded, setApExpanded] = useState(false);
   const [otherInput, setOtherInput] = useState(savedOtherName ?? "");
+
+  // Detection state
+  const [detecting, setDetecting] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [stuck, setStuck] = useState(false);
+  const detectStartedAt = useRef<number | null>(null);
+  const stuckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Watch for detection results landing — exit detecting state when done
+  useEffect(() => {
+    if (!detecting) return;
+
+    const hasDetectedDs =
+      settings?.designSystem?.mode === "designMd";
+    const hasDetectedAp =
+      settings?.analyticsPlatform?.mode === "detected";
+    const hasError = !!settings?.detectionError;
+
+    if (hasDetectedDs || hasDetectedAp || hasError) {
+      setDetecting(false);
+      setStuck(false);
+      if (stuckTimerRef.current) {
+        clearTimeout(stuckTimerRef.current);
+        stuckTimerRef.current = null;
+      }
+    }
+  }, [detecting, settings?.designSystem, settings?.analyticsPlatform, settings?.detectionError]);
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current);
+    };
+  }, []);
 
   if (!pl || !settingsProductLineId) return null;
 
@@ -79,7 +117,6 @@ export function ProductLineSettingsView() {
   // ── Analytics Platform handlers ──────────────────────────────────────────
   const handlePlatformSelect = (platform: AnalyticsPlatform) => {
     if (platform === "other") {
-      // Don't commit yet — reveal text input
       updateProductLineSettings(id, { analyticsPlatform: { mode: "manual", platform: "other", otherName: savedOtherName } });
       analyticsEmitter.emit("ManualSettingSaved", { Field: "analyticsPlatform", Mode: "manual", Source: "settings-page" });
       return;
@@ -95,10 +132,42 @@ export function ProductLineSettingsView() {
     analyticsEmitter.emit("ManualSettingSaved", { Field: "analyticsPlatform", Mode: "manual", Source: "settings-page" });
   };
 
+  // ── Detection handlers ───────────────────────────────────────────────────
+  const startDetecting = () => {
+    setDetecting(true);
+    setStuck(false);
+    detectStartedAt.current = Date.now();
+    if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current);
+    stuckTimerRef.current = setTimeout(() => {
+      setStuck(true);
+    }, STUCK_TIMEOUT_MS);
+  };
+
+  const cancelDetecting = () => {
+    setDetecting(false);
+    setStuck(false);
+    if (stuckTimerRef.current) {
+      clearTimeout(stuckTimerRef.current);
+      stuckTimerRef.current = null;
+    }
+  };
+
+  const handleCopyPrompt = () => {
+    const prompt = buildCodebaseDetectionPrompt(pl);
+    navigator.clipboard.writeText(prompt);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    trackEvent("DetectionPromptCopied", { product_line_id: pl.id });
+  };
+
   // ── Derived state ────────────────────────────────────────────────────────
   const isSkipped = savedPath === null;
   const dsSaved = savedSkillName !== null;
   const apSaved = savedPlatform !== null;
+  const detectionError = settings?.detectionError ?? null;
+
+  // Listening = detecting, not stuck, no error
+  const isListening = detecting && !stuck && !detectionError;
 
   return (
     <div className="px-8 py-8 max-w-2xl">
@@ -224,72 +293,144 @@ export function ProductLineSettingsView() {
                 Point to your design-system skill file so AI actions can generate on-brand prototypes.
               </p>
             </div>
+
+            {/* Detect CTA — only when codebasePath is set and not already detecting */}
+            {savedPath && !detecting && (
+              <button
+                onClick={startDetecting}
+                className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors shrink-0 ml-4"
+              >
+                Detect from codebase
+              </button>
+            )}
           </div>
 
-          {/* PICKED state: show saved or collapsed affordance */}
-          {!isSkipped && !dsExpanded ? (
-            dsSaved ? (
-              <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex items-center gap-3">
-                <span className="text-xs font-mono text-foreground flex-1 truncate">{savedSkillName}</span>
-                <button
-                  onClick={() => { setDsInput(savedSkillName ?? ""); setDsExpanded(true); }}
-                  aria-label="Edit design system skill path"
-                  className="cursor-pointer p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors shrink-0"
-                >
-                  <Pencil size={12} />
-                </button>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-border-subtle bg-surface-1 px-4 py-3 flex items-center gap-3">
-                <span className="text-xs text-muted-foreground/50 flex-1">No design system linked</span>
-                <button
-                  onClick={() => { setDsInput(""); setDsExpanded(true); }}
-                  className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
-                >
-                  Set up
-                </button>
-              </div>
-            )
-          ) : (
-            /* Input state (SKIPPED always visible, or PICKED when expanded) */
+          {/* Detection focused state */}
+          {detecting ? (
             <div className="rounded-xl border border-border-strong bg-surface-1 p-4 flex flex-col gap-3">
-              {!dsSaved && isSkipped && (
-                <h3 className="text-sm font-medium text-foreground">
-                  Where is your design-system skill file?
-                </h3>
-              )}
-              <input
-                value={dsInput}
-                onChange={(e) => setDsInput(e.target.value)}
-                placeholder="D:\Projects\my-app\.claude\skills\design-system\SKILL.md"
-                className="bg-surface-2 border border-border-strong rounded-md px-3 py-2 text-sm text-foreground hover:border-border-strong focus:outline-none focus:border-border-focus font-mono"
-                autoFocus={isSkipped ? false : true}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleDsSave();
-                  if (e.key === "Escape" && !isSkipped) setDsExpanded(false);
-                }}
-              />
-              <p className="text-xs text-muted-foreground/60">
-                Open your file explorer and copy/paste the skill file&apos;s path here.
-              </p>
-              <div className="flex gap-2">
+              {/* Prompt code block */}
+              <div className="bg-surface-2 border border-border-subtle rounded-md p-3 font-mono text-xs whitespace-pre-wrap text-foreground max-h-48 overflow-y-auto">
+                {buildCodebaseDetectionPrompt(pl)}
+              </div>
+
+              {/* Copy button */}
+              <div className="flex items-center gap-3">
                 <button
-                  onClick={handleDsSave}
-                  disabled={!dsInput.trim()}
-                  className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  onClick={handleCopyPrompt}
+                  className="cursor-pointer flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
                 >
-                  Save
+                  {copied ? (
+                    <>
+                      <Check size={12} />
+                      Copied!
+                    </>
+                  ) : (
+                    "Copy prompt"
+                  )}
                 </button>
-                {!isSkipped && (
-                  <button
-                    onClick={() => setDsExpanded(false)}
-                    className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus text-muted-foreground transition-colors"
-                  >
-                    Cancel
-                  </button>
+
+                {/* Listening indicator */}
+                {isListening && (
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse" />
+                    Listening for results…
+                  </span>
                 )}
               </div>
+
+              {/* Caption */}
+              <p className="text-xs text-muted-foreground">
+                Paste into Claude Code. This page updates automatically.
+              </p>
+
+              {/* Error state */}
+              {detectionError && (
+                <p className="text-xs text-rose-600 dark:text-rose-400">{detectionError}</p>
+              )}
+
+              {/* Stuck state */}
+              {stuck && !detectionError && (
+                <p className="text-xs text-muted-foreground">
+                  Detection seems stuck — try pasting again or set values manually.
+                </p>
+              )}
+
+              {/* Cancel */}
+              <button
+                onClick={cancelDetecting}
+                className="cursor-pointer self-start text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+              >
+                Cancel
+              </button>
             </div>
+          ) : (
+            /* Normal Design System body — PICKED state: show saved or collapsed affordance */
+            <>
+              {!isSkipped && !dsExpanded ? (
+                dsSaved ? (
+                  <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex items-center gap-3">
+                    <span className="text-xs font-mono text-foreground flex-1 truncate">{savedSkillName}</span>
+                    <button
+                      onClick={() => { setDsInput(savedSkillName ?? ""); setDsExpanded(true); }}
+                      aria-label="Edit design system skill path"
+                      className="cursor-pointer p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors shrink-0"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-border-subtle bg-surface-1 px-4 py-3 flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground/50 flex-1">No design system linked</span>
+                    <button
+                      onClick={() => { setDsInput(""); setDsExpanded(true); }}
+                      className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                    >
+                      Set up
+                    </button>
+                  </div>
+                )
+              ) : (
+                /* Input state (SKIPPED always visible, or PICKED when expanded) */
+                <div className="rounded-xl border border-border-strong bg-surface-1 p-4 flex flex-col gap-3">
+                  {!dsSaved && isSkipped && (
+                    <h3 className="text-sm font-medium text-foreground">
+                      Where is your design-system skill file?
+                    </h3>
+                  )}
+                  <input
+                    value={dsInput}
+                    onChange={(e) => setDsInput(e.target.value)}
+                    placeholder="D:\Projects\my-app\.claude\skills\design-system\SKILL.md"
+                    className="bg-surface-2 border border-border-strong rounded-md px-3 py-2 text-sm text-foreground hover:border-border-strong focus:outline-none focus:border-border-focus font-mono"
+                    autoFocus={isSkipped ? false : true}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleDsSave();
+                      if (e.key === "Escape" && !isSkipped) setDsExpanded(false);
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground/60">
+                    Open your file explorer and copy/paste the skill file&apos;s path here.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleDsSave}
+                      disabled={!dsInput.trim()}
+                      className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Save
+                    </button>
+                    {!isSkipped && (
+                      <button
+                        onClick={() => setDsExpanded(false)}
+                        className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus text-muted-foreground transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 

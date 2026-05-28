@@ -91,6 +91,13 @@ export type AnalyticsEventMap = {
     Mode: "skill" | "manual";
     Source: "settings-page" | "redirect";
   };
+  DetectionPromptCopied: {
+    product_line_id: string;
+  };
+  DetectionCompleted: {
+    DesignSystemConfidence: "high" | "medium" | "low" | "none-found";
+    AnalyticsPlatformConfidence: "high" | "medium" | "low" | "none-found";
+  };
 };
 
 type ListenerMap = { [K in keyof AnalyticsEventMap]?: Array<Listener<AnalyticsEventMap[K]>> };
