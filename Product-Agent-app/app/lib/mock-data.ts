@@ -1,4 +1,5 @@
 import type { EntityStore, DiscoveryTree, ProductLine } from "./schemas";
+import { DEFAULT_PRODUCT_LINE_SETTINGS } from "./schemas";
 
 // ════════════════════════════════════════════════════════════════════════════
 // PRODUCT LINE 1: FreshCart (B2C Grocery Delivery)
@@ -778,6 +779,7 @@ export const PRODUCT_LINES: Record<string, ProductLine> = {
       { id: "persona-fc-health-single", name: "Health-Conscious Single", description: "Age 25-35, urban professional. Orders 1-2× per week, average basket €28. Pain: hard to find specialty/organic items; wants nutritional info." },
       { id: "persona-fc-impulse-adder", name: "Impulse Adder", description: "Age 20-40, spontaneous shopper who adds items during checkout. Responds to recommendations, deals, and visually appealing product pages." },
     ],
+    settings: DEFAULT_PRODUCT_LINE_SETTINGS,
     tree: FRESHCART_TREE,
     entities: FRESHCART_ENTITIES,
   },
@@ -791,6 +793,7 @@ export const PRODUCT_LINES: Record<string, ProductLine> = {
       { id: "persona-ip-ecom-manager", name: "E-commerce Manager", description: "Manages online storefront and marketing spend. Needs high-level KPIs and trend summaries, not raw data." },
       { id: "persona-ip-founder", name: "DTC Founder", description: "Solo or small-team founder running a direct-to-consumer brand. Wants instant clarity on what's working and what's not, without learning complex BI tools." },
     ],
+    settings: DEFAULT_PRODUCT_LINE_SETTINGS,
     tree: INSIGHTPULSE_TREE,
     entities: INSIGHTPULSE_ENTITIES,
   },

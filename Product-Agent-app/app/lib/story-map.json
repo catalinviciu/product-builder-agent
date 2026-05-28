@@ -17,8 +17,15 @@
           "title": "Edit product line details",
           "stories": [
             { "action": "Edit the product line title inline on the Overview page", "components": ["RootView", "EditableText"] },
-            { "action": "Edit the product line description with markdown formatting and preview", "components": ["RootView", "EditableText", "MarkdownToolbar"] },
-            { "action": "Set the local code path for a product line so AI prompts can reference the codebase location", "components": ["EditProductLineForm", "SectionNav"] }
+            { "action": "Edit the product line description with markdown formatting and preview", "components": ["RootView", "EditableText", "MarkdownToolbar"] }
+          ]
+        },
+        {
+          "title": "Configure product-line settings",
+          "stories": [
+            { "action": "Open the Settings page for a product line from the sidebar header", "components": ["SectionNav", "ProductLineSettingsView"] },
+            { "action": "Pick a codebase path or explicitly skip from the Settings page empty state", "components": ["ProductLineSettingsView"] },
+            { "action": "Edit or replace a saved codebase path from the Settings page", "components": ["ProductLineSettingsView"] }
           ]
         },
         {
