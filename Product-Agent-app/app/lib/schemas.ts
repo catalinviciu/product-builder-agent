@@ -530,12 +530,12 @@ export interface DiscoveryTree {
 
 export type DesignSystemSettings =
   | { mode: "detected"; path: string | null; confidence?: "high" | "medium" | "low"; reasoning?: string }
-  | { mode: "skill";    skillPath: string | null };
+  | { mode: "skill";    skillName: string | null };
 
 export type AnalyticsPlatform = "pendo" | "mixpanel" | "amplitude" | "google_analytics" | "other";
 export type AnalyticsPlatformSettings =
   | { mode: "detected"; platform: AnalyticsPlatform | null; confidence?: "high" | "medium" | "low"; reasoning?: string }
-  | { mode: "manual";   platform: AnalyticsPlatform | null };
+  | { mode: "manual";   platform: AnalyticsPlatform | null; otherName?: string | null };
 
 export interface StoryMapSettings { enabled: boolean; sourcePath?: string | null }
 
@@ -548,8 +548,8 @@ export interface ProductLineSettings {
 
 export const DEFAULT_PRODUCT_LINE_SETTINGS: ProductLineSettings = {
   codebasePath: null,
-  designSystem: { mode: "skill", skillPath: null },
-  analyticsPlatform: { mode: "manual", platform: null },
+  designSystem: { mode: "skill", skillName: null },
+  analyticsPlatform: { mode: "manual", platform: null, otherName: null },
   storyMap: { enabled: false, sourcePath: null },
 };
 

@@ -25,7 +25,9 @@
           "stories": [
             { "action": "Open the Settings page for a product line from the sidebar header", "components": ["SectionNav", "ProductLineSettingsView"] },
             { "action": "Pick a codebase path or explicitly skip from the Settings page empty state", "components": ["ProductLineSettingsView"] },
-            { "action": "Edit or replace a saved codebase path from the Settings page", "components": ["ProductLineSettingsView"] }
+            { "action": "Edit or replace a saved codebase path from the Settings page", "components": ["ProductLineSettingsView"] },
+            { "action": "Set a design-system skill path manually on the Settings page", "components": ["ProductLineSettingsView"] },
+            { "action": "Select an analytics platform (or specify a custom one) manually on the Settings page", "components": ["ProductLineSettingsView"] }
           ]
         },
         {

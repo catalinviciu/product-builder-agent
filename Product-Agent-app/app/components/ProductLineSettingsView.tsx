@@ -5,6 +5,15 @@ import { FolderOpen, Pencil, X } from "lucide-react";
 import { useAppStore } from "@/app/lib/store";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { cn } from "@/app/lib/utils";
+import type { AnalyticsPlatform } from "@/app/lib/schemas";
+
+const ANALYTICS_OPTIONS: { label: string; value: AnalyticsPlatform }[] = [
+  { label: "Pendo", value: "pendo" },
+  { label: "Mixpanel", value: "mixpanel" },
+  { label: "Amplitude", value: "amplitude" },
+  { label: "Google Analytics", value: "google_analytics" },
+  { label: "Other", value: "other" },
+];
 
 export function ProductLineSettingsView() {
   const settingsProductLineId = useAppStore((s) => s.settingsProductLineId);
@@ -16,22 +25,40 @@ export function ProductLineSettingsView() {
   const settings = pl?.settings;
   const savedPath = settings?.codebasePath ?? null;
 
+  // Codebase state
   const [editing, setEditing] = useState(savedPath === null);
   const [inputValue, setInputValue] = useState(savedPath ?? "");
 
+  // Design system state
+  const savedSkillName =
+    settings?.designSystem?.mode === "skill" ? (settings.designSystem.skillName ?? null) : null;
+  const [dsExpanded, setDsExpanded] = useState(false);
+  const [dsInput, setDsInput] = useState(savedSkillName ?? "");
+
+  // Analytics platform state
+  const savedPlatform =
+    settings?.analyticsPlatform?.mode === "manual" ? (settings.analyticsPlatform.platform ?? null) : null;
+  const savedOtherName =
+    settings?.analyticsPlatform?.mode === "manual" ? (settings.analyticsPlatform.otherName ?? null) : null;
+  const [apExpanded, setApExpanded] = useState(false);
+  const [otherInput, setOtherInput] = useState(savedOtherName ?? "");
+
   if (!pl || !settingsProductLineId) return null;
 
+  const id = settingsProductLineId;
+
+  // ── Codebase handlers ────────────────────────────────────────────────────
   const handleSave = () => {
     const trimmed = inputValue.trim();
     if (!trimmed) return;
-    updateProductLineSettings(settingsProductLineId, { codebasePath: trimmed });
-    analyticsEmitter.emit("CodebasePicked", { productLineId: settingsProductLineId });
+    updateProductLineSettings(id, { codebasePath: trimmed });
+    analyticsEmitter.emit("CodebasePicked", { productLineId: id });
     setEditing(false);
   };
 
   const handleSkip = () => {
-    updateProductLineSettings(settingsProductLineId, { codebasePath: null });
-    analyticsEmitter.emit("CodebaseSkipped", { productLineId: settingsProductLineId });
+    updateProductLineSettings(id, { codebasePath: null });
+    analyticsEmitter.emit("CodebaseSkipped", { productLineId: id });
     setEditing(false);
   };
 
@@ -39,6 +66,39 @@ export function ProductLineSettingsView() {
     setInputValue(savedPath ?? "");
     setEditing(true);
   };
+
+  // ── Design System handlers ───────────────────────────────────────────────
+  const handleDsSave = () => {
+    const trimmed = dsInput.trim();
+    if (!trimmed) return;
+    updateProductLineSettings(id, { designSystem: { mode: "skill", skillName: trimmed } });
+    analyticsEmitter.emit("ManualSettingSaved", { Field: "designSystem", Mode: "skill", Source: "settings-page" });
+    setDsExpanded(false);
+  };
+
+  // ── Analytics Platform handlers ──────────────────────────────────────────
+  const handlePlatformSelect = (platform: AnalyticsPlatform) => {
+    if (platform === "other") {
+      // Don't commit yet — reveal text input
+      updateProductLineSettings(id, { analyticsPlatform: { mode: "manual", platform: "other", otherName: savedOtherName } });
+      analyticsEmitter.emit("ManualSettingSaved", { Field: "analyticsPlatform", Mode: "manual", Source: "settings-page" });
+      return;
+    }
+    updateProductLineSettings(id, { analyticsPlatform: { mode: "manual", platform, otherName: null } });
+    analyticsEmitter.emit("ManualSettingSaved", { Field: "analyticsPlatform", Mode: "manual", Source: "settings-page" });
+  };
+
+  const handleOtherSave = () => {
+    const trimmed = otherInput.trim();
+    if (!trimmed) return;
+    updateProductLineSettings(id, { analyticsPlatform: { mode: "manual", platform: "other", otherName: trimmed } });
+    analyticsEmitter.emit("ManualSettingSaved", { Field: "analyticsPlatform", Mode: "manual", Source: "settings-page" });
+  };
+
+  // ── Derived state ────────────────────────────────────────────────────────
+  const isSkipped = savedPath === null;
+  const dsSaved = savedSkillName !== null;
+  const apSaved = savedPlatform !== null;
 
   return (
     <div className="px-8 py-8 max-w-2xl">
@@ -57,92 +117,284 @@ export function ProductLineSettingsView() {
         </button>
       </div>
 
-      {/* Codebase section */}
-      <div className="flex flex-col gap-4">
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">Codebase</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Link the folder where this product line&apos;s code lives. AI actions use this path as context.
-          </p>
+      <div className="flex flex-col gap-8">
+        {/* ── Codebase section ── */}
+        <div className="flex flex-col gap-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Codebase</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Link the folder where this product line&apos;s code lives. AI actions use this path as context.
+            </p>
+          </div>
+
+          {savedPath && !editing ? (
+            <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex items-center gap-3">
+              <FolderOpen size={14} className="text-muted-foreground/50 shrink-0" />
+              <span className="text-xs font-mono text-foreground flex-1 truncate">{savedPath}</span>
+              <button
+                onClick={handleEdit}
+                aria-label="Edit codebase path"
+                className="cursor-pointer p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors shrink-0"
+              >
+                <Pencil size={12} />
+              </button>
+            </div>
+          ) : !editing && savedPath === null ? (
+            <div className="rounded-xl border border-border-subtle bg-surface-1 px-4 py-3 flex items-center gap-3">
+              <span className="text-xs text-muted-foreground/50 flex-1">No codebase linked</span>
+              <button
+                onClick={handleEdit}
+                className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+              >
+                Add a codebase
+              </button>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border-strong bg-surface-1 p-4 flex flex-col gap-3">
+              {!savedPath && (
+                <h3 className="text-sm font-medium text-foreground">
+                  Where does this product line&apos;s code live?
+                </h3>
+              )}
+              <input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder={`D:\\Projects\\my-app`}
+                className="bg-surface-2 border border-border-strong rounded-md px-3 py-2 text-sm text-foreground hover:border-border-strong focus:outline-none focus:border-border-focus font-mono"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSave();
+                  if (e.key === "Escape") {
+                    if (savedPath) { setEditing(false); } else { handleSkip(); }
+                  }
+                }}
+              />
+              <p className="text-xs text-muted-foreground/60">
+                Open your file explorer and copy/paste the codebase folder&apos;s path here.
+              </p>
+              <div className={cn("flex items-center", savedPath ? "gap-2" : "flex-col items-start gap-2")}>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSave}
+                    disabled={!inputValue.trim()}
+                    className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Save
+                  </button>
+                  {savedPath && (
+                    <button
+                      onClick={() => setEditing(false)}
+                      className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus text-muted-foreground transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+                {!savedPath && (
+                  <button
+                    onClick={handleSkip}
+                    className="cursor-pointer text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                  >
+                    I don&apos;t have a codebase yet — set up without one.
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        {savedPath && !editing ? (
-          // Saved state
-          <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex items-center gap-3">
-            <FolderOpen size={14} className="text-muted-foreground/50 shrink-0" />
-            <span className="text-xs font-mono text-foreground flex-1 truncate">{savedPath}</span>
-            <button
-              onClick={handleEdit}
-              aria-label="Edit codebase path"
-              className="cursor-pointer p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors shrink-0"
-            >
-              <Pencil size={12} />
-            </button>
+        {/* ── Inline notice (SKIPPED state only) ── */}
+        {isSkipped && (
+          <p className="text-xs text-muted-foreground/60 border-l-2 border-border-subtle pl-3">
+            Plan &amp; Implement needs a codebase. Prototype needs a design-system skill. Story AC writing needs an analytics platform.
+          </p>
+        )}
+
+        {/* ── Design System section ── */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">
+                Design System
+                {isSkipped && (
+                  <span className="ml-2 text-xs font-medium text-muted-foreground/50">Required</span>
+                )}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Point to your design-system skill file so AI actions can generate on-brand prototypes.
+              </p>
+            </div>
           </div>
-        ) : !editing && savedPath === null ? (
-          // No-codebase state (after skip)
-          <div className="rounded-xl border border-border-subtle bg-surface-1 px-4 py-3 flex items-center gap-3">
-            <span className="text-xs text-muted-foreground/50 flex-1">No codebase linked</span>
-            <button
-              onClick={handleEdit}
-              className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
-            >
-              Add a codebase
-            </button>
-          </div>
-        ) : (
-          // Input state (empty state or editing)
-          <div className="rounded-xl border border-border-strong bg-surface-1 p-4 flex flex-col gap-3">
-            {!savedPath && (
-              <h3 className="text-sm font-medium text-foreground">
-                Where does this product line&apos;s code live?
-              </h3>
-            )}
-            <input
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder={`D:\\Projects\\my-app`}
-              className="bg-surface-2 border border-border-strong rounded-md px-3 py-2 text-sm text-foreground hover:border-border-strong focus:outline-none focus:border-border-focus font-mono"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSave();
-                if (e.key === "Escape") {
-                  if (savedPath) { setEditing(false); } else { handleSkip(); }
-                }
-              }}
-            />
-            <p className="text-xs text-muted-foreground/60">
-              Open your file explorer and copy/paste the codebase folder&apos;s path here.
-            </p>
-            <div className={cn("flex items-center", savedPath ? "gap-2" : "flex-col items-start gap-2")}>
+
+          {/* PICKED state: show saved or collapsed affordance */}
+          {!isSkipped && !dsExpanded ? (
+            dsSaved ? (
+              <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex items-center gap-3">
+                <span className="text-xs font-mono text-foreground flex-1 truncate">{savedSkillName}</span>
+                <button
+                  onClick={() => { setDsInput(savedSkillName ?? ""); setDsExpanded(true); }}
+                  aria-label="Edit design system skill path"
+                  className="cursor-pointer p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors shrink-0"
+                >
+                  <Pencil size={12} />
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border-subtle bg-surface-1 px-4 py-3 flex items-center gap-3">
+                <span className="text-xs text-muted-foreground/50 flex-1">No design system linked</span>
+                <button
+                  onClick={() => { setDsInput(""); setDsExpanded(true); }}
+                  className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                >
+                  Set up
+                </button>
+              </div>
+            )
+          ) : (
+            /* Input state (SKIPPED always visible, or PICKED when expanded) */
+            <div className="rounded-xl border border-border-strong bg-surface-1 p-4 flex flex-col gap-3">
+              {!dsSaved && isSkipped && (
+                <h3 className="text-sm font-medium text-foreground">
+                  Where is your design-system skill file?
+                </h3>
+              )}
+              <input
+                value={dsInput}
+                onChange={(e) => setDsInput(e.target.value)}
+                placeholder="D:\Projects\my-app\.claude\skills\design-system\SKILL.md"
+                className="bg-surface-2 border border-border-strong rounded-md px-3 py-2 text-sm text-foreground hover:border-border-strong focus:outline-none focus:border-border-focus font-mono"
+                autoFocus={isSkipped ? false : true}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleDsSave();
+                  if (e.key === "Escape" && !isSkipped) setDsExpanded(false);
+                }}
+              />
+              <p className="text-xs text-muted-foreground/60">
+                Open your file explorer and copy/paste the skill file&apos;s path here.
+              </p>
               <div className="flex gap-2">
                 <button
-                  onClick={handleSave}
-                  disabled={!inputValue.trim()}
-                  className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  onClick={handleDsSave}
+                  disabled={!dsInput.trim()}
+                  className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Save
                 </button>
-                {savedPath && (
+                {!isSkipped && (
                   <button
-                    onClick={() => setEditing(false)}
+                    onClick={() => setDsExpanded(false)}
                     className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus text-muted-foreground transition-colors"
                   >
                     Cancel
                   </button>
                 )}
               </div>
-              {!savedPath && (
+            </div>
+          )}
+        </div>
+
+        {/* ── Analytics Platform section ── */}
+        <div className="flex flex-col gap-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">
+              Analytics Platform
+              {isSkipped && (
+                <span className="ml-2 text-xs font-medium text-muted-foreground/50">Required</span>
+              )}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Select your analytics tool so AI actions can generate the right tracking events.
+            </p>
+          </div>
+
+          {/* PICKED state: collapsed affordance */}
+          {!isSkipped && !apExpanded ? (
+            apSaved ? (
+              <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex items-center gap-3">
+                <span className="text-xs text-foreground flex-1">
+                  {savedPlatform === "other"
+                    ? savedOtherName ?? "Other"
+                    : ANALYTICS_OPTIONS.find((o) => o.value === savedPlatform)?.label ?? savedPlatform}
+                </span>
                 <button
-                  onClick={handleSkip}
-                  className="cursor-pointer text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                  onClick={() => setApExpanded(true)}
+                  aria-label="Edit analytics platform"
+                  className="cursor-pointer p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors shrink-0"
                 >
-                  I don&apos;t have a codebase yet — set up without one.
+                  <Pencil size={12} />
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border-subtle bg-surface-1 px-4 py-3 flex items-center gap-3">
+                <span className="text-xs text-muted-foreground/50 flex-1">No platform selected</span>
+                <button
+                  onClick={() => setApExpanded(true)}
+                  className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                >
+                  Set up
+                </button>
+              </div>
+            )
+          ) : (
+            /* Radio group — always visible in SKIPPED state, expanded in PICKED state */
+            <div className="rounded-xl border border-border-strong bg-surface-1 p-4 flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                {ANALYTICS_OPTIONS.map((opt) => (
+                  <label
+                    key={opt.value}
+                    className="flex items-center gap-3 px-2 py-1.5 rounded-md cursor-pointer hover:bg-surface-hover transition-colors"
+                  >
+                    <input
+                      type="radio"
+                      name={`analytics-${id}`}
+                      value={opt.value}
+                      checked={savedPlatform === opt.value}
+                      onChange={() => handlePlatformSelect(opt.value)}
+                      className="accent-foreground"
+                    />
+                    <span className="text-sm text-foreground">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Other free-text input — show when "other" is selected */}
+              {savedPlatform === "other" && (
+                <div className="flex flex-col gap-2 pt-1 border-t border-border-subtle">
+                  <input
+                    value={otherInput}
+                    onChange={(e) => setOtherInput(e.target.value)}
+                    placeholder="e.g. PostHog, Heap, FullStory…"
+                    className="bg-surface-2 border border-border-strong rounded-md px-3 py-2 text-sm text-foreground hover:border-border-strong focus:outline-none focus:border-border-focus"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleOtherSave();
+                    }}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleOtherSave}
+                      disabled={!otherInput.trim()}
+                      className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Save
+                    </button>
+                  </div>
+                  {savedOtherName && (
+                    <p className="text-xs text-muted-foreground/60">Currently saved: {savedOtherName}</p>
+                  )}
+                </div>
+              )}
+
+              {!isSkipped && (
+                <button
+                  onClick={() => setApExpanded(false)}
+                  className="cursor-pointer self-start text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus text-muted-foreground transition-colors"
+                >
+                  Done
                 </button>
               )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

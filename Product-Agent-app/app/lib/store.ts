@@ -269,6 +269,20 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
                 codebasePath: pl.codePath?.trim() ? pl.codePath.trim() : null,
               };
             }
+            // Migrate legacy skillPath → skillName
+            if (pl.settings.designSystem?.mode === "skill") {
+              const ds = pl.settings.designSystem as unknown as { mode: "skill"; skillPath?: string | null; skillName?: string | null };
+              if ("skillPath" in ds && ds.skillPath !== undefined) {
+                pl.settings.designSystem = { mode: "skill", skillName: ds.skillPath ?? null };
+              }
+            }
+            // Backfill missing otherName on manual analytics
+            if (pl.settings.analyticsPlatform?.mode === "manual") {
+              const ap = pl.settings.analyticsPlatform as { mode: "manual"; platform: string | null; otherName?: string | null };
+              if (!("otherName" in ap)) {
+                ap.otherName = null;
+              }
+            }
           }
           set({ productLines: data, currentProductLineId, isHydrated: true });
           return;
@@ -441,6 +455,16 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
       if ("codebasePath" in patchCopy && typeof patchCopy.codebasePath === "string") {
         const trimmed = patchCopy.codebasePath.trim();
         patchCopy.codebasePath = trimmed || null;
+      }
+      if (patchCopy.designSystem?.mode === "skill" && typeof (patchCopy.designSystem as { mode: string; skillName?: string }).skillName === "string") {
+        const ds = patchCopy.designSystem as { mode: "skill"; skillName: string | null };
+        const trimmed = (ds.skillName as string).trim();
+        ds.skillName = trimmed || null;
+      }
+      if (patchCopy.analyticsPlatform?.mode === "manual" && typeof (patchCopy.analyticsPlatform as { mode: string; otherName?: string | null }).otherName === "string") {
+        const ap = patchCopy.analyticsPlatform as { mode: "manual"; platform: string | null; otherName: string | null };
+        const trimmed = (ap.otherName as string).trim();
+        ap.otherName = trimmed || null;
       }
       Object.assign(pl.settings, patchCopy);
     }),
