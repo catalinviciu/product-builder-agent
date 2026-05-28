@@ -2,6 +2,7 @@ import type {
   Block,
   Entity,
   ProductLine,
+  ProductLineSettings,
   CreateEntityInput,
   EntityContext,
   EntityNode,
@@ -131,6 +132,13 @@ export class HttpStoreAdapter implements StoreAdapter {
 
   updateBlock(entityId: string, blockIndex: number, patch: Partial<Block>): Promise<Entity> {
     return this.request(`/api/store/entity/${encodeURIComponent(entityId)}/block/${blockIndex}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    });
+  }
+
+  updateProductLineSettings(productLineId: string, patch: Partial<ProductLineSettings>): Promise<ProductLineSettings> {
+    return this.request(`/api/store/product-line/${encodeURIComponent(productLineId)}/settings`, {
       method: "PATCH",
       body: JSON.stringify(patch),
     });

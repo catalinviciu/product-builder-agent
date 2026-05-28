@@ -24,7 +24,6 @@ export type Store = Record<string, ProductLine>;
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const STORE_FILE = path.join(DATA_DIR, "store.json");
-const STORE_FILE_TMP = STORE_FILE + ".tmp";
 const BACKUPS_DIR = path.join(DATA_DIR, ".backups");
 const MAX_BACKUPS = 5;
 
@@ -86,8 +85,10 @@ export async function writeStore(store: Store): Promise<void> {
   }
 
   const serialized = JSON.stringify(store, null, 2);
-  await fs.writeFile(STORE_FILE_TMP, serialized, "utf-8");
-  await fs.rename(STORE_FILE_TMP, STORE_FILE);
+  // Unique temp name per write so concurrent writers never tear a shared tmp file.
+  const tmp = `${STORE_FILE}.${randomUUID()}.tmp`;
+  await fs.writeFile(tmp, serialized, "utf-8");
+  await fs.rename(tmp, STORE_FILE);
 }
 
 // ── Mutex: serialize all mutations to the store ───────────────────────

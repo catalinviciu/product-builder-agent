@@ -529,7 +529,9 @@ export interface DiscoveryTree {
 }
 
 export type DesignSystemSettings =
-  | { mode: "detected"; path: string | null; confidence?: "high" | "medium" | "low"; reasoning?: string }
+  | { mode: "designMd"; designMd: string; source: "detected" | "edited" | "template";
+      confidence?: "high" | "medium" | "low"; reasoning?: string;
+      library?: string | null; tokensHint?: string | null }
   | { mode: "skill";    skillName: string | null };
 
 export type AnalyticsPlatform = "pendo" | "mixpanel" | "amplitude" | "google_analytics" | "other";
@@ -544,6 +546,7 @@ export interface ProductLineSettings {
   designSystem: DesignSystemSettings;   // placeholder; Story 2+
   analyticsPlatform: AnalyticsPlatformSettings; // placeholder; Story 2+
   storyMap: StoryMapSettings;           // placeholder; Story 16
+  detectionError?: string | null;
 }
 
 export const DEFAULT_PRODUCT_LINE_SETTINGS: ProductLineSettings = {
@@ -551,6 +554,7 @@ export const DEFAULT_PRODUCT_LINE_SETTINGS: ProductLineSettings = {
   designSystem: { mode: "skill", skillName: null },
   analyticsPlatform: { mode: "manual", platform: null, otherName: null },
   storyMap: { enabled: false, sourcePath: null },
+  detectionError: null,
 };
 
 export interface ProductLine {

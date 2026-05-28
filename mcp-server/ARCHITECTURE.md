@@ -95,6 +95,7 @@ All tools live in `src/tools/register.ts`. They map 1:1 to `StoreAdapter` method
 | `pa_delete_entity` | Deletes a **leaf only** — refuses with HTTP 409 + `blockedBy` child ids if non-leaf (matches UI behaviour) | `DELETE /api/store/entity/:id` |
 | `pa_add_block` | Appends a block (accordion/pills/quote/metric) | `POST /api/store/entity/:id/block` |
 | `pa_update_block` | Patches a block by index (label/content/items/…) | `PATCH /api/store/entity/:id/block/:idx` |
+| `pa_update_product_line_settings` | Patches settings fields (codebasePath, designSystem, analyticsPlatform, storyMap, detectionError) | `PATCH /api/store/product-line/:id/settings` |
 
 ### Design rules
 
@@ -250,7 +251,7 @@ mcp-server/
 │   │   └── HttpStoreAdapter.ts ← the only implementation
 │   └── tools/
 │       ├── schemas.ts        ← Zod schemas + compile-time drift assertions
-│       └── register.ts       ← all 11 tools registered on the MCP server
+│       └── register.ts       ← all 12 tools registered on the MCP server
 └── dist/                     ← build output (gitignored)
 ```
 
@@ -267,7 +268,8 @@ Product-Agent-app/app/api/store/
 ├── entity/[id]/block/route.ts          ← POST append
 ├── entity/[id]/block/[idx]/route.ts    ← PATCH update
 ├── subtree/[id]/route.ts
-└── context/[id]/route.ts
+├── context/[id]/route.ts
+└── product-line/[id]/settings/route.ts ← PATCH settings
 ```
 
 ```

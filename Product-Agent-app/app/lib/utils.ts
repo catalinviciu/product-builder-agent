@@ -502,6 +502,20 @@ export function buildWipBriefingPrompt(productLineName: string): string {
   return sections.join("\n\n---\n\n");
 }
 
+// ── Codebase detection prompt for AI agents ───────────────────────────────
+
+export function buildCodebaseDetectionPrompt(productLine: ProductLine): string {
+  const sections: string[] = [];
+  sections.push(`Use skill: ProductSkills/codebase-detector/SKILL.md`);
+  sections.push([
+    `Product Line: ${productLine.name}`,
+    `Product Line ID: ${productLine.id}`,
+    `Codebase path: ${productLine.settings?.codebasePath ?? "(not set)"}`,
+  ].join("\n"));
+  sections.push(`Data: Product-Agent-app/data/store.json`);
+  return sections.join("\n\n---\n\n");
+}
+
 // ── New product line setup prompt for AI agents ───────────────────────────
 
 export function buildNewProductLineSetupPrompt(productLine: ProductLine): string {

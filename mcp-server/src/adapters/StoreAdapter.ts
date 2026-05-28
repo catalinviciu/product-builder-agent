@@ -2,6 +2,7 @@ import type {
   Block,
   Entity,
   ProductLine,
+  ProductLineSettings,
   CreateEntityInput,
   EntityContext,
   EntityNode,
@@ -34,6 +35,7 @@ export interface StoreAdapter {
   // ── Writes ──────────────────────────────────────────────────────────
   createEntity(input: CreateEntityInput): Promise<Entity>;
   updateEntity(entityId: string, patch: Partial<Entity>): Promise<Entity>;
+  updateProductLineSettings(productLineId: string, patch: Partial<ProductLineSettings>): Promise<ProductLineSettings>;
   deleteEntity(entityId: string): Promise<void>;
   addBlock(entityId: string, block: Block): Promise<Entity>;
   updateBlock(entityId: string, blockIndex: number, patch: Partial<Block>): Promise<Entity>;

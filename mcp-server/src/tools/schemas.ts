@@ -132,3 +132,44 @@ export const BlockPatchSchema = z.object({
   attribution: z.string().optional(),
   items: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
 });
+
+// ── ProductLineSettings partial-update schema ─────────────────────────
+// No drift assertion — Partial<ProductLineSettings> erases discriminated-union
+// information that Zod can't faithfully model (same pattern as EntityPatchSchema).
+
+export const ProductLineSettingsPatchSchema = z.object({
+  codebasePath: z.string().nullable().optional(),
+  designSystem: z.union([
+    z.object({
+      mode: z.literal("designMd"),
+      designMd: z.string(),
+      source: z.enum(["detected", "edited", "template"]),
+      confidence: z.enum(["high", "medium", "low"]).optional(),
+      reasoning: z.string().optional(),
+      library: z.string().nullable().optional(),
+      tokensHint: z.string().nullable().optional(),
+    }),
+    z.object({
+      mode: z.literal("skill"),
+      skillName: z.string().nullable().optional(),
+    }),
+  ]).optional(),
+  analyticsPlatform: z.union([
+    z.object({
+      mode: z.literal("detected"),
+      platform: z.enum(["pendo", "mixpanel", "amplitude", "google_analytics", "other"]).nullable().optional(),
+      confidence: z.enum(["high", "medium", "low"]).optional(),
+      reasoning: z.string().optional(),
+    }),
+    z.object({
+      mode: z.literal("manual"),
+      platform: z.enum(["pendo", "mixpanel", "amplitude", "google_analytics", "other"]).nullable().optional(),
+      otherName: z.string().nullable().optional(),
+    }),
+  ]).optional(),
+  storyMap: z.object({
+    enabled: z.boolean().optional(),
+    sourcePath: z.string().nullable().optional(),
+  }).optional(),
+  detectionError: z.string().nullable().optional(),
+});

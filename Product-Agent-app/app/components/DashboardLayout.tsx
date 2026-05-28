@@ -34,6 +34,9 @@ export function DashboardLayout() {
   const currentEntityId = useAppStore((s) => s.currentEntityId);
   const viewMode = useAppStore((s) => s.viewMode);
   const settingsProductLineId = useAppStore((s) => s.settingsProductLineId);
+  const hasProductLine = useAppStore(
+    (s) => Boolean(s.productLines[s.currentProductLineId] ?? Object.values(s.productLines)[0])
+  );
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -56,6 +59,22 @@ export function DashboardLayout() {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
         <p className="text-muted-foreground text-sm animate-pulse">Loading…</p>
+      </div>
+    );
+  }
+
+  // Hydrated but no product line resolved (empty/failed-to-load store). Render a
+  // calm fallback instead of letting product-line consumers crash on undefined.
+  if (!hasProductLine) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background px-6">
+        <div className="max-w-sm text-center space-y-2">
+          <p className="text-foreground text-sm font-medium">No product data loaded</p>
+          <p className="text-muted-foreground text-sm">
+            No product lines were found. Your data may have failed to load — try refreshing the
+            page.
+          </p>
+        </div>
       </div>
     );
   }

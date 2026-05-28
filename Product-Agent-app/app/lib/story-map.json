@@ -10,45 +10,131 @@
         {
           "title": "Create product line",
           "stories": [
-            { "action": "Create a new product line with a name via the Product Line Selector", "components": ["Product Line Selector"] }
+            {
+              "action": "Create a new product line with a name via the Product Line Selector",
+              "components": [
+                "Product Line Selector"
+              ]
+            }
           ]
         },
         {
           "title": "Edit product line details",
           "stories": [
-            { "action": "Edit the product line title inline on the Overview page", "components": ["RootView", "EditableText"] },
-            { "action": "Edit the product line description with markdown formatting and preview", "components": ["RootView", "EditableText", "MarkdownToolbar"] }
+            {
+              "action": "Edit the product line title inline on the Overview page",
+              "components": [
+                "RootView",
+                "EditableText"
+              ]
+            },
+            {
+              "action": "Edit the product line description with markdown formatting and preview",
+              "components": [
+                "RootView",
+                "EditableText",
+                "MarkdownToolbar"
+              ]
+            }
           ]
         },
         {
           "title": "Configure product-line settings",
           "stories": [
-            { "action": "Open the Settings page for a product line from the sidebar header", "components": ["SectionNav", "ProductLineSettingsView"] },
-            { "action": "Pick a codebase path or explicitly skip from the Settings page empty state", "components": ["ProductLineSettingsView"] },
-            { "action": "Edit or replace a saved codebase path from the Settings page", "components": ["ProductLineSettingsView"] },
-            { "action": "Set a design-system skill path manually on the Settings page", "components": ["ProductLineSettingsView"] },
-            { "action": "Select an analytics platform (or specify a custom one) manually on the Settings page", "components": ["ProductLineSettingsView"] }
+            {
+              "action": "Open the Settings page for a product line from the sidebar header",
+              "components": [
+                "SectionNav",
+                "ProductLineSettingsView"
+              ]
+            },
+            {
+              "action": "Pick a codebase path or explicitly skip from the Settings page empty state",
+              "components": [
+                "ProductLineSettingsView"
+              ]
+            },
+            {
+              "action": "Edit or replace a saved codebase path from the Settings page",
+              "components": [
+                "ProductLineSettingsView"
+              ]
+            },
+            {
+              "action": "Set a design-system skill path manually on the Settings page",
+              "components": [
+                "ProductLineSettingsView"
+              ]
+            },
+            {
+              "action": "Select an analytics platform (or specify a custom one) manually on the Settings page",
+              "components": [
+                "ProductLineSettingsView"
+              ]
+            },
+            {
+              "action": "Detect design system & analytics platform from the linked codebase via a copy-paste handoff",
+              "components": [
+                "ProductLineSettingsView",
+                "buildCodebaseDetectionPrompt",
+                "codebase-detector"
+              ]
+            }
           ]
         },
         {
           "title": "Change product line status",
           "stories": [
-            { "action": "Change product line status (active, closed, archived) via the status indicator", "components": ["Product Line Selector"] }
+            {
+              "action": "Change product line status (active, closed, archived) via the status indicator",
+              "components": [
+                "Product Line Selector"
+              ]
+            }
           ]
         },
         {
           "title": "Delete product line",
           "stories": [
-            { "action": "Delete a product line from the Product Line Selector", "components": ["Product Line Selector"] }
+            {
+              "action": "Delete a product line from the Product Line Selector",
+              "components": [
+                "Product Line Selector"
+              ]
+            }
           ]
         },
         {
           "title": "Start co-worker setup",
           "stories": [
-            { "action": "See co-worker intro card on first visit to an empty product line", "components": ["CoworkerIntroCard", "EntityView (RootView)"] },
-            { "action": "Copy co-worker setup prompt to clipboard and track Coworker Setup Started event", "components": ["CoworkerIntroCard", "buildNewProductLineSetupPrompt"] },
-            { "action": "Dismiss the intro card and see persistent co-worker button in the empty state", "components": ["CoworkerIntroCard", "CoworkerEmptyButton", "EntityView (RootView)"] },
-            { "action": "Re-access co-worker setup prompt via the compact button after dismissing the card", "components": ["CoworkerEmptyButton"] }
+            {
+              "action": "See co-worker intro card on first visit to an empty product line",
+              "components": [
+                "CoworkerIntroCard",
+                "EntityView (RootView)"
+              ]
+            },
+            {
+              "action": "Copy co-worker setup prompt to clipboard and track Coworker Setup Started event",
+              "components": [
+                "CoworkerIntroCard",
+                "buildNewProductLineSetupPrompt"
+              ]
+            },
+            {
+              "action": "Dismiss the intro card and see persistent co-worker button in the empty state",
+              "components": [
+                "CoworkerIntroCard",
+                "CoworkerEmptyButton",
+                "EntityView (RootView)"
+              ]
+            },
+            {
+              "action": "Re-access co-worker setup prompt via the compact button after dismissing the card",
+              "components": [
+                "CoworkerEmptyButton"
+              ]
+            }
           ]
         }
       ]
@@ -61,26 +147,57 @@
         {
           "title": "View existing personas",
           "stories": [
-            { "action": "Expand the Persona Manager to see all personas for this product line", "components": ["PersonaManager"] },
-            { "action": "Hover a persona name to see its markdown-rendered description in a tooltip", "components": ["PersonaManager", "Tooltip", "MarkdownBlock"] }
+            {
+              "action": "Expand the Persona Manager to see all personas for this product line",
+              "components": [
+                "PersonaManager"
+              ]
+            },
+            {
+              "action": "Hover a persona name to see its markdown-rendered description in a tooltip",
+              "components": [
+                "PersonaManager",
+                "Tooltip",
+                "MarkdownBlock"
+              ]
+            }
           ]
         },
         {
           "title": "Add a persona",
           "stories": [
-            { "action": "Create a new persona with name and markdown description via the slide-over form", "components": ["PersonaManager", "PersonaSlideOver", "MarkdownToolbar"] }
+            {
+              "action": "Create a new persona with name and markdown description via the slide-over form",
+              "components": [
+                "PersonaManager",
+                "PersonaSlideOver",
+                "MarkdownToolbar"
+              ]
+            }
           ]
         },
         {
           "title": "Edit a persona",
           "stories": [
-            { "action": "Open an existing persona in the slide-over to update its details", "components": ["PersonaManager", "PersonaSlideOver", "MarkdownToolbar"] }
+            {
+              "action": "Open an existing persona in the slide-over to update its details",
+              "components": [
+                "PersonaManager",
+                "PersonaSlideOver",
+                "MarkdownToolbar"
+              ]
+            }
           ]
         },
         {
           "title": "Delete a persona",
           "stories": [
-            { "action": "Remove a persona with a confirmation prompt", "components": ["PersonaManager"] }
+            {
+              "action": "Remove a persona with a confirmation prompt",
+              "components": [
+                "PersonaManager"
+              ]
+            }
           ]
         }
       ]
@@ -93,34 +210,114 @@
         {
           "title": "Open Overview",
           "stories": [
-            { "action": "Navigate to the Overview page from the sidebar", "components": ["SectionNav"] }
+            {
+              "action": "Navigate to the Overview page from the sidebar",
+              "components": [
+                "SectionNav"
+              ]
+            }
           ]
         },
         {
           "title": "Add Business Outcome",
           "stories": [
-            { "action": "Create a new Business Outcome with title and description", "components": ["RootView", "Add Root Form"] }
+            {
+              "action": "Create a new Business Outcome with title and description",
+              "components": [
+                "RootView",
+                "Add Root Form"
+              ]
+            }
           ]
         },
         {
           "title": "Refine the entity",
           "stories": [
-            { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
-            { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
-            { "action": "Add a content block (accordion, pills, or quote)", "components": ["EntityView", "Add Block Button"] },
-            { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
-            { "action": "Configure structured metric tracking with frequency, numeric targets, and date range", "components": ["EntityBlocks", "MetricBlockEditor", "BlockRenderer"] },
-            { "action": "Record a metric data point and view progress in the interactive area chart with hover tooltips", "components": ["MetricCard", "MetricChart", "RecordValueForm"] },
-            { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
-            { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
-            { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
+            {
+              "action": "Edit the entity title inline",
+              "components": [
+                "EntityView",
+                "EditableText"
+              ]
+            },
+            {
+              "action": "Edit the entity description with markdown formatting and preview",
+              "components": [
+                "EntityView",
+                "EditableText",
+                "MarkdownToolbar"
+              ]
+            },
+            {
+              "action": "Add a content block (accordion, pills, or quote)",
+              "components": [
+                "EntityView",
+                "Add Block Button"
+              ]
+            },
+            {
+              "action": "Edit or delete an existing content block",
+              "components": [
+                "EntityView",
+                "Block Toolbar",
+                "MarkdownToolbar"
+              ]
+            },
+            {
+              "action": "Configure structured metric tracking with frequency, numeric targets, and date range",
+              "components": [
+                "EntityBlocks",
+                "MetricBlockEditor",
+                "BlockRenderer"
+              ]
+            },
+            {
+              "action": "Record a metric data point and view progress in the interactive area chart with hover tooltips",
+              "components": [
+                "MetricCard",
+                "MetricChart",
+                "RecordValueForm"
+              ]
+            },
+            {
+              "action": "Change entity status via the Status Picker",
+              "components": [
+                "EntityView",
+                "Status Picker"
+              ]
+            },
+            {
+              "action": "Copy the context anchor for AI reference",
+              "components": [
+                "AIActionsMenu",
+                "EntityView"
+              ]
+            },
+            {
+              "action": "Delete the entity (only when it has no children)",
+              "components": [
+                "EntityView"
+              ]
+            },
+            {
+              "action": "Mark entity as dropped, cascading the status to all children",
+              "components": [
+                "EntityView",
+                "Status Picker"
+              ]
+            }
           ]
         },
         {
           "title": "Add Product Outcome children",
           "stories": [
-            { "action": "Add a child Product Outcome from the children section", "components": ["EntityView", "Add Child Button"] }
+            {
+              "action": "Add a child Product Outcome from the children section",
+              "components": [
+                "EntityView",
+                "Add Child Button"
+              ]
+            }
           ]
         }
       ]
@@ -133,51 +330,171 @@
         {
           "title": "Navigate to parent",
           "stories": [
-            { "action": "Open the parent Business Outcome via the Entity Tree or Breadcrumb", "components": ["SectionNav", "EntityBreadcrumb"] }
+            {
+              "action": "Open the parent Business Outcome via the Entity Tree or Breadcrumb",
+              "components": [
+                "SectionNav",
+                "EntityBreadcrumb"
+              ]
+            }
           ]
         },
         {
           "title": "Add Product Outcome",
           "stories": [
-            { "action": "Create a new Product Outcome with title and description", "components": ["EntityView", "Add Child Button"] }
+            {
+              "action": "Create a new Product Outcome with title and description",
+              "components": [
+                "EntityView",
+                "Add Child Button"
+              ]
+            }
           ]
         },
         {
           "title": "Refine the entity",
           "stories": [
-            { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
-            { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
-            { "action": "Add a content block (accordion, pills, or quote)", "components": ["EntityView", "Add Block Button"] },
-            { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
-            { "action": "Configure structured metric tracking with frequency, numeric targets, and date range", "components": ["EntityBlocks", "MetricBlockEditor", "BlockRenderer"] },
-            { "action": "Record a metric data point and view progress in the interactive area chart with hover tooltips", "components": ["MetricCard", "MetricChart", "RecordValueForm"] },
-            { "action": "View solution completion markers on the metric chart showing when child solutions were marked done", "components": ["MetricCard", "MetricChart"] },
-            { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
-            { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
-            { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
+            {
+              "action": "Edit the entity title inline",
+              "components": [
+                "EntityView",
+                "EditableText"
+              ]
+            },
+            {
+              "action": "Edit the entity description with markdown formatting and preview",
+              "components": [
+                "EntityView",
+                "EditableText",
+                "MarkdownToolbar"
+              ]
+            },
+            {
+              "action": "Add a content block (accordion, pills, or quote)",
+              "components": [
+                "EntityView",
+                "Add Block Button"
+              ]
+            },
+            {
+              "action": "Edit or delete an existing content block",
+              "components": [
+                "EntityView",
+                "Block Toolbar",
+                "MarkdownToolbar"
+              ]
+            },
+            {
+              "action": "Configure structured metric tracking with frequency, numeric targets, and date range",
+              "components": [
+                "EntityBlocks",
+                "MetricBlockEditor",
+                "BlockRenderer"
+              ]
+            },
+            {
+              "action": "Record a metric data point and view progress in the interactive area chart with hover tooltips",
+              "components": [
+                "MetricCard",
+                "MetricChart",
+                "RecordValueForm"
+              ]
+            },
+            {
+              "action": "View solution completion markers on the metric chart showing when child solutions were marked done",
+              "components": [
+                "MetricCard",
+                "MetricChart"
+              ]
+            },
+            {
+              "action": "Change entity status via the Status Picker",
+              "components": [
+                "EntityView",
+                "Status Picker"
+              ]
+            },
+            {
+              "action": "Copy the context anchor for AI reference",
+              "components": [
+                "AIActionsMenu",
+                "EntityView"
+              ]
+            },
+            {
+              "action": "Delete the entity (only when it has no children)",
+              "components": [
+                "EntityView"
+              ]
+            },
+            {
+              "action": "Mark entity as dropped, cascading the status to all children",
+              "components": [
+                "EntityView",
+                "Status Picker"
+              ]
+            }
           ]
         },
         {
           "title": "Assign Personas",
           "stories": [
-            { "action": "Assign a primary persona via the Persona Picker", "components": ["EntityView", "PersonaPicker"] },
-            { "action": "Add or remove secondary personas via the multi-select picker", "components": ["EntityView", "SecondaryPersonaPicker"] }
+            {
+              "action": "Assign a primary persona via the Persona Picker",
+              "components": [
+                "EntityView",
+                "PersonaPicker"
+              ]
+            },
+            {
+              "action": "Add or remove secondary personas via the multi-select picker",
+              "components": [
+                "EntityView",
+                "SecondaryPersonaPicker"
+              ]
+            }
           ]
         },
         {
           "title": "Track signals",
           "stories": [
-            { "action": "Switch to the Signals tab on a Product Outcome to view input tracking", "components": ["EntityView", "SignalsTab"] },
-            { "action": "Add a signal inline with name, frequency, and format", "components": ["SignalsTab"] },
-            { "action": "Record a data point on a signal with the inline record form", "components": ["SignalCard"] },
-            { "action": "Pause or resume a signal to temporarily stop tracking without deleting it", "components": ["SignalCard"] }
+            {
+              "action": "Switch to the Signals tab on a Product Outcome to view input tracking",
+              "components": [
+                "EntityView",
+                "SignalsTab"
+              ]
+            },
+            {
+              "action": "Add a signal inline with name, frequency, and format",
+              "components": [
+                "SignalsTab"
+              ]
+            },
+            {
+              "action": "Record a data point on a signal with the inline record form",
+              "components": [
+                "SignalCard"
+              ]
+            },
+            {
+              "action": "Pause or resume a signal to temporarily stop tracking without deleting it",
+              "components": [
+                "SignalCard"
+              ]
+            }
           ]
         },
         {
           "title": "Add Opportunity children",
           "stories": [
-            { "action": "Add a child Opportunity from the children section", "components": ["EntityView", "Add Child Button"] }
+            {
+              "action": "Add a child Opportunity from the children section",
+              "components": [
+                "EntityView",
+                "Add Child Button"
+              ]
+            }
           ]
         }
       ]
@@ -190,45 +507,130 @@
         {
           "title": "Navigate to parent",
           "stories": [
-            { "action": "Open the parent Product Outcome via the Entity Tree or Breadcrumb", "components": ["SectionNav", "EntityBreadcrumb"] }
+            {
+              "action": "Open the parent Product Outcome via the Entity Tree or Breadcrumb",
+              "components": [
+                "SectionNav",
+                "EntityBreadcrumb"
+              ]
+            }
           ]
         },
         {
           "title": "Add Opportunity",
           "stories": [
-            { "action": "Create a new Opportunity with title and description", "components": ["EntityView", "Add Child Button"] }
+            {
+              "action": "Create a new Opportunity with title and description",
+              "components": [
+                "EntityView",
+                "Add Child Button"
+              ]
+            }
           ]
         },
         {
           "title": "Assign a Persona",
           "stories": [
-            { "action": "Assign a primary persona to the opportunity (primary only — secondary personas are available only on Product Outcomes)", "components": ["EntityView", "PersonaPicker"] }
+            {
+              "action": "Assign a primary persona to the opportunity (primary only — secondary personas are available only on Product Outcomes)",
+              "components": [
+                "EntityView",
+                "PersonaPicker"
+              ]
+            }
           ]
         },
         {
           "title": "Score opportunity with ICE",
           "stories": [
-            { "action": "Rate the opportunity using Impact, Confidence, and Ease sliders (1–10 each) to compute an ICE score", "components": ["EntityView", "IceScorePanel"] }
+            {
+              "action": "Rate the opportunity using Impact, Confidence, and Ease sliders (1–10 each) to compute an ICE score",
+              "components": [
+                "EntityView",
+                "IceScorePanel"
+              ]
+            }
           ]
         },
         {
           "title": "Refine the entity",
           "stories": [
-            { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
-            { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
-            { "action": "Add a content block (accordion, pills, or quote)", "components": ["EntityView", "Add Block Button"] },
-            { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
-            { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
-            { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
-            { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] },
-            { "action": "Copy an opportunity writing prompt to capture or refine the opportunity via the AI skill", "components": ["EntityView", "AIActionsMenu"] }
+            {
+              "action": "Edit the entity title inline",
+              "components": [
+                "EntityView",
+                "EditableText"
+              ]
+            },
+            {
+              "action": "Edit the entity description with markdown formatting and preview",
+              "components": [
+                "EntityView",
+                "EditableText",
+                "MarkdownToolbar"
+              ]
+            },
+            {
+              "action": "Add a content block (accordion, pills, or quote)",
+              "components": [
+                "EntityView",
+                "Add Block Button"
+              ]
+            },
+            {
+              "action": "Edit or delete an existing content block",
+              "components": [
+                "EntityView",
+                "Block Toolbar",
+                "MarkdownToolbar"
+              ]
+            },
+            {
+              "action": "Change entity status via the Status Picker",
+              "components": [
+                "EntityView",
+                "Status Picker"
+              ]
+            },
+            {
+              "action": "Copy the context anchor for AI reference",
+              "components": [
+                "AIActionsMenu",
+                "EntityView"
+              ]
+            },
+            {
+              "action": "Delete the entity (only when it has no children)",
+              "components": [
+                "EntityView"
+              ]
+            },
+            {
+              "action": "Mark entity as dropped, cascading the status to all children",
+              "components": [
+                "EntityView",
+                "Status Picker"
+              ]
+            },
+            {
+              "action": "Copy an opportunity writing prompt to capture or refine the opportunity via the AI skill",
+              "components": [
+                "EntityView",
+                "AIActionsMenu"
+              ]
+            }
           ]
         },
         {
           "title": "Add Solution children",
           "stories": [
-            { "action": "Add a child Solution from the children section", "components": ["EntityView", "Add Child Button"] }
+            {
+              "action": "Add a child Solution from the children section",
+              "components": [
+                "EntityView",
+                "Add Child Button"
+              ]
+            }
           ]
         }
       ]
@@ -241,32 +643,99 @@
         {
           "title": "Navigate to parent",
           "stories": [
-            { "action": "Open the parent Opportunity via the Entity Tree or Breadcrumb", "components": ["SectionNav", "EntityBreadcrumb"] }
+            {
+              "action": "Open the parent Opportunity via the Entity Tree or Breadcrumb",
+              "components": [
+                "SectionNav",
+                "EntityBreadcrumb"
+              ]
+            }
           ]
         },
         {
           "title": "Add Solution",
           "stories": [
-            { "action": "Create a new Solution with title and description", "components": ["EntityView", "Add Child Button"] }
+            {
+              "action": "Create a new Solution with title and description",
+              "components": [
+                "EntityView",
+                "Add Child Button"
+              ]
+            }
           ]
         },
         {
           "title": "Refine the entity",
           "stories": [
-            { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
-            { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
-            { "action": "Add a content block (accordion, pills, or quote)", "components": ["EntityView", "Add Block Button"] },
-            { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
-            { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
-            { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
-            { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
+            {
+              "action": "Edit the entity title inline",
+              "components": [
+                "EntityView",
+                "EditableText"
+              ]
+            },
+            {
+              "action": "Edit the entity description with markdown formatting and preview",
+              "components": [
+                "EntityView",
+                "EditableText",
+                "MarkdownToolbar"
+              ]
+            },
+            {
+              "action": "Add a content block (accordion, pills, or quote)",
+              "components": [
+                "EntityView",
+                "Add Block Button"
+              ]
+            },
+            {
+              "action": "Edit or delete an existing content block",
+              "components": [
+                "EntityView",
+                "Block Toolbar",
+                "MarkdownToolbar"
+              ]
+            },
+            {
+              "action": "Change entity status via the Status Picker",
+              "components": [
+                "EntityView",
+                "Status Picker"
+              ]
+            },
+            {
+              "action": "Copy the context anchor for AI reference",
+              "components": [
+                "AIActionsMenu",
+                "EntityView"
+              ]
+            },
+            {
+              "action": "Delete the entity (only when it has no children)",
+              "components": [
+                "EntityView"
+              ]
+            },
+            {
+              "action": "Mark entity as dropped, cascading the status to all children",
+              "components": [
+                "EntityView",
+                "Status Picker"
+              ]
+            }
           ]
         },
         {
           "title": "Add Assumption children",
           "stories": [
-            { "action": "Add a child Assumption from the children section", "components": ["EntityView", "Add Child Button"] }
+            {
+              "action": "Add a child Assumption from the children section",
+              "components": [
+                "EntityView",
+                "Add Child Button"
+              ]
+            }
           ]
         }
       ]
@@ -279,47 +748,152 @@
         {
           "title": "Slice empty user journey to populate the map",
           "stories": [
-            { "action": "Copy the slicer prompt from a Solution's empty Stories tab to start populating the story map", "components": ["EntityView", "StoriesTab", "buildUserStorySlicerPrompt", "Toaster"] },
-            { "action": "Choose custom labels for the iteration slices (Walking Skeleton, Enhancement, GA) during the slicer interview so the story map rows reflect the team's release naming", "components": ["ProductSkills/user-story-slicer/SKILL.md"] },
-            { "action": "[system] Slicer skill writes structured Story records into solution.stories[] in store.json (replaces previous MD-file output)", "components": ["ProductSkills/user-story-slicer/SKILL.md", "schemas.ts (Story, StoryIteration)", "store.ts (hydrate backfill)"] }
+            {
+              "action": "Copy the slicer prompt from a Solution's empty Stories tab to start populating the story map",
+              "components": [
+                "EntityView",
+                "StoriesTab",
+                "buildUserStorySlicerPrompt",
+                "Toaster"
+              ]
+            },
+            {
+              "action": "Choose custom labels for the iteration slices (Walking Skeleton, Enhancement, GA) during the slicer interview so the story map rows reflect the team's release naming",
+              "components": [
+                "ProductSkills/user-story-slicer/SKILL.md"
+              ]
+            },
+            {
+              "action": "[system] Slicer skill writes structured Story records into solution.stories[] in store.json (replaces previous MD-file output)",
+              "components": [
+                "ProductSkills/user-story-slicer/SKILL.md",
+                "schemas.ts (Story, StoryIteration)",
+                "store.ts (hydrate backfill)"
+              ]
+            }
           ]
         },
         {
           "title": "Add a single story to a task cell",
           "stories": [
-            { "action": "Click the '+' affordance in a task cell to create a new story inline without re-running the full slicer", "components": ["PattonMap", "AddStoryCell", "addStoryToCell"] }
+            {
+              "action": "Click the '+' affordance in a task cell to create a new story inline without re-running the full slicer",
+              "components": [
+                "PattonMap",
+                "AddStoryCell",
+                "addStoryToCell"
+              ]
+            }
           ]
         },
         {
           "title": "Read the Patton story map for the active persona",
           "stories": [
-            { "action": "View activities, tasks, and iteration rows (one Walking Skeleton row, one or more Enhancement rows, one GA row — each with the team's chosen label) as a Patton-style grid with story cards at each task × iteration intersection", "components": ["StoriesTab", "PattonMap", "PattonMapCard"] },
-            { "action": "Switch between persona-specific backbones via the persona strip when a solution covers multiple personas", "components": ["StoriesTab", "PersonaStrip", "listPersonasWithStories"] },
-            { "action": "See a story count next to each iteration label to size the slice at a glance", "components": ["PattonMap"] }
+            {
+              "action": "View activities, tasks, and iteration rows (one Walking Skeleton row, one or more Enhancement rows, one GA row — each with the team's chosen label) as a Patton-style grid with story cards at each task × iteration intersection",
+              "components": [
+                "StoriesTab",
+                "PattonMap",
+                "PattonMapCard"
+              ]
+            },
+            {
+              "action": "Switch between persona-specific backbones via the persona strip when a solution covers multiple personas",
+              "components": [
+                "StoriesTab",
+                "PersonaStrip",
+                "listPersonasWithStories"
+              ]
+            },
+            {
+              "action": "See a story count next to each iteration label to size the slice at a glance",
+              "components": [
+                "PattonMap"
+              ]
+            }
           ]
         },
         {
           "title": "Open a story's details",
           "stories": [
-            { "action": "Open a story card from the Patton map to see its full details — id, title, iteration kind + label, activity → task crumb, acceptance criteria, and analytics events", "components": ["PattonMapCard", "StoryDetailSlideOver", "DashboardLayout"] },
-            { "action": "Mark a story as done from the story detail slide-over so the Patton map card reflects shipped progress with a green check", "components": ["StoryDetailSlideOver", "PattonMapCard", "setStoryDone"] },
-            { "action": "Navigate to the previous or next story in map reading order (WS → ENH → GA, left-to-right within each row) using ← / → buttons in the footer or ArrowLeft / ArrowRight keyboard shortcuts, staying within the active persona", "components": ["StoryDetailSlideOver", "navigateStoryDetail", "orderStoriesForTraversal"] },
-            { "action": "Share a direct link to an open story via the ?story=<id> URL param — pasting the URL in a fresh tab opens the panel to that exact story", "components": ["StoryDetailSlideOver", "useSearchParams", "history.replaceState"] }
+            {
+              "action": "Open a story card from the Patton map to see its full details — id, title, iteration kind + label, activity → task crumb, acceptance criteria, and analytics events",
+              "components": [
+                "PattonMapCard",
+                "StoryDetailSlideOver",
+                "DashboardLayout"
+              ]
+            },
+            {
+              "action": "Mark a story as done from the story detail slide-over so the Patton map card reflects shipped progress with a green check",
+              "components": [
+                "StoryDetailSlideOver",
+                "PattonMapCard",
+                "setStoryDone"
+              ]
+            },
+            {
+              "action": "Navigate to the previous or next story in map reading order (WS → ENH → GA, left-to-right within each row) using ← / → buttons in the footer or ArrowLeft / ArrowRight keyboard shortcuts, staying within the active persona",
+              "components": [
+                "StoryDetailSlideOver",
+                "navigateStoryDetail",
+                "orderStoriesForTraversal"
+              ]
+            },
+            {
+              "action": "Share a direct link to an open story via the ?story=<id> URL param — pasting the URL in a fresh tab opens the panel to that exact story",
+              "components": [
+                "StoryDetailSlideOver",
+                "useSearchParams",
+                "history.replaceState"
+              ]
+            }
           ]
         },
         {
           "title": "Hand off a single story to the agent",
           "stories": [
-            { "action": "Click 'Plan & Implement story' in the slide-over footer to copy a prompt containing only that story's ID and hand it off to the agent for fine-grained implementation", "components": ["StoryDetailSlideOver", "buildSolutionPlanningPrompt", "Toaster"] },
-            { "action": "See muted helper text instead of the button when the open story has no acceptance criteria, so only ready stories can be handed off", "components": ["StoryDetailSlideOver"] }
+            {
+              "action": "Click 'Plan & Implement story' in the slide-over footer to copy a prompt containing only that story's ID and hand it off to the agent for fine-grained implementation",
+              "components": [
+                "StoryDetailSlideOver",
+                "buildSolutionPlanningPrompt",
+                "Toaster"
+              ]
+            },
+            {
+              "action": "See muted helper text instead of the button when the open story has no acceptance criteria, so only ready stories can be handed off",
+              "components": [
+                "StoryDetailSlideOver"
+              ]
+            }
           ]
         },
         {
           "title": "Add acceptance criteria + analytics events to stories",
           "stories": [
-            { "action": "Click the toolbar 'Add acceptance criteria' button to copy the AC writer prompt; the skill writes Gherkin AC and analytics events directly to each story record", "components": ["StoryMapToolbar", "StoriesTab", "buildUserStoryAcWriterPrompt"] },
-            { "action": "[system] AC writer skill writes structured acceptance_criteria + analytics_events into solution.stories[] in store.json (replaces previous MD-file output)", "components": ["ProductSkills/user-story-ac-writer/SKILL.md"] },
-            { "action": "Click 'Refine story' in the slide-over footer to copy a single prompt that fills the story definition and AC for a manually-added story", "components": ["StoryDetailSlideOver", "buildRefineStoryPrompt", "Toaster"] }
+            {
+              "action": "Click the toolbar 'Add acceptance criteria' button to copy the AC writer prompt; the skill writes Gherkin AC and analytics events directly to each story record",
+              "components": [
+                "StoryMapToolbar",
+                "StoriesTab",
+                "buildUserStoryAcWriterPrompt"
+              ]
+            },
+            {
+              "action": "[system] AC writer skill writes structured acceptance_criteria + analytics_events into solution.stories[] in store.json (replaces previous MD-file output)",
+              "components": [
+                "ProductSkills/user-story-ac-writer/SKILL.md"
+              ]
+            },
+            {
+              "action": "Click 'Refine story' in the slide-over footer to copy a single prompt that fills the story definition and AC for a manually-added story",
+              "components": [
+                "StoryDetailSlideOver",
+                "buildRefineStoryPrompt",
+                "Toaster"
+              ]
+            }
           ]
         }
       ]
@@ -332,59 +906,199 @@
         {
           "title": "Navigate to parent",
           "stories": [
-            { "action": "Open the parent Solution via the Entity Tree or Breadcrumb", "components": ["SectionNav", "EntityBreadcrumb"] }
+            {
+              "action": "Open the parent Solution via the Entity Tree or Breadcrumb",
+              "components": [
+                "SectionNav",
+                "EntityBreadcrumb"
+              ]
+            }
           ]
         },
         {
           "title": "Add Assumption",
           "stories": [
-            { "action": "Create a new Assumption with title and description (auto-generates Impact if True and Evidence blocks)", "components": ["EntityView", "Add Child Button"] }
+            {
+              "action": "Create a new Assumption with title and description (auto-generates Impact if True and Evidence blocks)",
+              "components": [
+                "EntityView",
+                "Add Child Button"
+              ]
+            }
           ]
         },
         {
           "title": "Classify the Assumption",
           "stories": [
-            { "action": "Assign an assumption type (Desirability, Usability, Feasibility, Viability, or Ethical) via the type picker", "components": ["EntityView", "AssumptionTypePicker"] },
-            { "action": "View the colored type pill on the entity and on child cards in the parent grid", "components": ["EntityView", "ChildEntityCard"] }
+            {
+              "action": "Assign an assumption type (Desirability, Usability, Feasibility, Viability, or Ethical) via the type picker",
+              "components": [
+                "EntityView",
+                "AssumptionTypePicker"
+              ]
+            },
+            {
+              "action": "View the colored type pill on the entity and on child cards in the parent grid",
+              "components": [
+                "EntityView",
+                "ChildEntityCard"
+              ]
+            }
           ]
         },
         {
           "title": "Refine the Assumption",
           "stories": [
-            { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
-            { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
-            { "action": "Add a content block (accordion, pills, or quote)", "components": ["EntityView", "Add Block Button"] },
-            { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
-            { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
-            { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
-            { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
+            {
+              "action": "Edit the entity title inline",
+              "components": [
+                "EntityView",
+                "EditableText"
+              ]
+            },
+            {
+              "action": "Edit the entity description with markdown formatting and preview",
+              "components": [
+                "EntityView",
+                "EditableText",
+                "MarkdownToolbar"
+              ]
+            },
+            {
+              "action": "Add a content block (accordion, pills, or quote)",
+              "components": [
+                "EntityView",
+                "Add Block Button"
+              ]
+            },
+            {
+              "action": "Edit or delete an existing content block",
+              "components": [
+                "EntityView",
+                "Block Toolbar",
+                "MarkdownToolbar"
+              ]
+            },
+            {
+              "action": "Change entity status via the Status Picker",
+              "components": [
+                "EntityView",
+                "Status Picker"
+              ]
+            },
+            {
+              "action": "Copy the context anchor for AI reference",
+              "components": [
+                "AIActionsMenu",
+                "EntityView"
+              ]
+            },
+            {
+              "action": "Delete the entity (only when it has no children)",
+              "components": [
+                "EntityView"
+              ]
+            },
+            {
+              "action": "Mark entity as dropped, cascading the status to all children",
+              "components": [
+                "EntityView",
+                "Status Picker"
+              ]
+            }
           ]
         },
         {
           "title": "Add Test children",
           "stories": [
-            { "action": "Create a new Test under the assumption (auto-generates Define Test and Pass/Fail Criteria blocks)", "components": ["EntityView", "Add Child Button"] }
+            {
+              "action": "Create a new Test under the assumption (auto-generates Define Test and Pass/Fail Criteria blocks)",
+              "components": [
+                "EntityView",
+                "Add Child Button"
+              ]
+            }
           ]
         },
         {
           "title": "Classify the Test",
           "stories": [
-            { "action": "Assign a test type (Prototype Test, One-Question Survey, Data Mining, or Research Spike) via the type picker", "components": ["EntityView", "TestTypePicker"] },
-            { "action": "View the colored type pill on the entity and on child cards in the parent grid", "components": ["EntityView", "ChildEntityCard"] }
+            {
+              "action": "Assign a test type (Prototype Test, One-Question Survey, Data Mining, or Research Spike) via the type picker",
+              "components": [
+                "EntityView",
+                "TestTypePicker"
+              ]
+            },
+            {
+              "action": "View the colored type pill on the entity and on child cards in the parent grid",
+              "components": [
+                "EntityView",
+                "ChildEntityCard"
+              ]
+            }
           ]
         },
         {
           "title": "Refine the Test",
           "stories": [
-            { "action": "Edit the entity title inline", "components": ["EntityView", "EditableText"] },
-            { "action": "Edit the entity description with markdown formatting and preview", "components": ["EntityView", "EditableText", "MarkdownToolbar"] },
-            { "action": "Add a content block (accordion, pills, or quote)", "components": ["EntityView", "Add Block Button"] },
-            { "action": "Edit or delete an existing content block", "components": ["EntityView", "Block Toolbar", "MarkdownToolbar"] },
-            { "action": "Change entity status via the Status Picker", "components": ["EntityView", "Status Picker"] },
-            { "action": "Copy the context anchor for AI reference", "components": ["AIActionsMenu", "EntityView"] },
-            { "action": "Delete the entity (only when it has no children)", "components": ["EntityView"] },
-            { "action": "Mark entity as dropped, cascading the status to all children", "components": ["EntityView", "Status Picker"] }
+            {
+              "action": "Edit the entity title inline",
+              "components": [
+                "EntityView",
+                "EditableText"
+              ]
+            },
+            {
+              "action": "Edit the entity description with markdown formatting and preview",
+              "components": [
+                "EntityView",
+                "EditableText",
+                "MarkdownToolbar"
+              ]
+            },
+            {
+              "action": "Add a content block (accordion, pills, or quote)",
+              "components": [
+                "EntityView",
+                "Add Block Button"
+              ]
+            },
+            {
+              "action": "Edit or delete an existing content block",
+              "components": [
+                "EntityView",
+                "Block Toolbar",
+                "MarkdownToolbar"
+              ]
+            },
+            {
+              "action": "Change entity status via the Status Picker",
+              "components": [
+                "EntityView",
+                "Status Picker"
+              ]
+            },
+            {
+              "action": "Copy the context anchor for AI reference",
+              "components": [
+                "AIActionsMenu",
+                "EntityView"
+              ]
+            },
+            {
+              "action": "Delete the entity (only when it has no children)",
+              "components": [
+                "EntityView"
+              ]
+            },
+            {
+              "action": "Mark entity as dropped, cascading the status to all children",
+              "components": [
+                "EntityView",
+                "Status Picker"
+              ]
+            }
           ]
         }
       ]
@@ -397,44 +1111,95 @@
         {
           "title": "Change entity status",
           "stories": [
-            { "action": "Change an entity's status (draft, explore, commit, done, archived, dropped) via the Status Picker", "components": ["EntityView", "Status Picker"] }
+            {
+              "action": "Change an entity's status (draft, explore, commit, done, archived, dropped) via the Status Picker",
+              "components": [
+                "EntityView",
+                "Status Picker"
+              ]
+            }
           ]
         },
         {
           "title": "Switch view modes",
           "stories": [
-            { "action": "Switch between Grid and Kanban views using the view mode toggle", "components": ["EntityView", "View Toggle"] }
+            {
+              "action": "Switch between Grid and Kanban views using the view mode toggle",
+              "components": [
+                "EntityView",
+                "View Toggle"
+              ]
+            }
           ]
         },
         {
           "title": "Move entities between statuses in Kanban",
           "stories": [
-            { "action": "Drag a child card from one Kanban column to another to change its status", "components": ["Kanban View", "ChildEntityCard", "Drag Overlay"] }
+            {
+              "action": "Drag a child card from one Kanban column to another to change its status",
+              "components": [
+                "Kanban View",
+                "ChildEntityCard",
+                "Drag Overlay"
+              ]
+            }
           ]
         },
         {
           "title": "Stack-rank entities by priority",
           "stories": [
-            { "action": "Drag cards up or down within a Kanban column to reorder by priority", "components": ["Kanban View", "ChildEntityCard", "SortableContext"] },
-            { "action": "Reorder root Business Outcome cards within a column on the Overview page", "components": ["RootView", "ChildEntityCard", "SortableContext"] }
+            {
+              "action": "Drag cards up or down within a Kanban column to reorder by priority",
+              "components": [
+                "Kanban View",
+                "ChildEntityCard",
+                "SortableContext"
+              ]
+            },
+            {
+              "action": "Reorder root Business Outcome cards within a column on the Overview page",
+              "components": [
+                "RootView",
+                "ChildEntityCard",
+                "SortableContext"
+              ]
+            }
           ]
         },
         {
           "title": "Show/hide archived and dropped",
           "stories": [
-            { "action": "Toggle visibility of archived and dropped items in the Done column", "components": ["Kanban View", "Archived Toggle"] }
+            {
+              "action": "Toggle visibility of archived and dropped items in the Done column",
+              "components": [
+                "Kanban View",
+                "Archived Toggle"
+              ]
+            }
           ]
         },
         {
           "title": "View priority-sorted grid",
           "stories": [
-            { "action": "View cards in Grid mode grouped by status priority: commit, explore, draft, done, archived, dropped", "components": ["Grid View", "ChildEntityCard"] }
+            {
+              "action": "View cards in Grid mode grouped by status priority: commit, explore, draft, done, archived, dropped",
+              "components": [
+                "Grid View",
+                "ChildEntityCard"
+              ]
+            }
           ]
         },
         {
           "title": "Compare ICE scores",
           "stories": [
-            { "action": "Compare ICE score badges on opportunity cards to prioritize across the grid", "components": ["ChildEntityCard", "ICE Badge"] }
+            {
+              "action": "Compare ICE score badges on opportunity cards to prioritize across the grid",
+              "components": [
+                "ChildEntityCard",
+                "ICE Badge"
+              ]
+            }
           ]
         }
       ]
@@ -447,22 +1212,56 @@
         {
           "title": "Switch to Metric Tree view",
           "stories": [
-            { "action": "Toggle from Discovery Tree to Metric Tree using the sidebar segmented control", "components": ["SectionNav", "ViewModeToggle"] }
+            {
+              "action": "Toggle from Discovery Tree to Metric Tree using the sidebar segmented control",
+              "components": [
+                "SectionNav",
+                "ViewModeToggle"
+              ]
+            }
           ]
         },
         {
           "title": "Browse metric relationships",
           "stories": [
-            { "action": "View all Business and Product Outcomes arranged as a recursive driver/driven tree with connector lines", "components": ["MetricTreeView", "MetricTreeCard"] },
-            { "action": "See signal health and latest values as detail rows inside each outcome card", "components": ["MetricTreeCard"] },
-            { "action": "Navigate to an outcome's detail view by clicking its metric card", "components": ["MetricTreeCard", "EntityView"] },
-            { "action": "Zoom in or out on large metric trees using the zoom controls", "components": ["MetricTreeView"] }
+            {
+              "action": "View all Business and Product Outcomes arranged as a recursive driver/driven tree with connector lines",
+              "components": [
+                "MetricTreeView",
+                "MetricTreeCard"
+              ]
+            },
+            {
+              "action": "See signal health and latest values as detail rows inside each outcome card",
+              "components": [
+                "MetricTreeCard"
+              ]
+            },
+            {
+              "action": "Navigate to an outcome's detail view by clicking its metric card",
+              "components": [
+                "MetricTreeCard",
+                "EntityView"
+              ]
+            },
+            {
+              "action": "Zoom in or out on large metric trees using the zoom controls",
+              "components": [
+                "MetricTreeView"
+              ]
+            }
           ]
         },
         {
           "title": "Reparent a metric",
           "stories": [
-            { "action": "Change a Product Outcome's driver relationship by picking a new parent in the reparent dropdown, updating the tree immediately", "components": ["MetricTreeCard", "ReparentDropdown"] }
+            {
+              "action": "Change a Product Outcome's driver relationship by picking a new parent in the reparent dropdown, updating the tree immediately",
+              "components": [
+                "MetricTreeCard",
+                "ReparentDropdown"
+              ]
+            }
           ]
         }
       ]
@@ -475,31 +1274,58 @@
         {
           "title": "Open Overview",
           "stories": [
-            { "action": "Navigate to the product line overview by selecting Discovery Tree in the sidebar view toggle", "components": ["SectionNav", "ViewModeToggle"] }
+            {
+              "action": "Navigate to the product line overview by selecting Discovery Tree in the sidebar view toggle",
+              "components": [
+                "SectionNav",
+                "ViewModeToggle"
+              ]
+            }
           ]
         },
         {
           "title": "Browse the entity tree",
           "stories": [
-            { "action": "Navigate to any entity by clicking it in the sidebar tree", "components": ["SectionNav"] }
+            {
+              "action": "Navigate to any entity by clicking it in the sidebar tree",
+              "components": [
+                "SectionNav"
+              ]
+            }
           ]
         },
         {
           "title": "Use breadcrumbs",
           "stories": [
-            { "action": "Jump to any ancestor entity using the breadcrumb trail", "components": ["EntityBreadcrumb"] }
+            {
+              "action": "Jump to any ancestor entity using the breadcrumb trail",
+              "components": [
+                "EntityBreadcrumb"
+              ]
+            }
           ]
         },
         {
           "title": "Switch product line",
           "stories": [
-            { "action": "Switch to a different product line via the Product Line Selector", "components": ["Product Line Selector"] }
+            {
+              "action": "Switch to a different product line via the Product Line Selector",
+              "components": [
+                "Product Line Selector"
+              ]
+            }
           ]
         },
         {
           "title": "Toggle sidebar",
           "stories": [
-            { "action": "Collapse or expand the sidebar to control workspace layout", "components": ["DashboardLayout", "Sidebar Toggle"] }
+            {
+              "action": "Collapse or expand the sidebar to control workspace layout",
+              "components": [
+                "DashboardLayout",
+                "Sidebar Toggle"
+              ]
+            }
           ]
         }
       ]
@@ -512,14 +1338,30 @@
         {
           "title": "Set display theme",
           "stories": [
-            { "action": "Open the account menu to access display preferences", "components": ["AccountMenu"] },
-            { "action": "Choose between automatic (time-based) or manual light/dark theme", "components": ["AccountMenu", "ThemePreferenceContext"] }
+            {
+              "action": "Open the account menu to access display preferences",
+              "components": [
+                "AccountMenu"
+              ]
+            },
+            {
+              "action": "Choose between automatic (time-based) or manual light/dark theme",
+              "components": [
+                "AccountMenu",
+                "ThemePreferenceContext"
+              ]
+            }
           ]
         },
         {
           "title": "Configure analytics consent",
           "stories": [
-            { "action": "Accept or decline anonymous analytics consent on first launch via the consent banner", "components": ["ConsentBanner"] }
+            {
+              "action": "Accept or decline anonymous analytics consent on first launch via the consent banner",
+              "components": [
+                "ConsentBanner"
+              ]
+            }
           ]
         }
       ]
@@ -532,38 +1374,86 @@
         {
           "title": "Copy entity anchor",
           "stories": [
-            { "action": "Copy a context anchor for any entity to reference it in an AI agent", "components": ["AIActionsMenu", "EntityView"] }
+            {
+              "action": "Copy a context anchor for any entity to reference it in an AI agent",
+              "components": [
+                "AIActionsMenu",
+                "EntityView"
+              ]
+            }
           ]
         },
         {
           "title": "Generate solution planning prompt",
           "stories": [
-            { "action": "Copy a full planning prompt from a Solution entity that includes Opportunity context, Solution details, persona, codebase path, and skill instructions", "components": ["AIActionsMenu", "EntityView", "buildSolutionPlanningPrompt"] }
+            {
+              "action": "Copy a full planning prompt from a Solution entity that includes Opportunity context, Solution details, persona, codebase path, and skill instructions",
+              "components": [
+                "AIActionsMenu",
+                "EntityView",
+                "buildSolutionPlanningPrompt"
+              ]
+            }
           ]
         },
         {
           "title": "Generate opportunity writing prompt",
           "stories": [
-            { "action": "Copy an AI writing prompt from a Product Outcome to launch the opportunity writer skill for a new opportunity", "components": ["AIActionsMenu", "EntityView", "buildOpportunityWriterPrompt"] },
-            { "action": "Copy an AI writing prompt from an existing Opportunity to launch the opportunity writer skill for editing", "components": ["AIActionsMenu", "EntityView", "buildOpportunityWriterPrompt"] }
+            {
+              "action": "Copy an AI writing prompt from a Product Outcome to launch the opportunity writer skill for a new opportunity",
+              "components": [
+                "AIActionsMenu",
+                "EntityView",
+                "buildOpportunityWriterPrompt"
+              ]
+            },
+            {
+              "action": "Copy an AI writing prompt from an existing Opportunity to launch the opportunity writer skill for editing",
+              "components": [
+                "AIActionsMenu",
+                "EntityView",
+                "buildOpportunityWriterPrompt"
+              ]
+            }
           ]
         },
         {
           "title": "Brainstorm solutions for an opportunity",
           "stories": [
-            { "action": "Copy an AI prompt from an Opportunity to launch the solutions brainstormer skill and generate 5 distinct solution approaches", "components": ["AIActionsMenu", "EntityView", "buildSolutionsBrainstormerPrompt"] }
+            {
+              "action": "Copy an AI prompt from an Opportunity to launch the solutions brainstormer skill and generate 5 distinct solution approaches",
+              "components": [
+                "AIActionsMenu",
+                "EntityView",
+                "buildSolutionsBrainstormerPrompt"
+              ]
+            }
           ]
         },
         {
           "title": "Generate WIP briefing",
           "stories": [
-            { "action": "Copy an AI prompt from the Product Line overview to generate a WIP briefing covering metric health, management signals, and insights per product outcome", "components": ["RootAIActionsButton", "RootView", "buildWipBriefingPrompt"] }
+            {
+              "action": "Copy an AI prompt from the Product Line overview to generate a WIP briefing covering metric health, management signals, and insights per product outcome",
+              "components": [
+                "RootAIActionsButton",
+                "RootView",
+                "buildWipBriefingPrompt"
+              ]
+            }
           ]
         },
         {
           "title": "Generate product line setup prompt",
           "stories": [
-            { "action": "Copy a co-worker setup prompt from the Root AI Actions menu to define a product line's Business Outcome, Product Outcome, and Opportunities via the new-product-line-setup skill", "components": ["RootAIActionsButton", "RootView", "buildNewProductLineSetupPrompt"] }
+            {
+              "action": "Copy a co-worker setup prompt from the Root AI Actions menu to define a product line's Business Outcome, Product Outcome, and Opportunities via the new-product-line-setup skill",
+              "components": [
+                "RootAIActionsButton",
+                "RootView",
+                "buildNewProductLineSetupPrompt"
+              ]
+            }
           ]
         }
       ]
