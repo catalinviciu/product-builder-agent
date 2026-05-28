@@ -31,6 +31,8 @@
 | **Configure product-line settings** | Open the Settings page for a product line from the sidebar header | `SectionNav` · `ProductLineSettingsView` |
 |  | Pick a codebase path or explicitly skip from the Settings page empty state | `ProductLineSettingsView` |
 |  | Edit or replace a saved codebase path from the Settings page | `ProductLineSettingsView` |
+|  | Set a design-system skill path manually on the Settings page | `ProductLineSettingsView` |
+|  | Select an analytics platform (or specify a custom one) manually on the Settings page | `ProductLineSettingsView` |
 | **Change product line status** | Change product line status (active, closed, archived) via the status indicator | `Product Line Selector` |
 | **Delete product line** | Delete a product line from the Product Line Selector | `Product Line Selector` |
 | **Start co-worker setup** | See co-worker intro card on first visit to an empty product line | `CoworkerIntroCard` · `EntityView (RootView)` |

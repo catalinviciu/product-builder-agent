@@ -86,6 +86,11 @@ export type AnalyticsEventMap = {
   CodebaseSkipped: {
     productLineId: string;
   };
+  ManualSettingSaved: {
+    Field: "designSystem" | "analyticsPlatform";
+    Mode: "skill" | "manual";
+    Source: "settings-page" | "redirect";
+  };
 };
 
 type ListenerMap = { [K in keyof AnalyticsEventMap]?: Array<Listener<AnalyticsEventMap[K]>> };

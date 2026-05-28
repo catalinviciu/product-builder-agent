@@ -113,6 +113,10 @@ export function startAnalyticsSubscribers(): void {
     trackEvent("CodebaseSkipped", props);
   });
 
+  analyticsEmitter.on("ManualSettingSaved", (props) => {
+    trackEvent("ManualSettingSaved", props);
+  });
+
   // Diff subscription: emit story_map_ac_enriched when a solution's
   // stories_with_ac count increases compared to the previous snapshot.
   // Also emit story_enriched when a manually-added story (wasManual = !narrative)
