@@ -28,7 +28,9 @@
 | **Create product line** | Create a new product line with a name via the Product Line Selector | `Product Line Selector` |
 | **Edit product line details** | Edit the product line title inline on the Overview page | `RootView` · `EditableText` |
 |  | Edit the product line description with markdown formatting and preview | `RootView` · `EditableText` · `MarkdownToolbar` |
-|  | Set the local code path for a product line so AI prompts can reference the codebase location | `EditProductLineForm` · `SectionNav` |
+| **Configure product-line settings** | Open the Settings page for a product line from the sidebar header | `SectionNav` · `ProductLineSettingsView` |
+|  | Pick a codebase path or explicitly skip from the Settings page empty state | `ProductLineSettingsView` |
+|  | Edit or replace a saved codebase path from the Settings page | `ProductLineSettingsView` |
 | **Change product line status** | Change product line status (active, closed, archived) via the status indicator | `Product Line Selector` |
 | **Delete product line** | Delete a product line from the Product Line Selector | `Product Line Selector` |
 | **Start co-worker setup** | See co-worker intro card on first visit to an empty product line | `CoworkerIntroCard` · `EntityView (RootView)` |

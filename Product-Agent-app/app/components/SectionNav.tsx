@@ -3,10 +3,10 @@
 import React, { useState, useRef, useCallback } from "react";
 import { useClickOutside } from "@/app/lib/hooks/useClickOutside";
 import {
-  ChevronDown, Check, Plus, Pencil, X, Trash2,
+  ChevronDown, Check, Plus, Settings, X, Trash2,
 } from "lucide-react";
-import type { Entity, ProductLineStatus } from "@/app/lib/schemas";
-import { LEVEL_META, PRODUCT_LINE_STATUS_META, PRODUCT_LINE_STATUSES, ENTITY_STATUS_META } from "@/app/lib/schemas";
+import type { Entity } from "@/app/lib/schemas";
+import { LEVEL_META, PRODUCT_LINE_STATUS_META, ENTITY_STATUS_META, DEFAULT_PRODUCT_LINE_SETTINGS } from "@/app/lib/schemas";
 import { LEVEL_ICON_MAP } from "@/app/lib/icons";
 import { cn } from "@/app/lib/utils";
 import { useAppStore } from "@/app/lib/store";
@@ -27,6 +27,7 @@ function NewProductLineForm({ onClose }: { onClose: () => void }) {
       description: description.trim(),
       status: "active",
       personas: [],
+      settings: DEFAULT_PRODUCT_LINE_SETTINGS,
       tree: { title: `Product Line: ${name.trim()}`, description: description.trim(), rootChildren: [] },
       entities: {},
     });
@@ -67,87 +68,11 @@ function NewProductLineForm({ onClose }: { onClose: () => void }) {
   );
 }
 
-function EditProductLineForm({ plId, onClose }: { plId: string; onClose: () => void }) {
-  const productLines = useAppStore((s) => s.productLines);
-  const { updateProductLine, updateTree } = useAppStore();
-  const pl = productLines[plId];
-  const [name, setName] = useState(pl?.name || "");
-  const [description, setDescription] = useState(pl?.description || "");
-  const [status, setStatus] = useState<ProductLineStatus>(pl?.status || "active");
-  const [codePath, setCodePath] = useState(pl?.codePath || "");
-
-  if (!pl) return null;
-
-  const handleSubmit = () => {
-    if (!name.trim()) return;
-    updateProductLine(plId, { name: name.trim(), description: description.trim(), status, codePath: codePath.trim() });
-    updateTree(plId, { title: `Product Line: ${name.trim()}`, description: description.trim() });
-    onClose();
-  };
-
-  return (
-    <div className="px-2 mb-3">
-      <div className="rounded-lg border border-border-strong p-3 flex flex-col gap-2 bg-surface-1">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-          Edit Product Line
-        </span>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Name"
-          className="bg-surface-hover border border-border-strong rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-border-focus"
-          autoFocus
-          onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
-        />
-        <input
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Description"
-          className="bg-surface-hover border border-border-strong rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-border-focus"
-          onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
-        />
-        <input
-          value={codePath}
-          onChange={(e) => setCodePath(e.target.value)}
-          placeholder="Local code path, e.g. Product-Agent-app/"
-          className="bg-surface-hover border border-border-strong rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-border-focus"
-          onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
-        />
-        <div className="flex gap-1.5">
-          {PRODUCT_LINE_STATUSES.map((s) => {
-            const meta = PRODUCT_LINE_STATUS_META[s];
-            return (
-              <button
-                key={s}
-                onClick={() => setStatus(s)}
-                className={cn(
-                  "cursor-pointer text-[10px] px-2 py-1 rounded-md border transition-colors",
-                  status === s ? meta.color : "text-muted-foreground/40 bg-transparent border-border-default hover:border-border-strong"
-                )}
-              >
-                {meta.label}
-              </button>
-            );
-          })}
-        </div>
-        <div className="flex gap-2">
-          <button onClick={handleSubmit} disabled={!name.trim()} className="cursor-pointer text-[10px] px-2 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed">
-            <Check size={10} /> Save
-          </button>
-          <button onClick={onClose} className="cursor-pointer text-[10px] px-2 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1">
-            <X size={10} /> Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function ProductLineSelector() {
-  const { currentProductLineId, switchProductLine, deleteProductLine } = useAppStore();
+  const { currentProductLineId, switchProductLine, deleteProductLine, openSettings } = useAppStore();
   const [open, setOpen] = useState(false);
   const [showNewForm, setShowNewForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -163,10 +88,6 @@ function ProductLineSelector() {
 
   if (showNewForm) {
     return <NewProductLineForm onClose={() => setShowNewForm(false)} />;
-  }
-
-  if (editingId) {
-    return <EditProductLineForm plId={editingId} onClose={() => setEditingId(null)} />;
   }
 
   return (
@@ -227,10 +148,11 @@ function ProductLineSelector() {
                 <div className="flex items-center gap-1 shrink-0">
                   {isActive && <Check size={14} className="text-emerald-600 dark:text-emerald-400" />}
                   <button
-                    onClick={(e) => { e.stopPropagation(); setEditingId(pl.id); setOpen(false); }}
+                    onClick={(e) => { e.stopPropagation(); openSettings(pl.id, "header-link"); setOpen(false); }}
                     className="cursor-pointer p-1 rounded text-muted-foreground/30 hover:text-foreground opacity-0 group-hover/pl:opacity-100 transition-opacity"
+                    title="Settings"
                   >
-                    <Pencil size={11} />
+                    <Settings size={11} />
                   </button>
                   {confirmDeleteId === pl.id ? (
                     <div className="flex gap-1">
@@ -278,7 +200,7 @@ const STATUS_SORT_ORDER: Record<string, number> = { commit: 0, explore: 1, draft
 
 export function SectionNav() {
   const { currentEntityId, navigateTo, viewMode, setViewMode } = useAppStore();
-  const { tree, entities, name } = useProductLine();
+  const { tree, entities } = useProductLine();
 
   const expandedIds = React.useMemo(() => {
     const ids = new Set<string>();

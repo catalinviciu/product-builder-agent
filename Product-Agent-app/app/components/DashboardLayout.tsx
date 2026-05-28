@@ -4,6 +4,7 @@ import { useEffect, useCallback } from "react";
 import { SectionNav } from "./SectionNav";
 import { EntityView } from "./EntityView";
 import { MetricTreeView } from "./MetricTreeView";
+import { ProductLineSettingsView } from "./ProductLineSettingsView";
 import { PersonaSlideOver } from "./PersonaSlideOver";
 import { StoryDetailSlideOver } from "./StoryDetailSlideOver";
 import { AccountMenu } from "./AccountMenu";
@@ -32,6 +33,7 @@ export function DashboardLayout() {
   const setSidebarOpen = useAppStore((s) => s.setSidebarOpen);
   const currentEntityId = useAppStore((s) => s.currentEntityId);
   const viewMode = useAppStore((s) => s.viewMode);
+  const settingsProductLineId = useAppStore((s) => s.settingsProductLineId);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -121,7 +123,9 @@ export function DashboardLayout() {
             {sidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
           </button>
           <AccountMenu />
-          {viewMode === "metric-tree" ? <MetricTreeView /> : <EntityView />}
+          {settingsProductLineId
+            ? <ProductLineSettingsView />
+            : viewMode === "metric-tree" ? <MetricTreeView /> : <EntityView />}
         </main>
 
         <PersonaSlideOver />

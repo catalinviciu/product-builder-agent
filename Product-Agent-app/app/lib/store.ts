@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import { DEFAULT_PRODUCT_LINE_ID } from "./schemas";
-import type { Entity, Block, MetricBlock, ProductLine, DiscoveryTree, Persona, AssumptionType, TestType, IceScore, EntityStatus, Signal } from "./schemas";
+import { DEFAULT_PRODUCT_LINE_ID, DEFAULT_PRODUCT_LINE_SETTINGS } from "./schemas";
+import type { Entity, Block, MetricBlock, ProductLine, ProductLineSettings, DiscoveryTree, Persona, AssumptionType, TestType, IceScore, EntityStatus, Signal } from "./schemas";
 import { analyticsEmitter, type AnalyticsEventMap } from "./analytics-events";
 import { getDescendantIds } from "./utils";
 
@@ -19,6 +19,9 @@ export interface AppStore {
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setViewMode: (mode: "discovery" | "metric-tree") => void;
+  settingsProductLineId: string | null;
+  openSettings: (plId: string, source: "creation" | "header-link") => void;
+  closeSettings: () => void;
   personaPanelOpen: boolean;
   personaPanelId: string | null;
   openPersonaPanel: (id?: string) => void;
@@ -56,7 +59,8 @@ export interface AppStore {
 
   // Product Line CRUD
   addProductLine: (pl: ProductLine) => void;
-  updateProductLine: (id: string, updates: Partial<Pick<ProductLine, "name" | "description" | "status" | "codePath">>) => void;
+  updateProductLine: (id: string, updates: Partial<Pick<ProductLine, "name" | "description" | "status">>) => void;
+  updateProductLineSettings: (id: string, patch: Partial<ProductLineSettings>) => void;
   updateTree: (plId: string, updates: Partial<Pick<DiscoveryTree, "title" | "description" | "rootChildren">>) => void;
   deleteProductLine: (id: string) => void;
   addRootEntity: (entity: Entity) => void;
@@ -133,6 +137,12 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
     draft.currentEntityId = null;
     draft.sidebarOpen = mode === "discovery";
   }),
+  settingsProductLineId: null,
+  openSettings: (plId, source) => {
+    set({ settingsProductLineId: plId, currentEntityId: null });
+    analyticsEmitter.emit("SettingsPageOpened", { source, productLineId: plId });
+  },
+  closeSettings: () => set({ settingsProductLineId: null }),
   personaPanelOpen: false,
   personaPanelId: null,
   openPersonaPanel: (id) => set({ personaPanelOpen: true, personaPanelId: id ?? null }),
@@ -251,6 +261,15 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
               }
             }
           }
+          // Backfill settings for product lines that predate this field
+          for (const pl of Object.values(data)) {
+            if (!pl.settings) {
+              pl.settings = {
+                ...DEFAULT_PRODUCT_LINE_SETTINGS,
+                codebasePath: pl.codePath?.trim() ? pl.codePath.trim() : null,
+              };
+            }
+          }
           set({ productLines: data, currentProductLineId, isHydrated: true });
           return;
         }
@@ -282,9 +301,9 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
 
   switchProductLine: (id) => {
     if (typeof window !== "undefined") localStorage.setItem("pa-current-pl", id);
-    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null, viewMode: "discovery", sidebarOpen: true, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null });
+    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null, viewMode: "discovery", sidebarOpen: true, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null, settingsProductLineId: null });
   },
-  navigateTo: (id) => set({ currentEntityId: id, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null }),
+  navigateTo: (id) => set({ currentEntityId: id, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null, settingsProductLineId: null }),
   navigateUp: () =>
     set((draft) => {
       if (!draft.currentEntityId) return;
@@ -390,16 +409,20 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
   }),
 
   addProductLine: (pl) => {
+    const plWithSettings = { ...pl, settings: pl.settings ?? DEFAULT_PRODUCT_LINE_SETTINGS };
     set((draft) => {
-      draft.productLines[pl.id] = pl;
-      draft.currentProductLineId = pl.id;
+      draft.productLines[plWithSettings.id] = plWithSettings;
+      draft.currentProductLineId = plWithSettings.id;
       draft.currentEntityId = null;
     });
     analyticsEmitter.emit("Product Line Created", {
-      status: pl.status,
-      has_personas: (pl.personas ?? []).length > 0,
-      persona_count: (pl.personas ?? []).length,
+      status: plWithSettings.status,
+      has_personas: (plWithSettings.personas ?? []).length > 0,
+      persona_count: (plWithSettings.personas ?? []).length,
     });
+    // Open settings so user lands on Settings page after creation
+    analyticsEmitter.emit("SettingsPageOpened", { source: "creation", productLineId: plWithSettings.id });
+    set({ settingsProductLineId: plWithSettings.id, currentEntityId: null });
   },
 
   updateProductLine: (id, updates) =>
@@ -407,6 +430,19 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
       const pl = draft.productLines[id];
       if (!pl) return;
       Object.assign(pl, updates);
+    }),
+
+  updateProductLineSettings: (id, patch) =>
+    set((draft) => {
+      const pl = draft.productLines[id];
+      if (!pl) return;
+      if (!pl.settings) pl.settings = { ...DEFAULT_PRODUCT_LINE_SETTINGS };
+      const patchCopy = { ...patch };
+      if ("codebasePath" in patchCopy && typeof patchCopy.codebasePath === "string") {
+        const trimmed = patchCopy.codebasePath.trim();
+        patchCopy.codebasePath = trimmed || null;
+      }
+      Object.assign(pl.settings, patchCopy);
     }),
 
   updateTree: (plId, updates) =>

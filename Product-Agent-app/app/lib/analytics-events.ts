@@ -76,6 +76,16 @@ export type AnalyticsEventMap = {
     solution_id: string;
     story_id: string;
   };
+  SettingsPageOpened: {
+    source: "creation" | "header-link";
+    productLineId: string;
+  };
+  CodebasePicked: {
+    productLineId: string;
+  };
+  CodebaseSkipped: {
+    productLineId: string;
+  };
 };
 
 type ListenerMap = { [K in keyof AnalyticsEventMap]?: Array<Listener<AnalyticsEventMap[K]>> };

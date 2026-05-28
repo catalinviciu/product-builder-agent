@@ -101,6 +101,18 @@ export function startAnalyticsSubscribers(): void {
     trackEvent("StoryEnriched", props);
   });
 
+  analyticsEmitter.on("SettingsPageOpened", (props) => {
+    trackEvent("SettingsPageOpened", props);
+  });
+
+  analyticsEmitter.on("CodebasePicked", (props) => {
+    trackEvent("CodebasePicked", props);
+  });
+
+  analyticsEmitter.on("CodebaseSkipped", (props) => {
+    trackEvent("CodebaseSkipped", props);
+  });
+
   // Diff subscription: emit story_map_ac_enriched when a solution's
   // stories_with_ac count increases compared to the previous snapshot.
   // Also emit story_enriched when a manually-added story (wasManual = !narrative)

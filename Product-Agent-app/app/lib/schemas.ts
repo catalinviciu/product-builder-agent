@@ -528,6 +528,31 @@ export interface DiscoveryTree {
   rootChildren: string[];
 }
 
+export type DesignSystemSettings =
+  | { mode: "detected"; path: string | null; confidence?: "high" | "medium" | "low"; reasoning?: string }
+  | { mode: "skill";    skillPath: string | null };
+
+export type AnalyticsPlatform = "pendo" | "mixpanel" | "amplitude" | "google_analytics" | "other";
+export type AnalyticsPlatformSettings =
+  | { mode: "detected"; platform: AnalyticsPlatform | null; confidence?: "high" | "medium" | "low"; reasoning?: string }
+  | { mode: "manual";   platform: AnalyticsPlatform | null };
+
+export interface StoryMapSettings { enabled: boolean; sourcePath?: string | null }
+
+export interface ProductLineSettings {
+  codebasePath: string | null;          // <-- the ONLY field story-1 writes
+  designSystem: DesignSystemSettings;   // placeholder; Story 2+
+  analyticsPlatform: AnalyticsPlatformSettings; // placeholder; Story 2+
+  storyMap: StoryMapSettings;           // placeholder; Story 16
+}
+
+export const DEFAULT_PRODUCT_LINE_SETTINGS: ProductLineSettings = {
+  codebasePath: null,
+  designSystem: { mode: "skill", skillPath: null },
+  analyticsPlatform: { mode: "manual", platform: null },
+  storyMap: { enabled: false, sourcePath: null },
+};
+
 export interface ProductLine {
   id: string;
   name: string;
@@ -535,6 +560,7 @@ export interface ProductLine {
   status: ProductLineStatus;
   personas?: Persona[];
   codePath?: string;
+  settings: ProductLineSettings;
   blocks?: Block[];
   tree: DiscoveryTree;
   entities: EntityStore;
