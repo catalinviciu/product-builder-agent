@@ -7,8 +7,9 @@ import {
   EntityPatchSchema,
   BlockPatchSchema,
   ProductLineSettingsPatchSchema,
+  StoryPatchSchema,
 } from "./schemas.js";
-import type { Block, Entity, ProductLineSettings } from "../types.js";
+import type { Block, Entity, ProductLineSettings, Story } from "../types.js";
 
 /**
  * Registers all Product Agent MCP tools on the given server.
@@ -178,6 +179,21 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
     },
     async ({ entityId, blockIndex, patch }) =>
       ok(await adapter.updateBlock(entityId, blockIndex, patch as Partial<Block>))
+  );
+
+  server.registerTool(
+    "pa_update_story",
+    {
+      title: "Update a story by id",
+      description: "Patches safe fields of one story (located by its string id) on a solution entity, merging only the fields you provide and leaving every other field and every other story untouched. Use this for per-story edits (e.g. writing acceptanceCriteria/analyticsEvents) instead of pa_update_entity, which replaces the whole stories array.",
+      inputSchema: {
+        entityId: z.string(),
+        storyId: z.string(),
+        patch: StoryPatchSchema,
+      },
+    },
+    async ({ entityId, storyId, patch }) =>
+      ok(await adapter.updateStory(entityId, storyId, patch as Partial<Story>))
   );
 
   server.registerTool(

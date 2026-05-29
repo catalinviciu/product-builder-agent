@@ -18,6 +18,7 @@ import {
   type EntityLevel,
   type EntityStatus,
   type ProductLine,
+  type Story,
 } from "@/app/lib/schemas";
 
 export type Store = Record<string, ProductLine>;
@@ -341,4 +342,26 @@ export function patchBlock(block: Block, patch: Partial<Block>): Block {
     }
   }
   return block;
+}
+
+const SAFE_STORY_FIELDS = [
+  "title", "persona", "activity", "task", "iteration", "narrative", "context",
+  "outOfScope", "dependencies", "humanVerification", "acceptanceCriteria",
+  "analyticsEvents", "taskType", "done", "doneAt",
+] as const;
+
+export function patchStory(story: Story, patch: Partial<Story>): Story {
+  const storyRec = story as unknown as Record<string, unknown>;
+  const patchRec = patch as unknown as Record<string, unknown>;
+  for (const key of SAFE_STORY_FIELDS) {
+    if (key in patch && patchRec[key] !== undefined) {
+      storyRec[key as string] = patchRec[key];
+    }
+  }
+  // Replicate the done -> doneAt coupling: if the caller toggles `done`
+  // without supplying an explicit `doneAt`, derive it.
+  if (patch.done !== undefined && patch.doneAt === undefined) {
+    story.doneAt = patch.done ? new Date().toISOString() : undefined;
+  }
+  return story;
 }
