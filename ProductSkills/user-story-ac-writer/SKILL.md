@@ -180,22 +180,29 @@ Present assumptions as a numbered list. Ask questions one at a time. Wait for an
 
 ## Phase 4: Output
 
-Output goes back into the entity via `pa_update_entity` as structured fields on each `Story` record. **No markdown file is generated.**
+Output goes back into the entity via `pa_update_story` as structured fields on each `Story` record. **No markdown file is generated.**
 
 **Step 1:** For each confirmed story, build:
 - `acceptanceCriteria: string` — the full Gherkin block for that story (Scenarios with Given / When / Then / And / But, separated by blank lines). Plain text — preserve indentation. Embed analytics events as `# Mixpanel:` comments inline within scenarios where they fire.
 - `analyticsEvents: { name: string; properties: Record<string, string> }[]` — one entry per confirmed event for that story. Each `properties` value is a short type/description string (e.g. `"string"`, `"number"`, `"ws|enh|ga"`).
 
-**Step 2:** Call `pa_get_entity(solutionId)` to get the current stories array.
+**Step 2:** For each confirmed story, call:
+```
+pa_update_story({
+  entityId: solutionId,
+  storyId: <story id>,
+  patch: {
+    acceptanceCriteria: "<gherkin block>",
+    analyticsEvents: [...]
+  }
+})
+```
+Send **only** `acceptanceCriteria` and `analyticsEvents`. The tool merges and preserves every other field automatically — you do not need to fetch the full stories array first, and you must not send any other fields. This makes Rule 13 (never modify `iteration`/`done`/`doneAt`) automatic.
 
-**Step 3:** For each confirmed story, locate the record in `entity.stories` by matching `id` and update `acceptanceCriteria` and `analyticsEvents` in memory. Preserve all other fields on every story record exactly (`title`, `persona`, `activity`, `task`, `iteration`, `narrative`, `context`, `outOfScope`, `dependencies`, `humanVerification`, `done`, `doneAt`).
-
-**Step 4:** Call `pa_update_entity({ entityId: solutionId, patch: { stories: <updatedStoriesArray> } })` — this replaces the entity's stories with the updated set.
-
-**Step 5:** Tell the builder:
+**Step 3:** Tell the builder:
 > *"Done. Refresh Product Agent to see the populated AC and analytics events on each story's slide-over."*
 
-**Step 6:** Present a brief summary:
+**Step 4:** Present a brief summary:
 - Total stories refined
 - Total Gherkin scenarios written
 - Total analytics events defined (must-have + optional)
@@ -215,8 +222,8 @@ Output goes back into the entity via `pa_update_entity` as structured fields on 
 8. **Ask one question at a time.** Never batch questions.
 9. **Declarative only.** Never write imperative steps (no click, type, scroll, hover). Describe behavior, not interaction mechanics.
 10. **Do not invent scope.** If a behavior isn't in the story card (Context, Constraints, Human Verification), don't write a scenario for it. Ask first.
-11. **Output goes to the entity via `pa_update_entity`, never to MD files.** Use the Solution ID from the prompt; do not ask the user for a file path.
-12. **Match stories by stable `id`.** Story IDs (`story-1`, `story-2`, ...) are stable contracts. When writing AC and analytics events, locate the record by `id` and update only `acceptanceCriteria` and `analyticsEvents`. Do not modify any other field.
+11. **Output goes to the entity via `pa_update_story`, never to MD files.** Use the Solution ID from the prompt; do not ask the user for a file path. Call `pa_update_story` once per confirmed story — send only `acceptanceCriteria` and `analyticsEvents`.
+12. **Match stories by stable `id`.** Story IDs (`story-1`, `story-2`, ...) are stable contracts. Call `pa_update_story({ entityId: solutionId, storyId: <id>, patch: { acceptanceCriteria, analyticsEvents } })`. The tool merges by id — never send a full stories array.
 13. **Never modify `iteration`, `done`, or `doneAt`.** These fields are managed by the slicer skill or toggled by the user via the UI. The AC writer must not set, overwrite, or even read them during output.
 
 ---

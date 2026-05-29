@@ -3,6 +3,7 @@ import type {
   Entity,
   ProductLine,
   ProductLineSettings,
+  Story,
   CreateEntityInput,
   EntityContext,
   EntityNode,
@@ -39,4 +40,5 @@ export interface StoreAdapter {
   deleteEntity(entityId: string): Promise<void>;
   addBlock(entityId: string, block: Block): Promise<Entity>;
   updateBlock(entityId: string, blockIndex: number, patch: Partial<Block>): Promise<Entity>;
+  updateStory(entityId: string, storyId: string, patch: Partial<Story>): Promise<Entity>;
 }
