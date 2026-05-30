@@ -7,7 +7,7 @@ import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { trackEvent } from "@/app/lib/analytics";
 import { cn } from "@/app/lib/utils";
 import { buildCodebaseDetectionPrompt } from "@/app/lib/utils";
-import type { AnalyticsPlatform } from "@/app/lib/schemas";
+import type { AnalyticsPlatform, DesignSystemSettings, AnalyticsPlatformSettings } from "@/app/lib/schemas";
 import { PRODUCT_AGENT_DESIGN_TEMPLATE } from "@/app/assets/design-templates/product-agent";
 
 /** Confidence chip — glyph encodes level (● high · ◐ medium · ○ low); neutral token color. */
@@ -69,18 +69,20 @@ export function ProductLineSettingsView() {
   const [stuck, setStuck] = useState(false);
   const detectStartedAt = useRef<number | null>(null);
   const stuckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Snapshots taken when detection starts, so we can tell "fresh write from the
+  // agent" apart from "this product line already had a design system before".
+  const detectBaselineDs = useRef<DesignSystemSettings | undefined>(undefined);
+  const detectBaselineAp = useRef<AnalyticsPlatformSettings | undefined>(undefined);
 
   // Watch for detection results landing — exit detecting state when done
   useEffect(() => {
     if (!detecting) return;
 
-    const hasDetectedDs =
-      settings?.designSystem?.mode === "designMd";
-    const hasDetectedAp =
-      settings?.analyticsPlatform?.mode === "detected";
+    const dsChanged = settings?.designSystem !== detectBaselineDs.current;
+    const apChanged = settings?.analyticsPlatform !== detectBaselineAp.current;
     const hasError = !!settings?.detectionError;
 
-    if (hasDetectedDs || hasDetectedAp || hasError) {
+    if (dsChanged || apChanged || hasError) {
       setDetecting(false);
       setStuck(false);
       if (stuckTimerRef.current) {
@@ -151,6 +153,8 @@ export function ProductLineSettingsView() {
 
   // ── Detection handlers ───────────────────────────────────────────────────
   const startDetecting = () => {
+    detectBaselineDs.current = settings?.designSystem;
+    detectBaselineAp.current = settings?.analyticsPlatform;
     setDetecting(true);
     setStuck(false);
     detectStartedAt.current = Date.now();
