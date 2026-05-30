@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { FolderOpen, Pencil, X, Check, ChevronDown } from "lucide-react";
+import { FolderOpen, Pencil, Check, ChevronDown, ArrowLeft } from "lucide-react";
 import { useAppStore } from "@/app/lib/store";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { trackEvent } from "@/app/lib/analytics";
@@ -9,6 +9,7 @@ import { cn } from "@/app/lib/utils";
 import { buildCodebaseDetectionPrompt } from "@/app/lib/utils";
 import type { AnalyticsPlatform, DesignSystemSettings, AnalyticsPlatformSettings } from "@/app/lib/schemas";
 import { PRODUCT_AGENT_DESIGN_TEMPLATE } from "@/app/assets/design-templates/product-agent";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 /** Confidence chip — glyph encodes level (● high · ◐ medium · ○ low); neutral token color. */
 function ConfidenceChip({ level }: { level: "high" | "medium" | "low" }) {
@@ -74,6 +75,25 @@ export function ProductLineSettingsView() {
   const detectBaselineDs = useRef<DesignSystemSettings | undefined>(undefined);
   const detectBaselineAp = useRef<AnalyticsPlatformSettings | undefined>(undefined);
 
+  // Confirm dialog state
+  const [pendingConfirm, setPendingConfirm] = useState<{
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    destructive?: boolean;
+    onConfirm: () => void;
+  } | null>(null);
+
+  const requestConfirm = (opts: {
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    destructive?: boolean;
+    onConfirm: () => void;
+  }) => {
+    setPendingConfirm(opts);
+  };
+
   // Watch for detection results landing — exit detecting state when done
   useEffect(() => {
     if (!detecting) return;
@@ -103,10 +123,71 @@ export function ProductLineSettingsView() {
 
   const id = settingsProductLineId;
 
+  // ── Codebase path validation ─────────────────────────────────────────────
+  const validateCodebasePath = (value: string): { ok: boolean; reason?: string } => {
+    const v = value.trim();
+    if (v.length < 3) return { ok: false, reason: "Path is too short." };
+    if (v.length > 500) return { ok: false, reason: "Path is too long (max 500 characters)." };
+    if (!/[\\/]/.test(v)) return { ok: false, reason: "Doesn't look like a file path — must contain / or \\." };
+    const isAbsolute = /^[A-Za-z]:[\\/]/.test(v) || v.startsWith("/");
+    if (!isAbsolute) return { ok: false, reason: "Must be an absolute path (e.g. D:\\Projects\\app or /home/user/app)." };
+    return { ok: true };
+  };
+
+  const EMPTY_ANALYTICS: AnalyticsPlatformSettings = { mode: "manual", platform: null, otherName: null };
+  const CLEARED_DESIGN_SYSTEM: DesignSystemSettings = { mode: "skill", skillName: null };
+
   // ── Codebase handlers ────────────────────────────────────────────────────
   const handleSave = () => {
     const trimmed = inputValue.trim();
+
+    // Clear path (empty input + existing path)
+    if (!trimmed && savedPath) {
+      requestConfirm({
+        title: "Clear codebase?",
+        message: "Your detected design system and analytics platform will also be cleared.",
+        confirmLabel: "Clear",
+        destructive: true,
+        onConfirm: () => {
+          updateProductLineSettings(id, {
+            codebasePath: null,
+            designSystem: CLEARED_DESIGN_SYSTEM,
+            analyticsPlatform: EMPTY_ANALYTICS,
+          });
+          analyticsEmitter.emit("CodebaseSkipped", { productLineId: id });
+          setEditing(false);
+        },
+      });
+      return;
+    }
+
+    // No-op: empty with no prior path
     if (!trimmed) return;
+
+    // Validate
+    if (!validateCodebasePath(trimmed).ok) return;
+
+    // Cascade: changing from one non-null path to a different non-null path
+    if (savedPath && savedPath !== trimmed) {
+      requestConfirm({
+        title: "Change codebase?",
+        message: "Your detected design system and analytics platform will be cleared so they can be re-detected.",
+        confirmLabel: "Change",
+        destructive: true,
+        onConfirm: () => {
+          updateProductLineSettings(id, {
+            codebasePath: trimmed,
+            designSystem: CLEARED_DESIGN_SYSTEM,
+            analyticsPlatform: EMPTY_ANALYTICS,
+          });
+          analyticsEmitter.emit("CodebasePicked", { productLineId: id });
+          setEditing(false);
+        },
+      });
+      return;
+    }
+
+    // First save or same path
     updateProductLineSettings(id, { codebasePath: trimmed });
     analyticsEmitter.emit("CodebasePicked", { productLineId: id });
     setEditing(false);
@@ -135,6 +216,27 @@ export function ProductLineSettingsView() {
   // ── Analytics Platform handlers ──────────────────────────────────────────
   const handlePlatformSelect = (platform: AnalyticsPlatform) => {
     const wasDetected = settings?.analyticsPlatform?.mode === "detected";
+    const detectedPlatform = wasDetected ? (settings?.analyticsPlatform as { platform?: AnalyticsPlatform | null }).platform : null;
+    // E2: warn before discarding a detected result
+    // Note: radio may show the new value briefly until the dialog resolves (uncontrolled DOM); will revert on cancel.
+    if (wasDetected && platform !== detectedPlatform) {
+      requestConfirm({
+        title: "Discard auto-detected platform?",
+        message: "Switching will discard the auto-detected analytics platform.",
+        confirmLabel: "Switch",
+        destructive: true,
+        onConfirm: () => {
+          if (platform === "other") {
+            updateProductLineSettings(id, { analyticsPlatform: { mode: "manual", platform: "other", otherName: savedOtherName } });
+          } else {
+            updateProductLineSettings(id, { analyticsPlatform: { mode: "manual", platform, otherName: null } });
+          }
+          analyticsEmitter.emit("ManualSettingSaved", { Field: "analyticsPlatform", Mode: "manual", Source: "settings-page" });
+          trackEvent("DetectionFieldEdited", { Field: "analyticsPlatform", FromMode: "detected", ToMode: "manual" });
+        },
+      });
+      return;
+    }
     if (platform === "other") {
       updateProductLineSettings(id, { analyticsPlatform: { mode: "manual", platform: "other", otherName: savedOtherName } });
     } else {
@@ -204,33 +306,50 @@ export function ProductLineSettingsView() {
   const handleUseTemplate = () => {
     const cur = settings?.designSystem;
     const hasExisting = cur?.mode === "designMd" && !!cur.designMd;
-    if (hasExisting && !window.confirm("Replace the current design system with Product Agent's template? Your current design system content will be overwritten.")) {
+    const doUseTemplate = () => {
+      updateProductLineSettings(id, {
+        designSystem: {
+          mode: "designMd",
+          designMd: PRODUCT_AGENT_DESIGN_TEMPLATE,
+          source: "template",
+          library: "Product Agent (Tailwind + shadcn/ui)",
+          tokensHint: "colors_and_type.css",
+        },
+      });
+      setDsMdCollapsedOverride(false);
+      setDsExpanded(false);
+    };
+    if (hasExisting) {
+      requestConfirm({
+        title: "Replace design system?",
+        message: "Your current design system content will be overwritten with the Product Agent template.",
+        confirmLabel: "Replace",
+        destructive: true,
+        onConfirm: doUseTemplate,
+      });
       return;
     }
-    updateProductLineSettings(id, {
-      designSystem: {
-        mode: "designMd",
-        designMd: PRODUCT_AGENT_DESIGN_TEMPLATE,
-        source: "template",
-        library: "Product Agent (Tailwind + shadcn/ui)",
-        tokensHint: "colors_and_type.css",
-      },
-    });
-    setDsMdCollapsedOverride(false);
-    setDsExpanded(false);
+    doUseTemplate();
   };
 
   const handleSwitchToSkill = () => {
     const cur = settings?.designSystem;
-    if (!window.confirm("Switch to skill mode? This clears the detected design system content.")) return;
     const wasDetected = cur?.mode === "designMd" && cur.source === "detected";
-    updateProductLineSettings(id, { designSystem: { mode: "skill", skillName: null } });
-    if (wasDetected) {
-      trackEvent("DetectionFieldEdited", { Field: "designSystem", FromMode: "detected", ToMode: "skill" });
-    }
-    setDsInput("");
-    setShowDsReasoning(false);
-    setDsExpanded(true);
+    requestConfirm({
+      title: "Switch to skill mode?",
+      message: "This clears the detected design system content.",
+      confirmLabel: "Switch",
+      destructive: true,
+      onConfirm: () => {
+        updateProductLineSettings(id, { designSystem: { mode: "skill", skillName: null } });
+        if (wasDetected) {
+          trackEvent("DetectionFieldEdited", { Field: "designSystem", FromMode: "detected", ToMode: "skill" });
+        }
+        setDsInput("");
+        setShowDsReasoning(false);
+        setDsExpanded(true);
+      },
+    });
   };
 
   // ── Derived state ────────────────────────────────────────────────────────
@@ -268,17 +387,16 @@ export function ProductLineSettingsView() {
   return (
     <div className="px-8 py-8 max-w-2xl">
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Settings</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{pl.name}</p>
-        </div>
+      <div className="flex items-center mb-8">
         <button
           onClick={closeSettings}
-          aria-label="Close settings"
-          className="cursor-pointer p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors"
+          aria-label="Back to product line"
+          className="cursor-pointer flex items-center gap-1.5 text-sm rounded-md hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors px-2 py-1 -ml-2"
         >
-          <X size={16} />
+          <ArrowLeft size={14} className="text-muted-foreground" />
+          <span className="text-muted-foreground">{pl.name}</span>
+          <span className="text-muted-foreground/40 mx-0.5">·</span>
+          <span className="text-foreground font-medium">Settings</span>
         </button>
       </div>
 
@@ -288,21 +406,40 @@ export function ProductLineSettingsView() {
           <div>
             <h2 className="text-sm font-semibold text-foreground">Codebase</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Link the folder where this product line&apos;s code lives. AI actions use this path as context.
+              Link the folder where this product line&apos;s code lives. Used to know where to apply code changes, and to detect your design system and analytics platform below.
             </p>
           </div>
 
           {savedPath && !editing ? (
-            <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex items-center gap-3">
-              <FolderOpen size={14} className="text-muted-foreground/50 shrink-0" />
-              <span className="text-xs font-mono text-foreground flex-1 truncate">{savedPath}</span>
-              <button
-                onClick={handleEdit}
-                aria-label="Edit codebase path"
-                className="cursor-pointer p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors shrink-0"
-              >
-                <Pencil size={12} />
-              </button>
+            <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <FolderOpen size={14} className="text-muted-foreground/50 shrink-0" />
+                <span className="text-xs font-mono text-foreground flex-1 truncate">{savedPath}</span>
+                <button
+                  onClick={handleEdit}
+                  aria-label="Edit codebase path"
+                  className="cursor-pointer p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors shrink-0"
+                >
+                  <Pencil size={12} />
+                </button>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => requestConfirm({
+                    title: "Clear codebase?",
+                    message: "Your detected design system and analytics platform will also be cleared.",
+                    confirmLabel: "Clear",
+                    destructive: true,
+                    onConfirm: () => {
+                      updateProductLineSettings(id, { codebasePath: null, designSystem: { mode: "skill", skillName: null }, analyticsPlatform: EMPTY_ANALYTICS });
+                      analyticsEmitter.emit("CodebaseSkipped", { productLineId: id });
+                    },
+                  })}
+                  className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
           ) : !editing && savedPath === null ? (
             <div className="rounded-xl border border-border-subtle bg-surface-1 px-4 py-3 flex items-center gap-3">
@@ -337,11 +474,16 @@ export function ProductLineSettingsView() {
               <p className="text-xs text-muted-foreground/60">
                 Open your file explorer and copy/paste the codebase folder&apos;s path here.
               </p>
+              {inputValue.trim() && !validateCodebasePath(inputValue).ok && (
+                <p className="text-xs text-destructive">
+                  {validateCodebasePath(inputValue).reason}
+                </p>
+              )}
               <div className={cn("flex items-center", savedPath ? "gap-2" : "flex-col items-start gap-2")}>
                 <div className="flex gap-2">
                   <button
                     onClick={handleSave}
-                    disabled={!inputValue.trim()}
+                    disabled={inputValue.trim().length > 0 && !validateCodebasePath(inputValue).ok}
                     className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Save
@@ -375,96 +517,125 @@ export function ProductLineSettingsView() {
           </p>
         )}
 
+        {/* ── Detect from codebase panel ── only shown when codebase is linked */}
+        {savedPath !== null && (() => {
+          const detectionDone =
+            (dsObj?.mode === "designMd") ||
+            (apObj?.mode === "detected");
+          if (detectionDone && !detecting) {
+            return (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground/60">Design system and analytics detected.</span>
+                <button
+                  onClick={startDetecting}
+                  className="cursor-pointer text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+                >
+                  Re-detect
+                </button>
+              </div>
+            );
+          }
+          return (
+            <div className="rounded-xl border border-border-subtle bg-surface-1 p-4 flex flex-col gap-3">
+              {detecting ? (
+                <>
+                  {/* Prompt code block */}
+                  <div className="bg-surface-2 border border-border-subtle rounded-md p-3 font-mono text-xs whitespace-pre-wrap text-foreground max-h-48 overflow-y-auto">
+                    {buildCodebaseDetectionPrompt(pl)}
+                  </div>
+
+                  {/* Copy button */}
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleCopyPrompt}
+                      className="cursor-pointer flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                    >
+                      {copied ? (
+                        <>
+                          <Check size={12} />
+                          Copied!
+                        </>
+                      ) : (
+                        "Copy prompt"
+                      )}
+                    </button>
+
+                    {/* Listening indicator */}
+                    {isListening && (
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse" />
+                        Listening for results…
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Caption */}
+                  <p className="text-xs text-muted-foreground">
+                    Paste into Claude Code. This page updates automatically.
+                  </p>
+
+                  {/* Error state */}
+                  {detectionError && (
+                    <p className="text-xs text-destructive">{detectionError}</p>
+                  )}
+
+                  {/* Stuck state */}
+                  {stuck && !detectionError && (
+                    <p className="text-xs text-muted-foreground">
+                      Detection seems stuck — try pasting again or set values manually.
+                    </p>
+                  )}
+
+                  {/* Cancel */}
+                  <button
+                    onClick={cancelDetecting}
+                    className="cursor-pointer self-start text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-sm font-semibold text-foreground">Detect from codebase</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Scan your codebase to auto-fill your design system and analytics platform below. You&apos;ll review the results before they&apos;re applied.
+                      </p>
+                    </div>
+                    <button
+                      onClick={startDetecting}
+                      className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors shrink-0"
+                    >
+                      Detect
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })()}
+
         {/* ── Design System section ── */}
         <div className="flex flex-col gap-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">
-                Design System
-                {isSkipped && (
-                  <span className="ml-2 text-xs font-medium text-muted-foreground/50">Required</span>
-                )}
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Point to your design-system skill file so AI actions can generate on-brand prototypes.
-              </p>
-            </div>
-
-            {/* Detect CTA — only when codebasePath is set and not already detecting */}
-            {savedPath && !detecting && (
-              <button
-                onClick={startDetecting}
-                className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors shrink-0 ml-4"
-              >
-                Detect from codebase
-              </button>
-            )}
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">
+              Design System
+              {isSkipped && (
+                <span className="ml-2 text-xs font-medium text-muted-foreground/50">Required</span>
+              )}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Point to your design-system skill file so AI actions can generate on-brand prototypes.
+            </p>
           </div>
 
-          {/* Detection focused state */}
-          {detecting ? (
-            <div className="rounded-xl border border-border-strong bg-surface-1 p-4 flex flex-col gap-3">
-              {/* Prompt code block */}
-              <div className="bg-surface-2 border border-border-subtle rounded-md p-3 font-mono text-xs whitespace-pre-wrap text-foreground max-h-48 overflow-y-auto">
-                {buildCodebaseDetectionPrompt(pl)}
-              </div>
-
-              {/* Copy button */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleCopyPrompt}
-                  className="cursor-pointer flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
-                >
-                  {copied ? (
-                    <>
-                      <Check size={12} />
-                      Copied!
-                    </>
-                  ) : (
-                    "Copy prompt"
-                  )}
-                </button>
-
-                {/* Listening indicator */}
-                {isListening && (
-                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse" />
-                    Listening for results…
-                  </span>
-                )}
-              </div>
-
-              {/* Caption */}
-              <p className="text-xs text-muted-foreground">
-                Paste into Claude Code. This page updates automatically.
-              </p>
-
-              {/* Error state */}
-              {detectionError && (
-                <p className="text-xs text-rose-600 dark:text-rose-400">{detectionError}</p>
-              )}
-
-              {/* Stuck state */}
-              {stuck && !detectionError && (
-                <p className="text-xs text-muted-foreground">
-                  Detection seems stuck — try pasting again or set values manually.
-                </p>
-              )}
-
-              {/* Cancel */}
-              <button
-                onClick={cancelDetecting}
-                className="cursor-pointer self-start text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            /* Normal Design System body — detected/template/edited markdown, skill, or empty */
+          {/* Normal Design System body — detected/template/edited markdown, skill, or empty */}
+          {!detecting && (
             <>
               {dsIsMd ? (
                 <div className="rounded-xl border border-border-strong bg-surface-1 p-4 flex flex-col gap-3">
-                  {/* Header: confidence chip + reasoning reveal + collapse + switch-to-skill */}
+                  {/* Header: confidence chip + reasoning reveal + collapse */}
                   <div className="flex items-center gap-3 flex-wrap">
                     {dsSource === "detected" && dsConfidence ? (
                       <ConfidenceChip level={dsConfidence} />
@@ -489,12 +660,6 @@ export function ProductLineSettingsView() {
                     >
                       <ChevronDown size={14} className={cn("transition-transform", dsCollapsed && "-rotate-90")} />
                     </button>
-                    <button
-                      onClick={handleSwitchToSkill}
-                      className="cursor-pointer text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
-                    >
-                      Switch to skill mode
-                    </button>
                   </div>
 
                   {showDsReasoning && dsReasoning && (
@@ -516,26 +681,78 @@ export function ProductLineSettingsView() {
                     </p>
                   )}
 
-                  {dsSource === "detected" && dsConfidence === "low" && (
-                    <button
-                      onClick={handleUseTemplate}
-                      className="cursor-pointer self-start text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
-                    >
-                      Use Product Agent&apos;s design system as a starting template
-                    </button>
+                  {/* Action row — visible whenever design system has content (detected, template, or edited) */}
+                  {!dsCollapsed && (
+                    <>
+                      <p className="text-xs text-muted-foreground/60">
+                        {dsSource === "template"
+                          ? "Using the Product Agent template. Keep editing, switch to a skill file, or clear it."
+                          : "Auto-detected from your codebase. Keep editing, replace with our template, switch to a skill file, or clear it."}
+                      </p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {dsSource !== "template" && (
+                          <button
+                            onClick={handleUseTemplate}
+                            className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                          >
+                            Use Product Agent template
+                          </button>
+                        )}
+                        <button
+                          onClick={handleSwitchToSkill}
+                          className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                        >
+                          Switch to skill mode
+                        </button>
+                        <button
+                          onClick={() => requestConfirm({
+                            title: "Clear design system?",
+                            message: "The current design system will be removed.",
+                            confirmLabel: "Clear",
+                            destructive: true,
+                            onConfirm: () => updateProductLineSettings(id, { designSystem: { mode: "skill", skillName: null } }),
+                          })}
+                          className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
-              ) : !isSkipped && !dsExpanded ? (
+              ) : !dsExpanded ? (
                 dsSaved ? (
-                  <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex items-center gap-3">
-                    <span className="text-xs font-mono text-foreground flex-1 truncate">{savedSkillName}</span>
-                    <button
-                      onClick={() => { setDsInput(savedSkillName ?? ""); setDsExpanded(true); }}
-                      aria-label="Edit design system skill path"
-                      className="cursor-pointer p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors shrink-0"
-                    >
-                      <Pencil size={12} />
-                    </button>
+                  <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex flex-col gap-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-mono text-foreground flex-1 truncate">{savedSkillName}</span>
+                      <button
+                        onClick={() => { setDsInput(savedSkillName ?? ""); setDsExpanded(true); }}
+                        aria-label="Edit design system skill path"
+                        className="cursor-pointer p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors shrink-0"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={handleUseTemplate}
+                        className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                      >
+                        Switch to Product Agent template
+                      </button>
+                      <button
+                        onClick={() => requestConfirm({
+                          title: "Clear design system?",
+                          message: "The linked design system skill will be removed.",
+                          confirmLabel: "Clear",
+                          destructive: true,
+                          onConfirm: () => updateProductLineSettings(id, { designSystem: { mode: "skill", skillName: null } }),
+                        })}
+                        className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                      >
+                        Clear
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="rounded-xl border border-border-subtle bg-surface-1 px-4 py-3 flex flex-col gap-3">
@@ -588,14 +805,12 @@ export function ProductLineSettingsView() {
                     >
                       Save
                     </button>
-                    {!isSkipped && (
-                      <button
-                        onClick={() => setDsExpanded(false)}
-                        className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus text-muted-foreground transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    )}
+                    <button
+                      onClick={() => setDsExpanded(false)}
+                      className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus text-muted-foreground transition-colors"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
               )}
@@ -654,22 +869,51 @@ export function ProductLineSettingsView() {
                   </label>
                 ))}
               </div>
+              {/* E3: Clear detection */}
+              <button
+                onClick={() => requestConfirm({
+                  title: "Clear detected analytics platform?",
+                  message: "The auto-detected analytics platform will be removed.",
+                  confirmLabel: "Clear",
+                  destructive: true,
+                  onConfirm: () => updateProductLineSettings(id, { analyticsPlatform: EMPTY_ANALYTICS }),
+                })}
+                className="cursor-pointer self-start text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+              >
+                Clear detection
+              </button>
             </div>
-          ) : !isSkipped && !apExpanded ? (
+          ) : !apExpanded ? (
             apSaved ? (
-              <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex items-center gap-3">
-                <span className="text-xs text-foreground flex-1">
-                  {savedPlatform === "other"
-                    ? savedOtherName ?? "Other"
-                    : ANALYTICS_OPTIONS.find((o) => o.value === savedPlatform)?.label ?? savedPlatform}
-                </span>
-                <button
-                  onClick={() => setApExpanded(true)}
-                  aria-label="Edit analytics platform"
-                  className="cursor-pointer p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors shrink-0"
-                >
-                  <Pencil size={12} />
-                </button>
+              <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex flex-col gap-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-foreground flex-1">
+                    {savedPlatform === "other"
+                      ? savedOtherName ?? "Other"
+                      : ANALYTICS_OPTIONS.find((o) => o.value === savedPlatform)?.label ?? savedPlatform}
+                  </span>
+                  <button
+                    onClick={() => setApExpanded(true)}
+                    aria-label="Edit analytics platform"
+                    className="cursor-pointer p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors shrink-0"
+                  >
+                    <Pencil size={12} />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => requestConfirm({
+                      title: "Clear analytics platform?",
+                      message: "The selected analytics platform will be removed.",
+                      confirmLabel: "Clear",
+                      destructive: true,
+                      onConfirm: () => updateProductLineSettings(id, { analyticsPlatform: EMPTY_ANALYTICS }),
+                    })}
+                    className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="rounded-xl border border-border-subtle bg-surface-1 px-4 py-3 flex items-center gap-3">
@@ -731,18 +975,29 @@ export function ProductLineSettingsView() {
                 </div>
               )}
 
-              {!isSkipped && (
-                <button
-                  onClick={() => setApExpanded(false)}
-                  className="cursor-pointer self-start text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus text-muted-foreground transition-colors"
-                >
-                  Done
-                </button>
-              )}
+              <button
+                onClick={() => setApExpanded(false)}
+                className="cursor-pointer self-start text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus text-muted-foreground transition-colors"
+              >
+                Done
+              </button>
             </div>
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={pendingConfirm !== null}
+        title={pendingConfirm?.title ?? ""}
+        message={pendingConfirm?.message ?? ""}
+        confirmLabel={pendingConfirm?.confirmLabel}
+        destructive={pendingConfirm?.destructive}
+        onConfirm={() => {
+          pendingConfirm?.onConfirm();
+          setPendingConfirm(null);
+        }}
+        onCancel={() => setPendingConfirm(null)}
+      />
     </div>
   );
 }
