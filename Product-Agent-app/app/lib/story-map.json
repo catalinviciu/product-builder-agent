@@ -79,6 +79,12 @@
                 "buildCodebaseDetectionPrompt",
                 "codebase-detector"
               ]
+            },
+            {
+              "action": "Review the detected design system and analytics platform, edit the design-system markdown, or override with a manual skill or platform",
+              "components": [
+                "ProductLineSettingsView"
+              ]
             }
           ]
         },

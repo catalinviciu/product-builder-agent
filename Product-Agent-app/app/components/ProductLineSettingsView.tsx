@@ -1,13 +1,25 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { FolderOpen, Pencil, X, Check } from "lucide-react";
+import { FolderOpen, Pencil, X, Check, ChevronDown } from "lucide-react";
 import { useAppStore } from "@/app/lib/store";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { trackEvent } from "@/app/lib/analytics";
 import { cn } from "@/app/lib/utils";
 import { buildCodebaseDetectionPrompt } from "@/app/lib/utils";
 import type { AnalyticsPlatform } from "@/app/lib/schemas";
+import { PRODUCT_AGENT_DESIGN_TEMPLATE } from "@/app/assets/design-templates/product-agent";
+
+/** Confidence chip — glyph encodes level (● high · ◐ medium · ○ low); neutral token color. */
+function ConfidenceChip({ level }: { level: "high" | "medium" | "low" }) {
+  const glyph = level === "high" ? "●" : level === "medium" ? "◐" : "○";
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+      <span aria-hidden>{glyph}</span>
+      {level} confidence
+    </span>
+  );
+}
 
 const ANALYTICS_OPTIONS: { label: string; value: AnalyticsPlatform }[] = [
   { label: "Pendo", value: "pendo" },
@@ -38,6 +50,10 @@ export function ProductLineSettingsView() {
     settings?.designSystem?.mode === "skill" ? (settings.designSystem.skillName ?? null) : null;
   const [dsExpanded, setDsExpanded] = useState(false);
   const [dsInput, setDsInput] = useState(savedSkillName ?? "");
+  // Detection-review state (Story 4)
+  const [showDsReasoning, setShowDsReasoning] = useState(false);
+  const [showApReasoning, setShowApReasoning] = useState(false);
+  const [dsMdCollapsedOverride, setDsMdCollapsedOverride] = useState<boolean | null>(null);
 
   // Analytics platform state
   const savedPlatform =
@@ -116,13 +132,14 @@ export function ProductLineSettingsView() {
 
   // ── Analytics Platform handlers ──────────────────────────────────────────
   const handlePlatformSelect = (platform: AnalyticsPlatform) => {
+    const wasDetected = settings?.analyticsPlatform?.mode === "detected";
     if (platform === "other") {
       updateProductLineSettings(id, { analyticsPlatform: { mode: "manual", platform: "other", otherName: savedOtherName } });
-      analyticsEmitter.emit("ManualSettingSaved", { Field: "analyticsPlatform", Mode: "manual", Source: "settings-page" });
-      return;
+    } else {
+      updateProductLineSettings(id, { analyticsPlatform: { mode: "manual", platform, otherName: null } });
     }
-    updateProductLineSettings(id, { analyticsPlatform: { mode: "manual", platform, otherName: null } });
     analyticsEmitter.emit("ManualSettingSaved", { Field: "analyticsPlatform", Mode: "manual", Source: "settings-page" });
+    if (wasDetected) trackEvent("DetectionFieldEdited", { Field: "analyticsPlatform", FromMode: "detected", ToMode: "manual" });
   };
 
   const handleOtherSave = () => {
@@ -160,6 +177,58 @@ export function ProductLineSettingsView() {
     trackEvent("DetectionPromptCopied", { product_line_id: pl.id });
   };
 
+  // ── Design System review handlers (Story 4) ──────────────────────────────
+  const handleDsMarkdownChange = (value: string) => {
+    const cur = settings?.designSystem;
+    if (cur?.mode !== "designMd") return;
+    const wasDetected = cur.source === "detected";
+    // Editing flips source -> "edited" and drops confidence/reasoning; library/tokensHint kept for orientation.
+    updateProductLineSettings(id, {
+      designSystem: {
+        mode: "designMd",
+        designMd: value,
+        source: "edited",
+        library: cur.library ?? null,
+        tokensHint: cur.tokensHint ?? null,
+      },
+    });
+    if (wasDetected) {
+      trackEvent("DetectionFieldEdited", { Field: "designSystem", FromMode: "detected", ToMode: "edited" });
+    }
+  };
+
+  const handleUseTemplate = () => {
+    const cur = settings?.designSystem;
+    const hasExisting = cur?.mode === "designMd" && !!cur.designMd;
+    if (hasExisting && !window.confirm("Replace the current design system with Product Agent's template? Your current design system content will be overwritten.")) {
+      return;
+    }
+    updateProductLineSettings(id, {
+      designSystem: {
+        mode: "designMd",
+        designMd: PRODUCT_AGENT_DESIGN_TEMPLATE,
+        source: "template",
+        library: "Product Agent (Tailwind + shadcn/ui)",
+        tokensHint: "colors_and_type.css",
+      },
+    });
+    setDsMdCollapsedOverride(false);
+    setDsExpanded(false);
+  };
+
+  const handleSwitchToSkill = () => {
+    const cur = settings?.designSystem;
+    if (!window.confirm("Switch to skill mode? This clears the detected design system content.")) return;
+    const wasDetected = cur?.mode === "designMd" && cur.source === "detected";
+    updateProductLineSettings(id, { designSystem: { mode: "skill", skillName: null } });
+    if (wasDetected) {
+      trackEvent("DetectionFieldEdited", { Field: "designSystem", FromMode: "detected", ToMode: "skill" });
+    }
+    setDsInput("");
+    setShowDsReasoning(false);
+    setDsExpanded(true);
+  };
+
   // ── Derived state ────────────────────────────────────────────────────────
   const isSkipped = savedPath === null;
   const dsSaved = savedSkillName !== null;
@@ -168,6 +237,29 @@ export function ProductLineSettingsView() {
 
   // Listening = detecting, not stuck, no error
   const isListening = detecting && !stuck && !detectionError;
+
+  // ── Detection-review derived flags (Story 4) ─────────────────────────────
+  const dsObj = settings?.designSystem;
+  const dsIsMd = dsObj?.mode === "designMd";
+  const dsSource = dsIsMd ? dsObj.source : null;
+  const dsMarkdown = dsIsMd ? dsObj.designMd : "";
+  const dsConfidence = dsIsMd ? (dsObj.confidence ?? null) : null;
+  const dsReasoning = dsIsMd ? (dsObj.reasoning ?? null) : null;
+  const dsLibrary = dsIsMd ? (dsObj.library ?? null) : null;
+  const dsTokensHint = dsIsMd ? (dsObj.tokensHint ?? null) : null;
+  // High confidence collapses by default; medium/low expand so the editor + TODOs are visible.
+  const dsDefaultCollapsed = dsSource === "detected" && dsConfidence === "high";
+  const dsCollapsed = dsMdCollapsedOverride ?? dsDefaultCollapsed;
+
+  const apObj = settings?.analyticsPlatform;
+  const apDetected = apObj?.mode === "detected";
+  const apDetectedPlatform = apDetected ? (apObj.platform ?? null) : null;
+  const apConfidence = apDetected ? (apObj.confidence ?? null) : null;
+  const apReasoning = apDetected ? (apObj.reasoning ?? null) : null;
+  const apDetectedLabel =
+    apDetectedPlatform === "other"
+      ? "Other"
+      : ANALYTICS_OPTIONS.find((o) => o.value === apDetectedPlatform)?.label ?? apDetectedPlatform ?? "";
 
   return (
     <div className="px-8 py-8 max-w-2xl">
@@ -364,9 +456,72 @@ export function ProductLineSettingsView() {
               </button>
             </div>
           ) : (
-            /* Normal Design System body — PICKED state: show saved or collapsed affordance */
+            /* Normal Design System body — detected/template/edited markdown, skill, or empty */
             <>
-              {!isSkipped && !dsExpanded ? (
+              {dsIsMd ? (
+                <div className="rounded-xl border border-border-strong bg-surface-1 p-4 flex flex-col gap-3">
+                  {/* Header: confidence chip + reasoning reveal + collapse + switch-to-skill */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {dsSource === "detected" && dsConfidence ? (
+                      <ConfidenceChip level={dsConfidence} />
+                    ) : (
+                      <span className="text-[11px] font-medium text-muted-foreground">
+                        {dsSource === "template" ? "From template" : "Edited"}
+                      </span>
+                    )}
+                    {dsSource === "detected" && dsReasoning && (
+                      <button
+                        onClick={() => setShowDsReasoning((v) => !v)}
+                        className="cursor-pointer text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+                      >
+                        Why?
+                      </button>
+                    )}
+                    <div className="flex-1" />
+                    <button
+                      onClick={() => setDsMdCollapsedOverride(!dsCollapsed)}
+                      aria-label={dsCollapsed ? "Expand design system editor" : "Collapse design system editor"}
+                      className="cursor-pointer p-1 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors"
+                    >
+                      <ChevronDown size={14} className={cn("transition-transform", dsCollapsed && "-rotate-90")} />
+                    </button>
+                    <button
+                      onClick={handleSwitchToSkill}
+                      className="cursor-pointer text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+                    >
+                      Switch to skill mode
+                    </button>
+                  </div>
+
+                  {showDsReasoning && dsReasoning && (
+                    <p className="text-xs text-muted-foreground">{dsReasoning}</p>
+                  )}
+
+                  {!dsCollapsed && (
+                    <textarea
+                      value={dsMarkdown}
+                      onChange={(e) => handleDsMarkdownChange(e.target.value)}
+                      spellCheck={false}
+                      className="bg-surface-2 border border-border-strong rounded-md px-3 py-2 text-xs text-foreground font-mono leading-relaxed focus:outline-none focus:border-border-focus min-h-[220px] resize-y"
+                    />
+                  )}
+
+                  {(dsLibrary || dsTokensHint) && (
+                    <p className="text-xs text-muted-foreground/60">
+                      {dsLibrary ?? "Design system"}{dsTokensHint ? ` · tokens: ${dsTokensHint}` : ""}
+                    </p>
+                  )}
+
+                  {dsSource === "detected" && dsConfidence === "low" && (
+                    <button
+                      onClick={handleUseTemplate}
+                      className="cursor-pointer self-start text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                    >
+                      Use Product Agent&apos;s design system as a starting template
+                    </button>
+                  )}
+                </div>
+              ) : !isSkipped && !dsExpanded ? (
                 dsSaved ? (
                   <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex items-center gap-3">
                     <span className="text-xs font-mono text-foreground flex-1 truncate">{savedSkillName}</span>
@@ -379,13 +534,23 @@ export function ProductLineSettingsView() {
                     </button>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-border-subtle bg-surface-1 px-4 py-3 flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground/50 flex-1">No design system linked</span>
+                  <div className="rounded-xl border border-border-subtle bg-surface-1 px-4 py-3 flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground/50 flex-1">
+                        {savedPath ? "No design system detected from the codebase" : "No design system linked"}
+                      </span>
+                      <button
+                        onClick={() => { setDsInput(""); setDsExpanded(true); }}
+                        className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors shrink-0"
+                      >
+                        Set up
+                      </button>
+                    </div>
                     <button
-                      onClick={() => { setDsInput(""); setDsExpanded(true); }}
-                      className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                      onClick={handleUseTemplate}
+                      className="cursor-pointer self-start text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
                     >
-                      Set up
+                      Use Product Agent&apos;s design system as a starting template
                     </button>
                   </div>
                 )
@@ -448,8 +613,45 @@ export function ProductLineSettingsView() {
             </p>
           </div>
 
-          {/* PICKED state: collapsed affordance */}
-          {!isSkipped && !apExpanded ? (
+          {/* Detected review state */}
+          {apDetected && !apExpanded ? (
+            <div className="rounded-xl border border-border-strong bg-surface-1 p-4 flex flex-col gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-sm font-medium text-foreground">{apDetectedLabel}</span>
+                {apConfidence && <ConfidenceChip level={apConfidence} />}
+                {apReasoning && (
+                  <button
+                    onClick={() => setShowApReasoning((v) => !v)}
+                    className="cursor-pointer text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+                  >
+                    Why?
+                  </button>
+                )}
+              </div>
+              {showApReasoning && apReasoning && (
+                <p className="text-xs text-muted-foreground">{apReasoning}</p>
+              )}
+              <p className="text-xs text-muted-foreground/60">Select a different platform to override:</p>
+              <div className="flex flex-col gap-1">
+                {ANALYTICS_OPTIONS.map((opt) => (
+                  <label
+                    key={opt.value}
+                    className="flex items-center gap-3 px-2 py-1.5 rounded-md cursor-pointer hover:bg-surface-hover transition-colors"
+                  >
+                    <input
+                      type="radio"
+                      name={`analytics-${id}`}
+                      value={opt.value}
+                      checked={apDetectedPlatform === opt.value}
+                      onChange={() => handlePlatformSelect(opt.value)}
+                      className="accent-foreground"
+                    />
+                    <span className="text-sm text-foreground">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : !isSkipped && !apExpanded ? (
             apSaved ? (
               <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex items-center gap-3">
                 <span className="text-xs text-foreground flex-1">

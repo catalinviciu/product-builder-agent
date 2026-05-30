@@ -98,6 +98,11 @@ export type AnalyticsEventMap = {
     DesignSystemConfidence: "high" | "medium" | "low" | "none-found";
     AnalyticsPlatformConfidence: "high" | "medium" | "low" | "none-found";
   };
+  DetectionFieldEdited: {
+    Field: "designSystem" | "analyticsPlatform";
+    FromMode: "detected";
+    ToMode: "skill" | "manual" | "edited";
+  };
 };
 
 type ListenerMap = { [K in keyof AnalyticsEventMap]?: Array<Listener<AnalyticsEventMap[K]>> };
