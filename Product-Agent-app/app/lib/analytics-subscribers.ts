@@ -97,6 +97,10 @@ export function startAnalyticsSubscribers(): void {
     trackEvent("RefineStoryPromptCopied", props);
   });
 
+  analyticsEmitter.on("write_ac_story_prompt_copied", (props) => {
+    trackEvent("WriteAcStoryPromptCopied", props);
+  });
+
   analyticsEmitter.on("story_enriched", (props) => {
     trackEvent("StoryEnriched", props);
   });

@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useAppStore } from "@/app/lib/store";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
-import { buildPlanImplementStoryPrompt, buildRefineStoryPrompt } from "@/app/lib/utils";
+import { buildPlanImplementStoryPrompt, buildRefineStoryPrompt, buildWriteAcStoryPrompt } from "@/app/lib/utils";
 import { showToast } from "@/components/ui/toast";
 import {
   buildBackbone,
@@ -105,6 +105,20 @@ function StoryDetailFooter({ story, solutionId, prev, next, navigateStoryDetail 
     showToast({ message: "Refine prompt copied — paste into your agentic tool", tone: "success" });
   }
 
+  async function handleWriteAc() {
+    if (!solutionId) return;
+    const text = buildWriteAcStoryPrompt(entityStore, productLineName, solutionId, {
+      id: story.id,
+      title: story.title,
+    });
+    await navigator.clipboard.writeText(text);
+    analyticsEmitter.emit("write_ac_story_prompt_copied", {
+      solution_id: solutionId,
+      story_id: story.id,
+    });
+    showToast({ message: "Write AC prompt copied — paste into your agentic tool", tone: "success" });
+  }
+
   async function handleCopy() {
     if (!solutionId) return;
     const text = buildPlanImplementStoryPrompt(
@@ -199,7 +213,12 @@ function StoryDetailFooter({ story, solutionId, prev, next, navigateStoryDetail 
               Plan &amp; Implement story
             </button>
           ) : (
-            <p className="text-sm text-muted-foreground text-center">Add AC first to enable this scope</p>
+            <button
+              onClick={handleWriteAc}
+              className="cursor-pointer inline-flex items-center justify-center gap-2 bg-surface-3 hover:bg-surface-hover active:bg-surface-active text-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
+            >
+              Write AC
+            </button>
           )}
         </div>
       </div>

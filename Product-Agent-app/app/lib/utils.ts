@@ -448,6 +448,28 @@ export function buildRefineStoryPrompt(
   return sections.join("\n\n---\n\n");
 }
 
+// ── Write AC for a single story prompt for AI agents ────────────────────
+
+export function buildWriteAcStoryPrompt(
+  store: EntityStore,
+  productLineName: string,
+  solutionId: string,
+  story: { id: string; title: string },
+): string {
+  const anchor = buildStoryAnchor(store, productLineName, solutionId, story.id, story.title);
+  const sections = [
+    anchor,
+    `Use skill: ProductSkills/user-story-ac-writer/SKILL.md`,
+    [
+      `Solution ID: ${solutionId}`,
+      `Scope: write acceptance criteria for ONLY story id: ${story.id}.`,
+      `Skip the multi-story Phase 1 review — go straight to this one story, then write back via`,
+      `pa_update_story({ entityId: "${solutionId}", storyId: "${story.id}", patch: { acceptanceCriteria, analyticsEvents } }).`,
+    ].join("\n"),
+  ];
+  return anchor ? sections.join("\n\n---\n\n") : sections.slice(1).join("\n\n---\n\n");
+}
+
 // ── Plan & implement story prompt for AI agents ──────────────────────────
 
 export function buildPlanImplementStoryPrompt(
@@ -459,12 +481,13 @@ export function buildPlanImplementStoryPrompt(
 ): string {
   const anchor = buildStoryAnchor(store, productLineName, solutionId, storyId, storyTitle);
   const instructions = [
-    `1. Plan the implementation of the story above`,
-    `2. Follow ProductSkills/story-map-updater/SKILL.md`,
-    `3. Ask clarifying questions before proceeding`,
-    `4. Use the .claude/skills/product-agent-design skill for frontend`,
-    `5. Follow existing patterns and conventions`,
-    `6. After plan is ready, dispatch sonnet subagents`,
+    `1. Read story id ${storyId} from pa_get_entity above — read its acceptanceCriteria, context, outOfScope, dependencies, and humanVerification in full before doing anything else`,
+    `2. Plan the implementation of that story`,
+    `3. Follow ProductSkills/story-map-updater/SKILL.md`,
+    `4. Ask clarifying questions before proceeding`,
+    `5. Use the .claude/skills/product-agent-design skill for frontend`,
+    `6. Follow existing patterns and conventions`,
+    `7. After plan is ready, dispatch sonnet subagents`,
   ].join("\n");
   return anchor ? `${anchor}\n\n${instructions}` : instructions;
 }

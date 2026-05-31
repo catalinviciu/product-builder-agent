@@ -72,6 +72,10 @@ export type AnalyticsEventMap = {
     solution_id: string;
     story_id: string;
   };
+  write_ac_story_prompt_copied: {
+    solution_id: string;
+    story_id: string;
+  };
   story_enriched: {
     solution_id: string;
     story_id: string;

@@ -85,6 +85,19 @@
               "components": [
                 "ProductLineSettingsView"
               ]
+            },
+            {
+              "action": "See a redirect banner when arriving at Settings from a blocked AI action, fill in the missing fields highlighted with a focus ring, and return to the action once all settings are resolved",
+              "components": [
+                "ProductLineSettingsView",
+                "settings-redirect"
+              ]
+            },
+            {
+              "action": "See the read-only base folder where this product line's prototypes will be saved, with a tooltip explaining the per-prototype subfolder convention",
+              "components": [
+                "ProductLineSettingsView"
+              ]
             }
           ]
         },

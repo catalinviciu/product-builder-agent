@@ -3,6 +3,7 @@ import { subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { DEFAULT_PRODUCT_LINE_ID, DEFAULT_PRODUCT_LINE_SETTINGS } from "./schemas";
 import type { Entity, Block, MetricBlock, ProductLine, ProductLineSettings, DiscoveryTree, Persona, AssumptionType, TestType, IceScore, EntityStatus, Signal } from "./schemas";
+import type { SettingsFieldKey } from "./settings-redirect";
 import { analyticsEmitter, type AnalyticsEventMap } from "./analytics-events";
 import { getDescendantIds } from "./utils";
 
@@ -22,6 +23,13 @@ export interface AppStore {
   settingsProductLineId: string | null;
   openSettings: (plId: string, source: "creation" | "header-link") => void;
   closeSettings: () => void;
+  settingsRedirect: {
+    actionName: string;
+    missingFields: SettingsFieldKey[];
+    returnEntityId: string | null;
+  } | null;
+  openSettingsWithRedirect: (plId: string, redirect: { actionName: string; missingFields: SettingsFieldKey[]; returnEntityId: string | null }) => void;
+  exitSettingsRedirect: () => void;
   personaPanelOpen: boolean;
   personaPanelId: string | null;
   openPersonaPanel: (id?: string) => void;
@@ -142,7 +150,19 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
     set({ settingsProductLineId: plId, currentEntityId: null });
     analyticsEmitter.emit("SettingsPageOpened", { source, productLineId: plId });
   },
-  closeSettings: () => set({ settingsProductLineId: null }),
+  closeSettings: () => set({ settingsProductLineId: null, settingsRedirect: null }),
+  settingsRedirect: null,
+  openSettingsWithRedirect: (plId, redirect) => set({
+    settingsProductLineId: plId,
+    currentEntityId: null,
+    settingsRedirect: redirect,
+  }),
+  exitSettingsRedirect: () => set((draft) => {
+    const returnId = draft.settingsRedirect?.returnEntityId ?? null;
+    draft.settingsRedirect = null;
+    draft.settingsProductLineId = null;
+    draft.currentEntityId = returnId;
+  }),
   personaPanelOpen: false,
   personaPanelId: null,
   openPersonaPanel: (id) => set({ personaPanelOpen: true, personaPanelId: id ?? null }),

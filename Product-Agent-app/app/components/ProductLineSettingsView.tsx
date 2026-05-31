@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { FolderOpen, Pencil, Check, ChevronDown, ArrowLeft } from "lucide-react";
+import { FolderOpen, Pencil, Check, ChevronDown, ArrowLeft, HelpCircle } from "lucide-react";
 import { useAppStore } from "@/app/lib/store";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { trackEvent } from "@/app/lib/analytics";
@@ -10,6 +10,8 @@ import { buildCodebaseDetectionPrompt } from "@/app/lib/utils";
 import type { AnalyticsPlatform, DesignSystemSettings, AnalyticsPlatformSettings } from "@/app/lib/schemas";
 import { PRODUCT_AGENT_DESIGN_TEMPLATE } from "@/app/assets/design-templates/product-agent";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { type SettingsFieldKey, isSettingsFieldFilled, joinFieldLabels } from "@/app/lib/settings-redirect";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 /** Confidence chip — glyph encodes level (● high · ◐ medium · ○ low); neutral token color. */
 function ConfidenceChip({ level }: { level: "high" | "medium" | "low" }) {
@@ -37,6 +39,8 @@ export function ProductLineSettingsView() {
   const productLines = useAppStore((s) => s.productLines);
   const updateProductLineSettings = useAppStore((s) => s.updateProductLineSettings);
   const closeSettings = useAppStore((s) => s.closeSettings);
+  const settingsRedirect = useAppStore((s) => s.settingsRedirect);
+  const exitSettingsRedirect = useAppStore((s) => s.exitSettingsRedirect);
 
   const pl = settingsProductLineId ? productLines[settingsProductLineId] : null;
   const settings = pl?.settings;
@@ -74,6 +78,21 @@ export function ProductLineSettingsView() {
   // agent" apart from "this product line already had a design system before".
   const detectBaselineDs = useRef<DesignSystemSettings | undefined>(undefined);
   const detectBaselineAp = useRef<AnalyticsPlatformSettings | undefined>(undefined);
+
+  // Section refs for redirect highlight + auto-scroll
+  const sectionRefs = useRef<Partial<Record<SettingsFieldKey, HTMLDivElement | null>>>({});
+
+  // Auto-scroll to first missing section when a redirect arrives
+  useEffect(() => {
+    if (!settingsRedirect || !settings) return;
+    const firstMissing = settingsRedirect.missingFields.find(
+      (k) => !isSettingsFieldFilled(settings, k) && sectionRefs.current[k]
+    );
+    if (firstMissing) {
+      sectionRefs.current[firstMissing]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run only when a new redirect arrives
+  }, [settingsRedirect]);
 
   // Confirm dialog state
   const [pendingConfirm, setPendingConfirm] = useState<{
@@ -122,6 +141,12 @@ export function ProductLineSettingsView() {
   if (!pl || !settingsProductLineId) return null;
 
   const id = settingsProductLineId;
+
+  // ── Redirect banner state ────────────────────────────────────────────────
+  const redirect = settingsRedirect;
+  const stillMissing: SettingsFieldKey[] =
+    redirect && settings ? redirect.missingFields.filter((k) => !isSettingsFieldFilled(settings, k)) : [];
+  const allResolved = !!redirect && stillMissing.length === 0;
 
   // ── Codebase path validation ─────────────────────────────────────────────
   const validateCodebasePath = (value: string): { ok: boolean; reason?: string } => {
@@ -386,6 +411,34 @@ export function ProductLineSettingsView() {
 
   return (
     <div className="px-8 py-8 max-w-2xl">
+      {/* Redirect banner — only rendered when an AI action sent the user here */}
+      {redirect && (
+        <div className="sticky top-0 z-20 -mx-8 px-8 pt-2 pb-3 mb-4 bg-background/95 backdrop-blur">
+          <div className="rounded-xl border border-border-default bg-surface-2 px-4 py-3 flex flex-col gap-3">
+            <p className="text-sm text-foreground">
+              {allResolved
+                ? <><span className="font-medium">{redirect.actionName}</span> — all set. Ready to return.</>
+                : <><span className="font-medium">{redirect.actionName}</span> needs {joinFieldLabels(stillMissing)}. Add {stillMissing.length > 1 ? "them" : "it"} below to continue.</>}
+            </p>
+            <div className="flex items-center gap-2">
+              {allResolved && (
+                <button
+                  onClick={exitSettingsRedirect}
+                  className="cursor-pointer text-xs px-3 py-1.5 rounded-md bg-foreground text-background hover:opacity-90 active:opacity-85 focus:outline-2 focus:outline-border-focus transition-opacity font-medium"
+                >
+                  Return to {redirect.actionName}
+                </button>
+              )}
+              <button
+                onClick={exitSettingsRedirect}
+                className="cursor-pointer text-xs px-3 py-1.5 rounded-md text-muted-foreground hover:bg-surface-hover hover:text-foreground active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors"
+              >
+                Cancel and go back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center mb-8">
         <button
@@ -402,7 +455,13 @@ export function ProductLineSettingsView() {
 
       <div className="flex flex-col gap-8">
         {/* ── Codebase section ── */}
-        <div className="flex flex-col gap-4">
+        <div
+          ref={(el) => { sectionRefs.current.codebasePath = el; }}
+          className={cn(
+            "flex flex-col gap-4 rounded-xl transition-shadow",
+            stillMissing.includes("codebasePath") && "ring-2 ring-border-focus ring-offset-2 ring-offset-background"
+          )}
+        >
           <div>
             <h2 className="text-sm font-semibold text-foreground">Codebase</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -617,7 +676,13 @@ export function ProductLineSettingsView() {
         })()}
 
         {/* ── Design System section ── */}
-        <div className="flex flex-col gap-4">
+        <div
+          ref={(el) => { sectionRefs.current.designSystem = el; }}
+          className={cn(
+            "flex flex-col gap-4 rounded-xl transition-shadow",
+            stillMissing.includes("designSystem") && "ring-2 ring-border-focus ring-offset-2 ring-offset-background"
+          )}
+        >
           <div>
             <h2 className="text-sm font-semibold text-foreground">
               Design System
@@ -769,7 +834,7 @@ export function ProductLineSettingsView() {
                     </div>
                     <button
                       onClick={handleUseTemplate}
-                      className="cursor-pointer self-start text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                      className="cursor-pointer self-start text-xs px-2.5 py-1 rounded-md text-muted-foreground hover:bg-surface-hover hover:text-foreground active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors"
                     >
                       Use Product Agent&apos;s design system as a starting template
                     </button>
@@ -819,7 +884,13 @@ export function ProductLineSettingsView() {
         </div>
 
         {/* ── Analytics Platform section ── */}
-        <div className="flex flex-col gap-4">
+        <div
+          ref={(el) => { sectionRefs.current.analyticsPlatform = el; }}
+          className={cn(
+            "flex flex-col gap-4 rounded-xl transition-shadow",
+            stillMissing.includes("analyticsPlatform") && "ring-2 ring-border-focus ring-offset-2 ring-offset-background"
+          )}
+        >
           <div>
             <h2 className="text-sm font-semibold text-foreground">
               Analytics Platform
@@ -983,6 +1054,36 @@ export function ProductLineSettingsView() {
               </button>
             </div>
           )}
+        </div>
+
+        {/* ── Prototype output path section ── */}
+        <div className="flex flex-col gap-4 rounded-xl">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Prototype output path</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Base folder where prototypes for this product line are saved.
+            </p>
+          </div>
+          <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex items-center gap-3">
+            <FolderOpen size={14} className="text-muted-foreground/50 shrink-0" />
+            <span className="text-xs font-mono text-foreground flex-1">Product-Agent-app/public/prototypes/</span>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="About the prototype output path"
+                    className="cursor-pointer p-1 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors shrink-0"
+                  >
+                    <HelpCircle size={14} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Prototypes are saved under this folder. Each prototype creates its own subfolder based on the product line, parent opportunity, and solution when you trigger the Prototype action.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       </div>
 

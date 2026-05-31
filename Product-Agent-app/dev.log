@@ -1,0 +1,14 @@
+
+> product-agent@0.1.0 dev
+> next dev
+
+⚠ Port 3000 is in use by process 9080, using available port 3001 instead.
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.0.38:3001
+- Environments: .env
+
+✓ Starting...
+⨯ Unable to acquire lock at D:\Projects\2.ProductAgent\Product-Agent-app\.next\dev\lock, is another instance of next dev running?
+  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+[?25h
