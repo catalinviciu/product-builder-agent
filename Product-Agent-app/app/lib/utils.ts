@@ -239,6 +239,31 @@ export function buildSolutionsBrainstormerPrompt(
 
 // ── Solution planning prompt for AI agents ──────────────────────────────
 
+/** Instruction line that points the agent at this product line's design system. */
+function designSystemInstruction(ds: ProductLine["settings"]["designSystem"]): string {
+  if (ds.mode === "skill" && ds.skillName) {
+    return `Use the \`${ds.skillName}\` skill for frontend.`;
+  }
+  // designMd mode (or skill without a name) — reference the settings, don't paste the content
+  return `Use the design system in this product line's settings (design system steering) before building any frontend.`;
+}
+
+/** Human-readable label for the configured analytics platform, or null if none is set. */
+function analyticsPlatformLabel(a: ProductLine["settings"]["analyticsPlatform"]): string | null {
+  if (!a.platform) return null;
+  if (a.platform === "other") {
+    const name = a.mode === "manual" ? a.otherName?.trim() : undefined;
+    return name || "the configured analytics platform";
+  }
+  const labels: Record<string, string> = {
+    pendo: "Pendo",
+    mixpanel: "Mixpanel",
+    amplitude: "Amplitude",
+    google_analytics: "Google Analytics",
+  };
+  return labels[a.platform] ?? "the configured analytics platform";
+}
+
 export function buildSolutionPlanningPrompt(
   store: EntityStore,
   productLine: ProductLine,
@@ -247,26 +272,21 @@ export function buildSolutionPlanningPrompt(
   const solution = store[entityId];
   if (!solution) return "";
 
+  const settings = productLine.settings;
   const chain = getParentChain(store, entityId);
   const opportunity = chain.find((e) => e.level === "opportunity");
-
-  const codePathLine = productLine.codePath
-    ? productLine.codePath
-    : "Not specified — set it in Product Line settings";
+  const pathLabels = [...chain.map((e) => LEVEL_META[e.level].label), LEVEL_META[solution.level].label];
 
   const sections: string[] = [];
 
-  // Header
-  sections.push(`# Planning Prompt: "${solution.title}"`);
-
-  // Context
+  // Context (at the beginning, mirroring the [Product Agent Context] anchor)
   sections.push([
-    `## Context`,
-    ``,
-    `You are planning the implementation of a solution within the Product Agent discovery tree.`,
-    ``,
-    `**Product Line:** ${productLine.name}`,
-    `**Codebase:** ${codePathLine}`,
+    `[Product Agent Context]`,
+    `Product Line: ${productLine.name} (id: ${productLine.id})`,
+    `Path: ${pathLabels.join(" > ")}`,
+    `Entity: "${solution.title}" (${solution.id})`,
+    `Codebase: ${settings.codebasePath} — locate this folder in the working directory before acting on any other path.`,
+    `Data: pa_get_entity("${entityId}")`,
   ].join("\n"));
 
   // Opportunity section
@@ -307,15 +327,21 @@ export function buildSolutionPlanningPrompt(
 
   sections.push(solLines.join("\n"));
 
-  // Instructions
-  sections.push([
-    `## Instructions`,
-    ``,
-    `1. Plan the implementation of this solution in the codebase at \`${productLine.codePath || codePathLine}\`.`,
-    `2. Read and follow \`ProductSkills/story-map-updater/SKILL.md\` to include story map updates as part of your plan.`,
-    `3. Ask clarifying questions before proceeding if anything is unclear.`,
-    `4. Follow existing patterns and conventions in the codebase.`,
-  ].join("\n"));
+  // Instructions (parametrized, mirroring the standard plan-and-implement flow)
+  const steps: string[] = [];
+  steps.push(`Plan the implementation of this solution.`);
+  if (settings.storyMap.enabled) {
+    steps.push(`Follow \`ProductSkills/story-map-updater/SKILL.md\` to include story map updates in your plan.`);
+  }
+  steps.push(`Ask clarifying questions before proceeding if anything is unclear.`);
+  steps.push(designSystemInstruction(settings.designSystem));
+  steps.push(`Follow existing patterns and conventions in the codebase.`);
+  steps.push(`After the plan is ready, dispatch Sonnet subagents to implement the mechanical work.`);
+  const analytics = analyticsPlatformLabel(settings.analyticsPlatform);
+  if (analytics) {
+    steps.push(`Instrument analytics using ${analytics} (the product line's configured platform).`);
+  }
+  sections.push([`## Instructions`, ``, ...steps.map((s, i) => `${i + 1}. ${s}`)].join("\n"));
 
   return sections.join("\n\n---\n\n");
 }

@@ -11,6 +11,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Entity, EntityStore, ProductLine } from "@/app/lib/schemas";
 import { buildEntityAnchor, buildOpportunityWriterPrompt, buildSolutionPlanningPrompt, buildSolutionsBrainstormerPrompt, buildAssumptionTesterPrompt, buildPrototypeBuilderPrompt } from "@/app/lib/utils";
+import type { SettingsFieldKey } from "@/app/lib/settings-redirect";
+import { isSettingsFieldFilled } from "@/app/lib/settings-redirect";
+import { trackEvent } from "@/app/lib/analytics";
+import { useAppStore } from "@/app/lib/store";
 
 export interface AIAction {
   id: string;
@@ -18,6 +22,8 @@ export interface AIAction {
   description: string;
   icon: LucideIcon;
   getText: () => string;
+  requiredSettings?: SettingsFieldKey[];
+  actionName?: string;
 }
 
 interface AIActionsMenuProps {
@@ -57,6 +63,8 @@ function getActions(entity: Entity, entities: EntityStore, productLine: ProductL
       description: "Full prompt to plan and build this feature — includes opportunity context, solution details, and codebase path",
       icon: Clipboard,
       getText: () => buildSolutionPlanningPrompt(entities, productLine, entity.id),
+      requiredSettings: ["codebasePath", "designSystem"] as SettingsFieldKey[],
+      actionName: "Plan & Implement (Solution)",
     });
     actions.push({
       id: "identify-assumptions",
@@ -169,14 +177,39 @@ export function AIActionsMenu({ entity, entities, productLine }: AIActionsMenuPr
     if (typeof window === "undefined") return false;
     return !localStorage.getItem(TOOLTIP_KEY);
   });
+  const openSettingsWithRedirect = useAppStore((s) => s.openSettingsWithRedirect);
 
   const actions = getActions(entity, entities, productLine);
 
-  const handleCopy = (action: AIAction) => {
+  const handleCopy = (action: AIAction, closeMenu: () => void) => {
+    if (action.requiredSettings && action.requiredSettings.length > 0) {
+      const missing = action.requiredSettings.filter(
+        (key) => !isSettingsFieldFilled(productLine.settings, key)
+      );
+      if (missing.length > 0) {
+        openSettingsWithRedirect(productLine.id, {
+          actionName: action.actionName!,
+          missingFields: missing,
+          returnEntityId: entity.id,
+        });
+        trackEvent("AIActionBlocked", { Action: "plan-implement", MissingFields: missing.join(",") });
+        closeMenu();
+        return;
+      }
+      // All required settings present — copy and track
+      navigator.clipboard.writeText(action.getText());
+      trackEvent("AIActionPromptRendered", { Action: "plan-implement", Scope: "solution" });
+      setCopiedId(action.id);
+      setTimeout(() => setCopiedId((prev) => (prev === action.id ? null : prev)), 2000);
+      return;
+    }
+    // No gate — copy as before
     navigator.clipboard.writeText(action.getText());
     setCopiedId(action.id);
     setTimeout(() => setCopiedId((prev) => (prev === action.id ? null : prev)), 2000);
   };
+
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const dismissTip = () => {
     localStorage.setItem(TOOLTIP_KEY, "1");
@@ -185,7 +218,8 @@ export function AIActionsMenu({ entity, entities, productLine }: AIActionsMenuPr
 
   return (
     <div className="relative">
-      <DropdownMenu onOpenChange={(open) => {
+      <DropdownMenu open={menuOpen} onOpenChange={(open) => {
+        setMenuOpen(open);
         if (!open) setCopiedId(null);
         if (open && showTip) dismissTip();
       }}>
@@ -203,7 +237,7 @@ export function AIActionsMenu({ entity, entities, productLine }: AIActionsMenuPr
               <DropdownMenuItem
                 onSelect={(e) => {
                   e.preventDefault();
-                  handleCopy(action);
+                  handleCopy(action, () => setMenuOpen(false));
                 }}
                 className="flex items-start gap-3 py-2.5 cursor-pointer"
               >

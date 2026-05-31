@@ -1406,11 +1406,12 @@
           "title": "Generate solution planning prompt",
           "stories": [
             {
-              "action": "Copy a full planning prompt from a Solution entity that includes Opportunity context, Solution details, persona, codebase path, and skill instructions",
+              "action": "Click 'Plan & implement this solution' on a Solution entity — if codebase path and design system are configured, copies a full planning prompt with resolved values (no placeholders); otherwise redirects to Settings with a banner listing the missing fields",
               "components": [
                 "AIActionsMenu",
                 "EntityView",
-                "buildSolutionPlanningPrompt"
+                "buildSolutionPlanningPrompt",
+                "ProductLineSettingsView"
               ]
             }
           ]
