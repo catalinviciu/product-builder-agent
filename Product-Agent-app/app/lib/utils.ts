@@ -500,22 +500,45 @@ export function buildWriteAcStoryPrompt(
 
 export function buildPlanImplementStoryPrompt(
   store: EntityStore,
-  productLineName: string,
+  productLine: ProductLine,
   solutionId: string,
   storyId: string,
   storyTitle: string,
 ): string {
-  const anchor = buildStoryAnchor(store, productLineName, solutionId, storyId, storyTitle);
-  const instructions = [
-    `1. Read story id ${storyId} from pa_get_entity above — read its acceptanceCriteria, context, outOfScope, dependencies, and humanVerification in full before doing anything else`,
-    `2. Plan the implementation of that story`,
-    `3. Follow ProductSkills/story-map-updater/SKILL.md`,
-    `4. Ask clarifying questions before proceeding`,
-    `5. Use the .claude/skills/product-agent-design skill for frontend`,
-    `6. Follow existing patterns and conventions`,
-    `7. After plan is ready, dispatch sonnet subagents`,
+  const solution = store[solutionId];
+  if (!solution) return "";
+
+  const settings = productLine.settings;
+  const chain = getParentChain(store, solutionId);
+  const pathLabels = [...chain.map((e) => LEVEL_META[e.level].label), LEVEL_META[solution.level].label];
+
+  const contextBlock = [
+    `[Product Agent Context]`,
+    `Product Line: ${productLine.name} (id: ${productLine.id})`,
+    `Path: ${pathLabels.join(" > ")}`,
+    `Entity: "${solution.title}" (${solution.id})`,
+    `Codebase: ${settings.codebasePath} — locate this folder in the working directory before acting on any other path.`,
+    `Data: pa_get_entity("${solutionId}")`,
+    `Story: ${storyId} — "${storyTitle}"`,
   ].join("\n");
-  return anchor ? `${anchor}\n\n${instructions}` : instructions;
+
+  const steps: string[] = [];
+  steps.push(`Read story id ${storyId} from pa_get_entity above — read its acceptanceCriteria, context, outOfScope, dependencies, and humanVerification in full before doing anything else`);
+  steps.push(`Plan the implementation of that story`);
+  if (settings.storyMap.enabled) {
+    steps.push(`Follow \`ProductSkills/story-map-updater/SKILL.md\``);
+  }
+  steps.push(`Ask clarifying questions before proceeding`);
+  steps.push(designSystemInstruction(settings.designSystem));
+  steps.push(`Follow existing patterns and conventions`);
+  steps.push(`After the plan is ready, dispatch Sonnet subagents to implement the mechanical work`);
+  const analytics = analyticsPlatformLabel(settings.analyticsPlatform);
+  if (analytics) {
+    steps.push(`Instrument analytics using ${analytics} (the product line's configured platform).`);
+  }
+
+  const numberedSteps = steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
+  return `${contextBlock}\n\n${numberedSteps}`;
 }
 
 export function buildPlanImplementIterationPrompt(

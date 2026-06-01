@@ -8,6 +8,8 @@ import { useAppStore } from "@/app/lib/store";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { buildPlanImplementStoryPrompt, buildRefineStoryPrompt, buildWriteAcStoryPrompt } from "@/app/lib/utils";
+import { runGatedPlanImplement } from "@/app/lib/ai-action-gate";
+import type { SettingsFieldKey } from "@/app/lib/settings-redirect";
 import { showToast } from "@/components/ui/toast";
 import {
   buildBackbone,
@@ -72,7 +74,7 @@ function formatDoneAt(iso: string): string {
 }
 
 // ── Footer sub-component (isolated to satisfy TypeScript non-null story) ──
-import type { Story } from "@/app/lib/schemas";
+import type { Story, ProductLine } from "@/app/lib/schemas";
 
 interface FooterProps {
   story: Story;
@@ -80,17 +82,17 @@ interface FooterProps {
   prev: Story | null;
   next: Story | null;
   navigateStoryDetail: (storyId: string) => void;
+  productLine: ProductLine;
+  openSettingsWithRedirect: (plId: string, redirect: { actionName: string; missingFields: SettingsFieldKey[]; returnEntityId: string | null }) => void;
+  close: () => void;
 }
 
-function StoryDetailFooter({ story, solutionId, prev, next, navigateStoryDetail }: FooterProps) {
+function StoryDetailFooter({ story, solutionId, prev, next, navigateStoryDetail, productLine, openSettingsWithRedirect, close }: FooterProps) {
   const hasAc = !!(story.acceptanceCriteria && story.acceptanceCriteria.trim() !== "");
   const isManual = !story.narrative;
   const setStoryDone = useAppStore((s) => s.setStoryDone);
   const isDone = !!story.done;
 
-  const productLines = useAppStore((s) => s.productLines);
-  const currentProductLineId = useAppStore((s) => s.currentProductLineId);
-  const productLine = Object.values(productLines).find((pl) => pl.id === currentProductLineId);
   const entityStore = productLine?.entities ?? {};
   const productLineName = productLine?.name ?? "";
 
@@ -121,20 +123,20 @@ function StoryDetailFooter({ story, solutionId, prev, next, navigateStoryDetail 
 
   async function handleCopy() {
     if (!solutionId) return;
-    const text = buildPlanImplementStoryPrompt(
-      entityStore,
-      productLineName,
-      solutionId,
-      story.id,
-      story.title,
-    );
-    await navigator.clipboard.writeText(text);
-    analyticsEmitter.emit("plan_implement_prompt_copied", {
-      solution_id: solutionId ?? "",
+    const copied = await runGatedPlanImplement({
+      productLine,
+      requiredSettings: ["codebasePath", "designSystem"] as SettingsFieldKey[],
+      actionName: "Plan & Implement (Stories tab)",
+      returnEntityId: solutionId,
       scope: "story",
-      story_count: 1,
+      buildPrompt: () => buildPlanImplementStoryPrompt(entityStore, productLine, solutionId, story.id, story.title),
+      openSettingsWithRedirect,
     });
-    showToast({ message: "Prompt copied — paste into your agentic tool", tone: "success" });
+    if (copied) {
+      showToast({ message: "Prompt copied — paste into your agentic tool", tone: "success" });
+    } else {
+      close();
+    }
   }
 
   function handleToggleDone() {
@@ -241,6 +243,7 @@ export function StoryDetailSlideOver() {
   const openStoryDetail = useAppStore((s) => s.openStoryDetail);
   const navigateTo = useAppStore((s) => s.navigateTo);
   const productLines = useAppStore((s) => s.productLines);
+  const openSettingsWithRedirect = useAppStore((s) => s.openSettingsWithRedirect);
 
   const productLine = useProductLine();
 
@@ -521,7 +524,7 @@ export function StoryDetailSlideOver() {
             </div>
 
             {/* ── Footer ── */}
-            <StoryDetailFooter story={story} solutionId={solutionId} prev={prev} next={next} navigateStoryDetail={navigateStoryDetail} />
+            <StoryDetailFooter story={story} solutionId={solutionId} prev={prev} next={next} navigateStoryDetail={navigateStoryDetail} productLine={productLine} openSettingsWithRedirect={openSettingsWithRedirect} close={close} />
           </motion.div>
         </>
       )}

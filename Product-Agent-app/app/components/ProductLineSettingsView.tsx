@@ -752,17 +752,9 @@ export function ProductLineSettingsView() {
                       <p className="text-xs text-muted-foreground/60">
                         {dsSource === "template"
                           ? "Using the Product Agent template. Keep editing, switch to a skill file, or clear it."
-                          : "Auto-detected from your codebase. Keep editing, replace with our template, switch to a skill file, or clear it."}
+                          : "Auto-detected from your codebase. Keep editing, switch to a skill file, or clear it."}
                       </p>
                       <div className="flex items-center gap-2 flex-wrap">
-                        {dsSource !== "template" && (
-                          <button
-                            onClick={handleUseTemplate}
-                            className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
-                          >
-                            Use Product Agent template
-                          </button>
-                        )}
                         <button
                           onClick={handleSwitchToSkill}
                           className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
@@ -799,12 +791,6 @@ export function ProductLineSettingsView() {
                       </button>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        onClick={handleUseTemplate}
-                        className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-2 border border-border-default hover:bg-surface-hover hover:border-border-strong active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
-                      >
-                        Switch to Product Agent template
-                      </button>
                       <button
                         onClick={() => requestConfirm({
                           title: "Clear design system?",

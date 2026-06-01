@@ -12,9 +12,8 @@ import {
 import type { Entity, EntityStore, ProductLine } from "@/app/lib/schemas";
 import { buildEntityAnchor, buildOpportunityWriterPrompt, buildSolutionPlanningPrompt, buildSolutionsBrainstormerPrompt, buildAssumptionTesterPrompt, buildPrototypeBuilderPrompt } from "@/app/lib/utils";
 import type { SettingsFieldKey } from "@/app/lib/settings-redirect";
-import { isSettingsFieldFilled } from "@/app/lib/settings-redirect";
-import { trackEvent } from "@/app/lib/analytics";
 import { useAppStore } from "@/app/lib/store";
+import { runGatedPlanImplement } from "@/app/lib/ai-action-gate";
 
 export interface AIAction {
   id: string;
@@ -181,24 +180,21 @@ export function AIActionsMenu({ entity, entities, productLine }: AIActionsMenuPr
 
   const actions = getActions(entity, entities, productLine);
 
-  const handleCopy = (action: AIAction, closeMenu: () => void) => {
+  const handleCopy = async (action: AIAction, closeMenu: () => void) => {
     if (action.requiredSettings && action.requiredSettings.length > 0) {
-      const missing = action.requiredSettings.filter(
-        (key) => !isSettingsFieldFilled(productLine.settings, key)
-      );
-      if (missing.length > 0) {
-        openSettingsWithRedirect(productLine.id, {
-          actionName: action.actionName!,
-          missingFields: missing,
-          returnEntityId: entity.id,
-        });
-        trackEvent("AIActionBlocked", { Action: "plan-implement", MissingFields: missing.join(",") });
+      const copied = await runGatedPlanImplement({
+        productLine,
+        requiredSettings: action.requiredSettings,
+        actionName: action.actionName!,
+        returnEntityId: entity.id,
+        scope: "solution",
+        buildPrompt: action.getText,
+        openSettingsWithRedirect,
+      });
+      if (!copied) {
         closeMenu();
         return;
       }
-      // All required settings present — copy and track
-      navigator.clipboard.writeText(action.getText());
-      trackEvent("AIActionPromptRendered", { Action: "plan-implement", Scope: "solution" });
       setCopiedId(action.id);
       setTimeout(() => setCopiedId((prev) => (prev === action.id ? null : prev)), 2000);
       return;

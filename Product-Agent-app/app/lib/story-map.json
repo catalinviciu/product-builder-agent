@@ -873,10 +873,12 @@
           "title": "Hand off a single story to the agent",
           "stories": [
             {
-              "action": "Click 'Plan & Implement story' in the slide-over footer to copy a prompt containing only that story's ID and hand it off to the agent for fine-grained implementation",
+              "action": "Click 'Plan & Implement story' in the slide-over footer — if codebase path and design system are configured, copies a story-scoped planning prompt with resolved settings values (no placeholders); otherwise redirects to Settings with a banner listing the missing fields",
               "components": [
                 "StoryDetailSlideOver",
-                "buildSolutionPlanningPrompt",
+                "buildPlanImplementStoryPrompt",
+                "runGatedPlanImplement",
+                "ProductLineSettingsView",
                 "Toaster"
               ]
             },
