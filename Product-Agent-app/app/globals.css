@@ -60,6 +60,14 @@
   --color-overlay: var(--overlay);
   --color-shadow-color: var(--shadow-color);
 
+  /* ── Warning + error semantic tokens ── */
+  --color-warning: var(--warning);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-border: var(--warning-border);
+  --color-destructive-surface: var(--destructive-surface);
+  --color-destructive-surface-hover: var(--destructive-surface-hover);
+  --color-destructive-border: var(--destructive-border);
+
   /* ── Accent color tokens ── */
   --color-accent-purple: var(--accent-purple);
   --color-accent-purple-bg: var(--accent-purple-bg);
@@ -115,6 +123,12 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-surface: oklch(0.577 0.245 27.325 / 10%);
+  --destructive-surface-hover: oklch(0.577 0.245 27.325 / 18%);
+  --destructive-border: oklch(0.577 0.245 27.325 / 25%);
+  --warning: oklch(0.70 0.17 65);
+  --warning-surface: oklch(0.70 0.17 65 / 12%);
+  --warning-border: oklch(0.70 0.17 65 / 30%);
   --border: oklch(0 0 0 / 12%);
   --input: oklch(0 0 0 / 15%);
   --ring: oklch(0.708 0 0);
@@ -203,6 +217,12 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  --destructive-surface: oklch(0.704 0.191 22.216 / 14%);
+  --destructive-surface-hover: oklch(0.704 0.191 22.216 / 22%);
+  --destructive-border: oklch(0.704 0.191 22.216 / 30%);
+  --warning: oklch(0.83 0.16 80);
+  --warning-surface: oklch(0.83 0.16 80 / 14%);
+  --warning-border: oklch(0.83 0.16 80 / 30%);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);

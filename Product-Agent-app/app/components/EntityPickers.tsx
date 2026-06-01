@@ -113,7 +113,7 @@ export function PersonaPicker({ entityId, personaId, secondaryPersonaIds }: { en
               <div className="flex gap-1">
                 <button
                   onClick={(e) => { e.stopPropagation(); assignPersona(entityId, undefined); setConfirmUnassign(false); setOpen(false); }}
-                  className="cursor-pointer text-[10px] font-medium px-2 py-1 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 transition-colors"
+                  className="cursor-pointer text-[10px] font-medium px-2 py-1 rounded-md bg-destructive-surface hover:bg-destructive-surface-hover text-destructive transition-colors"
                 >
                   Unassign all
                 </button>

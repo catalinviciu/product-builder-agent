@@ -391,7 +391,7 @@ export function EntityView() {
               <div className="flex items-center gap-1 ml-1">
                 <button
                   onClick={() => { deleteEntity(entity.id); setConfirmDeleteEntity(false); }}
-                  className="cursor-pointer text-[10px] font-medium px-2 py-1 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 transition-colors"
+                  className="cursor-pointer text-[10px] font-medium px-2 py-1 rounded-md bg-destructive-surface hover:bg-destructive-surface-hover text-destructive transition-colors"
                 >
                   Yes
                 </button>
@@ -406,7 +406,7 @@ export function EntityView() {
               <button
                 onClick={() => setConfirmDeleteEntity(true)}
                 title="Delete entity"
-                className="cursor-pointer p-1 rounded text-muted-foreground/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                className="cursor-pointer p-1 rounded text-muted-foreground/30 hover:text-destructive transition-colors"
               >
                 <Trash2 size={14} />
               </button>
@@ -416,13 +416,13 @@ export function EntityView() {
 
         {/* Cascade drop warning */}
         {confirmDrop && (
-          <div className="inline-flex items-center gap-3 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-b-lg rounded-tr-lg text-sm">
-            <span className="text-red-600 dark:text-red-400 text-xs">
+          <div className="inline-flex items-center gap-3 px-3 py-2 bg-destructive-surface border border-destructive-border rounded-b-lg rounded-tr-lg text-sm">
+            <span className="text-destructive text-xs">
               This will also drop all {entity.children.length} {entity.children.length === 1 ? 'child' : 'children'}. Continue?
             </span>
             <button
               onClick={() => { dropEntityCascade(entity.id); setConfirmDrop(false); }}
-              className="cursor-pointer text-[10px] font-medium px-2.5 py-1 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 transition-colors"
+              className="cursor-pointer text-[10px] font-medium px-2.5 py-1 rounded-md bg-destructive-surface hover:bg-destructive-surface-hover text-destructive transition-colors"
             >
               Drop all
             </button>
@@ -476,8 +476,8 @@ export function EntityView() {
                       className={cn(tierTitleClasses, "text-foreground bg-surface-hover border border-border-strong rounded-lg px-2 py-1 w-full focus:outline-none focus:border-border-focus")}
                     />
                     <div className={cn("text-right text-[10px] px-1",
-                      titleDraft.length >= 120 ? "text-red-500 dark:text-red-400" :
-                      titleDraft.length >= 102 ? "text-amber-500 dark:text-amber-400" :
+                      titleDraft.length >= 120 ? "text-destructive" :
+                      titleDraft.length >= 102 ? "text-warning" :
                       "text-muted-foreground/40"
                     )}>
                       {titleDraft.length}/120

@@ -70,7 +70,7 @@ export function PersonaManager() {
                   <div className="flex gap-1">
                     <button
                       onClick={() => { deletePersona(persona.id); setConfirmDeleteId(null); }}
-                      className="cursor-pointer text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/30"
+                      className="cursor-pointer text-[10px] px-1.5 py-0.5 rounded bg-destructive-surface text-destructive hover:bg-destructive-surface-hover"
                     >
                       Yes
                     </button>
@@ -91,7 +91,7 @@ export function PersonaManager() {
                     </button>
                     <button
                       onClick={() => setConfirmDeleteId(persona.id)}
-                      className="cursor-pointer p-1 rounded text-muted-foreground/30 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover/persona:opacity-100 transition-opacity"
+                      className="cursor-pointer p-1 rounded text-muted-foreground/30 hover:text-destructive opacity-0 group-hover/persona:opacity-100 transition-opacity"
                     >
                       <Trash2 size={11} />
                     </button>

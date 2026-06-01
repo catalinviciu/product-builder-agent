@@ -158,7 +158,7 @@ function ProductLineSelector() {
                     <div className="flex gap-1">
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteProductLine(pl.id); setOpen(false); setConfirmDeleteId(null); }}
-                        className="cursor-pointer text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/30"
+                        className="cursor-pointer text-[10px] px-1.5 py-0.5 rounded bg-destructive-surface text-destructive hover:bg-destructive-surface-hover"
                       >
                         Yes
                       </button>
@@ -173,7 +173,7 @@ function ProductLineSelector() {
                     allLines.length > 1 && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(pl.id); }}
-                        className="cursor-pointer p-1 rounded text-muted-foreground/30 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover/pl:opacity-100 transition-opacity"
+                        className="cursor-pointer p-1 rounded text-muted-foreground/30 hover:text-destructive opacity-0 group-hover/pl:opacity-100 transition-opacity"
                       >
                         <Trash2 size={11} />
                       </button>

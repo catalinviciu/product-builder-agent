@@ -47,8 +47,8 @@ export function AddChildForm({ parentId, childLevel, onClose }: { parentId: stri
         onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
       />
       <div className={cn("text-right text-[10px]",
-        title.length >= 120 ? "text-red-500 dark:text-red-400" :
-        title.length >= 102 ? "text-amber-500 dark:text-amber-400" :
+        title.length >= 120 ? "text-destructive" :
+        title.length >= 102 ? "text-warning" :
         "text-muted-foreground/40"
       )}>
         {title.length}/120
@@ -103,8 +103,8 @@ export function AddRootEntityForm({ onClose }: { onClose: () => void }) {
         onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose(); }}
       />
       <div className={cn("text-right text-[10px]",
-        title.length >= 120 ? "text-red-500 dark:text-red-400" :
-        title.length >= 102 ? "text-amber-500 dark:text-amber-400" :
+        title.length >= 120 ? "text-destructive" :
+        title.length >= 102 ? "text-warning" :
         "text-muted-foreground/40"
       )}>
         {title.length}/120

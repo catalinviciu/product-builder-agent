@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { FolderOpen, Pencil, Check, ChevronDown, ArrowLeft, HelpCircle } from "lucide-react";
+import { FolderOpen, Pencil, Check, ChevronDown, ArrowLeft, HelpCircle, TriangleAlert, CircleCheck } from "lucide-react";
 import { useAppStore } from "@/app/lib/store";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { trackEvent } from "@/app/lib/analytics";
@@ -147,6 +147,16 @@ export function ProductLineSettingsView() {
   const stillMissing: SettingsFieldKey[] =
     redirect && settings ? redirect.missingFields.filter((k) => !isSettingsFieldFilled(settings, k)) : [];
   const allResolved = !!redirect && stillMissing.length === 0;
+
+  // Warning treatment applied to a settings section the redirect still needs filled.
+  const missingSectionClass =
+    "ring-1 ring-warning-border bg-warning-surface px-3 py-3 -mx-3 transition-shadow";
+  // Amber "Needed" badge rendered next to a section heading when that field is still missing.
+  const neededBadge = (
+    <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-warning align-middle">
+      <span className="size-1.5 rounded-full bg-warning" /> Needed
+    </span>
+  );
 
   // ── Codebase path validation ─────────────────────────────────────────────
   const validateCodebasePath = (value: string): { ok: boolean; reason?: string } => {
@@ -414,12 +424,24 @@ export function ProductLineSettingsView() {
       {/* Redirect banner — only rendered when an AI action sent the user here */}
       {redirect && (
         <div className="sticky top-0 z-20 -mx-8 px-8 pt-2 pb-3 mb-4 bg-background/95 backdrop-blur">
-          <div className="rounded-xl border border-border-default bg-surface-2 px-4 py-3 flex flex-col gap-3">
-            <p className="text-sm text-foreground">
+          <div
+            className={cn(
+              "rounded-xl px-4 py-3 flex flex-col gap-3 border-l-2",
+              allResolved
+                ? "border border-border-default border-l-border-default bg-surface-3"
+                : "border-l-warning bg-warning-surface",
+            )}
+          >
+            <div className="flex items-start gap-2.5">
               {allResolved
-                ? <><span className="font-medium">{redirect.actionName}</span> — all set. Ready to return.</>
-                : <><span className="font-medium">{redirect.actionName}</span> needs {joinFieldLabels(stillMissing)}. Add {stillMissing.length > 1 ? "them" : "it"} below to continue.</>}
-            </p>
+                ? <CircleCheck size={15} className="text-foreground shrink-0 mt-0.5" />
+                : <TriangleAlert size={15} className="text-warning shrink-0 mt-0.5" />}
+              <p className="text-sm text-foreground">
+                {allResolved
+                  ? <><span className="font-medium">{redirect.actionName}</span> — all set. Ready to return.</>
+                  : <><span className="font-medium">{redirect.actionName}</span> needs {joinFieldLabels(stillMissing)}. Add {stillMissing.length > 1 ? "them" : "it"} below to continue.</>}
+              </p>
+            </div>
             <div className="flex items-center gap-2">
               {allResolved && (
                 <button
@@ -459,11 +481,14 @@ export function ProductLineSettingsView() {
           ref={(el) => { sectionRefs.current.codebasePath = el; }}
           className={cn(
             "flex flex-col gap-4 rounded-xl transition-shadow",
-            stillMissing.includes("codebasePath") && "ring-2 ring-border-focus ring-offset-2 ring-offset-background"
+            stillMissing.includes("codebasePath") && missingSectionClass
           )}
         >
           <div>
-            <h2 className="text-sm font-semibold text-foreground">Codebase</h2>
+            <h2 className="text-sm font-semibold text-foreground">
+              Codebase
+              {stillMissing.includes("codebasePath") && neededBadge}
+            </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               Link the folder where this product line&apos;s code lives. Used to know where to apply code changes, and to detect your design system and analytics platform below.
             </p>
@@ -502,10 +527,15 @@ export function ProductLineSettingsView() {
             </div>
           ) : !editing && savedPath === null ? (
             <div className="rounded-xl border border-border-subtle bg-surface-1 px-4 py-3 flex items-center gap-3">
-              <span className="text-xs text-muted-foreground/50 flex-1">No codebase linked</span>
+              <span className={cn("text-xs flex-1", stillMissing.includes("codebasePath") ? "text-muted-foreground" : "text-muted-foreground/50")}>No codebase linked</span>
               <button
                 onClick={handleEdit}
-                className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                className={cn(
+                  "cursor-pointer text-xs px-2.5 py-1 rounded-md focus:outline-2 focus:outline-border-focus transition-colors",
+                  stillMissing.includes("codebasePath")
+                    ? "bg-foreground text-background hover:opacity-90 active:opacity-85 font-medium"
+                    : "bg-surface-3 hover:bg-surface-active active:bg-surface-active text-foreground",
+                )}
               >
                 Add a codebase
               </button>
@@ -680,15 +710,13 @@ export function ProductLineSettingsView() {
           ref={(el) => { sectionRefs.current.designSystem = el; }}
           className={cn(
             "flex flex-col gap-4 rounded-xl transition-shadow",
-            stillMissing.includes("designSystem") && "ring-2 ring-border-focus ring-offset-2 ring-offset-background"
+            stillMissing.includes("designSystem") && missingSectionClass
           )}
         >
           <div>
             <h2 className="text-sm font-semibold text-foreground">
               Design System
-              {isSkipped && (
-                <span className="ml-2 text-xs font-medium text-muted-foreground/50">Required</span>
-              )}
+              {(stillMissing.includes("designSystem") || isSkipped) && neededBadge}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               Point to your design-system skill file so AI actions can generate on-brand prototypes.
@@ -808,12 +836,17 @@ export function ProductLineSettingsView() {
                 ) : (
                   <div className="rounded-xl border border-border-subtle bg-surface-1 px-4 py-3 flex flex-col gap-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground/50 flex-1">
+                      <span className={cn("text-xs flex-1", stillMissing.includes("designSystem") ? "text-muted-foreground" : "text-muted-foreground/50")}>
                         {savedPath ? "No design system detected from the codebase" : "No design system linked"}
                       </span>
                       <button
                         onClick={() => { setDsInput(""); setDsExpanded(true); }}
-                        className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors shrink-0"
+                        className={cn(
+                          "cursor-pointer text-xs px-2.5 py-1 rounded-md focus:outline-2 focus:outline-border-focus transition-colors shrink-0",
+                          stillMissing.includes("designSystem")
+                            ? "bg-foreground text-background hover:opacity-90 active:opacity-85 font-medium"
+                            : "bg-surface-3 hover:bg-surface-active active:bg-surface-active text-foreground",
+                        )}
                       >
                         Set up
                       </button>
@@ -874,15 +907,13 @@ export function ProductLineSettingsView() {
           ref={(el) => { sectionRefs.current.analyticsPlatform = el; }}
           className={cn(
             "flex flex-col gap-4 rounded-xl transition-shadow",
-            stillMissing.includes("analyticsPlatform") && "ring-2 ring-border-focus ring-offset-2 ring-offset-background"
+            stillMissing.includes("analyticsPlatform") && missingSectionClass
           )}
         >
           <div>
             <h2 className="text-sm font-semibold text-foreground">
               Analytics Platform
-              {isSkipped && (
-                <span className="ml-2 text-xs font-medium text-muted-foreground/50">Required</span>
-              )}
+              {(stillMissing.includes("analyticsPlatform") || isSkipped) && neededBadge}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               Select your analytics tool so AI actions can generate the right tracking events.
@@ -974,10 +1005,15 @@ export function ProductLineSettingsView() {
               </div>
             ) : (
               <div className="rounded-xl border border-border-subtle bg-surface-1 px-4 py-3 flex items-center gap-3">
-                <span className="text-xs text-muted-foreground/50 flex-1">No platform selected</span>
+                <span className={cn("text-xs flex-1", stillMissing.includes("analyticsPlatform") ? "text-muted-foreground" : "text-muted-foreground/50")}>No platform selected</span>
                 <button
                   onClick={() => setApExpanded(true)}
-                  className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active active:bg-surface-active focus:outline-2 focus:outline-border-focus text-foreground transition-colors"
+                  className={cn(
+                    "cursor-pointer text-xs px-2.5 py-1 rounded-md focus:outline-2 focus:outline-border-focus transition-colors",
+                    stillMissing.includes("analyticsPlatform")
+                      ? "bg-foreground text-background hover:opacity-90 active:opacity-85 font-medium"
+                      : "bg-surface-3 hover:bg-surface-active active:bg-surface-active text-foreground",
+                  )}
                 >
                   Set up
                 </button>

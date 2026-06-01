@@ -61,8 +61,8 @@ export function EditableText({ value, onSave, as = "input", placeholder, maxLeng
 
   const charCounter = maxLength ? (
     <div className={cn("text-right text-[10px]",
-      draft.length >= maxLength        ? "text-red-500 dark:text-red-400" :
-      draft.length >= maxLength * 0.85 ? "text-amber-500 dark:text-amber-400" :
+      draft.length >= maxLength        ? "text-destructive" :
+      draft.length >= maxLength * 0.85 ? "text-warning" :
       "text-muted-foreground/40"
     )}>
       {draft.length}/{maxLength}

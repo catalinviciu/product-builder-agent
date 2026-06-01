@@ -58,7 +58,7 @@ export function BlockToolbar({ onEdit, onDelete, onCopyAnchor, canDelete = true 
       {canDelete && (
         confirmDelete ? (
           <div className="flex gap-1">
-            <button onClick={onDelete} className="cursor-pointer p-1.5 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 transition-colors text-[10px] font-medium px-2">
+            <button onClick={onDelete} className="cursor-pointer p-1.5 rounded-md bg-destructive-surface hover:bg-destructive-surface-hover text-destructive transition-colors text-[10px] font-medium px-2">
               Delete
             </button>
             <button onClick={() => setConfirmDelete(false)} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 transition-colors text-[10px] px-2">
@@ -66,7 +66,7 @@ export function BlockToolbar({ onEdit, onDelete, onCopyAnchor, canDelete = true 
             </button>
           </div>
         ) : (
-          <button onClick={() => setConfirmDelete(true)} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+          <button onClick={() => setConfirmDelete(true)} className="cursor-pointer p-1.5 rounded-md bg-surface-hover hover:bg-surface-3 text-muted-foreground/60 hover:text-destructive transition-colors">
             <Trash2 size={12} />
           </button>
         )
@@ -100,8 +100,8 @@ export function AccordionBlockEditor({ block, onSave, onCancel, labelMaxLength, 
           className="bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus font-semibold" />
         {labelMaxLength && (
           <div className={cn("text-right text-[10px]",
-            label.length >= labelMaxLength        ? "text-red-500 dark:text-red-400" :
-            label.length >= labelMaxLength * 0.85 ? "text-amber-500 dark:text-amber-400" :
+            label.length >= labelMaxLength        ? "text-destructive" :
+            label.length >= labelMaxLength * 0.85 ? "text-warning" :
             "text-muted-foreground/40"
           )}>
             {label.length}/{labelMaxLength}
@@ -121,8 +121,8 @@ export function AccordionBlockEditor({ block, onSave, onCancel, labelMaxLength, 
         )}
         {contentMaxLength && (
           <div className={cn("text-right text-[10px]",
-            content.length >= contentMaxLength        ? "text-red-500 dark:text-red-400" :
-            content.length >= contentMaxLength * 0.85 ? "text-amber-500 dark:text-amber-400" :
+            content.length >= contentMaxLength        ? "text-destructive" :
+            content.length >= contentMaxLength * 0.85 ? "text-warning" :
             "text-muted-foreground/40"
           )}>
             {content.length}/{contentMaxLength}
@@ -152,7 +152,7 @@ export function PillsBlockEditor({ block, onSave, onCancel }: { block: PillsBloc
             className="bg-surface-hover border border-border-strong rounded-lg px-2 py-1.5 text-xs text-foreground focus:outline-none w-28" />
           <input value={item.value} onChange={(e) => updateItem(i, "value", e.target.value)} placeholder="Value"
             className="bg-surface-hover border border-border-strong rounded-lg px-2 py-1.5 text-xs text-foreground focus:outline-none flex-1" />
-          <button onClick={() => setItems(items.filter((_, j) => j !== i))} className="cursor-pointer p-1 text-muted-foreground/40 hover:text-red-600 dark:hover:text-red-400"><X size={14} /></button>
+          <button onClick={() => setItems(items.filter((_, j) => j !== i))} className="cursor-pointer p-1 text-muted-foreground/40 hover:text-destructive"><X size={14} /></button>
         </div>
       ))}
       <button onClick={() => setItems([...items, { label: "", value: "" }])} className="cursor-pointer text-xs text-muted-foreground/60 hover:text-foreground flex items-center gap-1"><Plus size={12} /> Add item</button>
