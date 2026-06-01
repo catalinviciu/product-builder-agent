@@ -9,17 +9,19 @@ type SettingsRedirect = {
 };
 
 /**
- * Click-time gate for Plan & Implement actions. If required settings are missing,
+ * Click-time gate for AI actions. If required settings are missing,
  * fires the Story 6 redirect + AIActionBlocked and returns false (no prompt rendered).
  * Otherwise copies the prompt, fires AIActionPromptRendered, and returns true.
+ * Returns false (no copy, no event) if buildPrompt returns null.
  */
-export async function runGatedPlanImplement(opts: {
+export async function runGatedAIAction(opts: {
+  action: "plan-implement" | "prototype";
   productLine: ProductLine;
   requiredSettings: SettingsFieldKey[];
   actionName: string;
   returnEntityId: string;
   scope: "solution" | "story";
-  buildPrompt: () => string;
+  buildPrompt: () => string | null;
   openSettingsWithRedirect: (plId: string, redirect: SettingsRedirect) => void;
 }): Promise<boolean> {
   const missing = opts.requiredSettings.filter(
@@ -31,10 +33,12 @@ export async function runGatedPlanImplement(opts: {
       missingFields: missing,
       returnEntityId: opts.returnEntityId,
     });
-    trackEvent("AIActionBlocked", { Action: "plan-implement", MissingFields: missing.join(",") });
+    trackEvent("AIActionBlocked", { Action: opts.action, MissingFields: missing.join(",") });
     return false;
   }
-  await navigator.clipboard.writeText(opts.buildPrompt());
-  trackEvent("AIActionPromptRendered", { Action: "plan-implement", Scope: opts.scope });
+  const prompt = opts.buildPrompt();
+  if (!prompt) return false;
+  await navigator.clipboard.writeText(prompt);
+  trackEvent("AIActionPromptRendered", { Action: opts.action, Scope: opts.scope });
   return true;
 }

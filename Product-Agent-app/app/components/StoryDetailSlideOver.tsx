@@ -8,7 +8,7 @@ import { useAppStore } from "@/app/lib/store";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { buildPlanImplementStoryPrompt, buildRefineStoryPrompt, buildWriteAcStoryPrompt } from "@/app/lib/utils";
-import { runGatedPlanImplement } from "@/app/lib/ai-action-gate";
+import { runGatedAIAction } from "@/app/lib/ai-action-gate";
 import type { SettingsFieldKey } from "@/app/lib/settings-redirect";
 import { showToast } from "@/components/ui/toast";
 import {
@@ -123,7 +123,8 @@ function StoryDetailFooter({ story, solutionId, prev, next, navigateStoryDetail,
 
   async function handleCopy() {
     if (!solutionId) return;
-    const copied = await runGatedPlanImplement({
+    const copied = await runGatedAIAction({
+      action: "plan-implement",
       productLine,
       requiredSettings: ["codebasePath", "designSystem"] as SettingsFieldKey[],
       actionName: "Plan & Implement (Stories tab)",

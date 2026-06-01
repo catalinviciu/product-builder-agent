@@ -77,6 +77,31 @@ export function getEntityPreview(entity: Entity, maxLength = 120): string {
   return text;
 }
 
+/** Slugify a title: lowercase, ASCII-fold accents, strip emoji, non-alphanumeric \u2192 "-", collapse/trim "-". Optionally keep only the first N words. */
+export function slugify(title: string, opts?: { maxWords?: number }): string {
+  let text = title ?? "";
+  if (opts?.maxWords && opts.maxWords > 0) {
+    text = text.trim().split(/\s+/).slice(0, opts.maxWords).join(" ");
+  }
+  return text
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")        // strip diacritics
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}]/gu, "") // strip emoji
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/** Derive the prototype output directory. plSlug = full title; opp/sol = first 5 words. Returns null if any segment is empty. */
+export function derivePrototypeOutputDir(productLineName: string, opportunityTitle: string, solutionTitle: string): string | null {
+  const plSlug = slugify(productLineName);
+  const oppSlug = slugify(opportunityTitle, { maxWords: 5 });
+  const solSlug = slugify(solutionTitle, { maxWords: 5 });
+  if (!plSlug || !oppSlug || !solSlug) return null;
+  return `Product-Agent-app/public/prototypes/${plSlug}/${oppSlug}/${solSlug}/`;
+}
+
 // ── Context anchor for AI agents ────────────────────────────────────────
 
 export function buildEntityAnchor(
@@ -365,22 +390,94 @@ export function buildAssumptionTesterPrompt(
   return sections.join("\n\n---\n\n");
 }
 
-export function buildPrototypeBuilderPrompt(
+export function buildPrototypePrompt(
   store: EntityStore,
   productLine: ProductLine,
   entityId: string,
-): string {
+): string | null {
   const entity = store[entityId];
-  if (!entity) return "";
+  if (!entity) return null;
+
+  const settings = productLine.settings;
+  const chain = getParentChain(store, entityId);
+
+  let solutionEntity: Entity | undefined;
+  let opportunityEntity: Entity | undefined;
+
+  if (entity.level === "solution") {
+    solutionEntity = entity;
+    opportunityEntity = chain.find((e) => e.level === "opportunity");
+  } else {
+    solutionEntity = [...chain].reverse().find((e) => e.level === "solution");
+    opportunityEntity = [...chain].reverse().find((e) => e.level === "opportunity");
+  }
+
+  if (!solutionEntity || !opportunityEntity) return null;
+
+  const outputDir = derivePrototypeOutputDir(productLine.name, opportunityEntity.title, solutionEntity.title);
+  if (!outputDir) return null;
+
+  const pathLabels = [...chain.map((e) => LEVEL_META[e.level].label), LEVEL_META[entity.level].label];
 
   const sections: string[] = [];
-  sections.push(`Use skill: ProductSkills/prototype-builder/SKILL.md`);
-  sections.push([
-    `Product Line: ${productLine.name}`,
-    `Entity ID: ${entity.id}`,
-    `Entity Level: ${entity.level}`,
-  ].join("\n"));
-  sections.push(`Data: Product-Agent-app/data/store.json`);
+
+  // Context block
+  const contextLines: string[] = [
+    `[Product Agent Context]`,
+    `Product Line: ${productLine.name} (id: ${productLine.id})`,
+    `Path: ${pathLabels.join(" > ")}`,
+    `Entity: "${entity.title}" (${entity.id})`,
+  ];
+  if (settings.codebasePath) {
+    contextLines.push(`Codebase: ${settings.codebasePath} — locate this folder in the working directory before acting on any other path.`);
+  }
+  contextLines.push(`Output: ${outputDir}`);
+  contextLines.push(`Data: pa_get_entity("${entityId}")`);
+  sections.push(contextLines.join("\n"));
+
+  // Opportunity section
+  const oppLines: string[] = [
+    `## Opportunity (Why)`,
+    ``,
+    `**"${opportunityEntity.title}"**`,
+  ];
+  if (opportunityEntity.description) oppLines.push(opportunityEntity.description);
+
+  const persona = opportunityEntity.personaId
+    ? (productLine.personas ?? []).find((p) => p.id === opportunityEntity!.personaId)
+    : undefined;
+  if (persona) {
+    oppLines.push(`\n**Persona:** ${persona.name} — ${persona.description}`);
+  }
+
+  const oppBlocks = serializeBlocksToText(opportunityEntity.blocks);
+  if (oppBlocks) oppLines.push(`\n${oppBlocks}`);
+
+  sections.push(oppLines.join("\n"));
+
+  // Solution section
+  const solLines: string[] = [
+    `## Solution (What)`,
+    ``,
+    `**"${solutionEntity.title}"**`,
+  ];
+  if (solutionEntity.description) solLines.push(solutionEntity.description);
+
+  const solBlocks = serializeBlocksToText(solutionEntity.blocks);
+  if (solBlocks) solLines.push(`\n${solBlocks}`);
+
+  sections.push(solLines.join("\n"));
+
+  // Instructions
+  const steps: string[] = [];
+  steps.push(`Use skill: ProductSkills/prototype-builder/SKILL.md`);
+  steps.push(designSystemInstruction(settings.designSystem));
+  steps.push(`Write the prototype to the Output path above.`);
+  const analytics = analyticsPlatformLabel(settings.analyticsPlatform);
+  if (analytics) {
+    steps.push(`Instrument analytics using ${analytics} (the product line's configured platform).`);
+  }
+  sections.push([`## Instructions`, ``, ...steps.map((s, i) => `${i + 1}. ${s}`)].join("\n"));
 
   return sections.join("\n\n---\n\n");
 }

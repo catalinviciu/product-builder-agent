@@ -10,10 +10,10 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import type { Entity, EntityStore, ProductLine } from "@/app/lib/schemas";
-import { buildEntityAnchor, buildOpportunityWriterPrompt, buildSolutionPlanningPrompt, buildSolutionsBrainstormerPrompt, buildAssumptionTesterPrompt, buildPrototypeBuilderPrompt } from "@/app/lib/utils";
+import { buildEntityAnchor, buildOpportunityWriterPrompt, buildSolutionPlanningPrompt, buildSolutionsBrainstormerPrompt, buildAssumptionTesterPrompt, buildPrototypePrompt } from "@/app/lib/utils";
 import type { SettingsFieldKey } from "@/app/lib/settings-redirect";
 import { useAppStore } from "@/app/lib/store";
-import { runGatedPlanImplement } from "@/app/lib/ai-action-gate";
+import { runGatedAIAction } from "@/app/lib/ai-action-gate";
 
 export interface AIAction {
   id: string;
@@ -21,8 +21,10 @@ export interface AIAction {
   description: string;
   icon: LucideIcon;
   getText: () => string;
+  getGatedText?: () => string | null;
   requiredSettings?: SettingsFieldKey[];
   actionName?: string;
+  analyticsAction?: "plan-implement" | "prototype";
 }
 
 interface AIActionsMenuProps {
@@ -50,7 +52,11 @@ function getActions(entity: Entity, entities: EntityStore, productLine: ProductL
       label: "Build this prototype",
       description: "Turn this test definition into a lightweight HTML prototype ready to run with real users",
       icon: LayoutTemplate,
-      getText: () => buildPrototypeBuilderPrompt(entities, productLine, entity.id),
+      getText: () => buildPrototypePrompt(entities, productLine, entity.id) ?? "",
+      getGatedText: () => buildPrototypePrompt(entities, productLine, entity.id),
+      requiredSettings: ["designSystem"] as SettingsFieldKey[],
+      actionName: "Build Prototype",
+      analyticsAction: "prototype",
     });
   }
 
@@ -64,6 +70,7 @@ function getActions(entity: Entity, entities: EntityStore, productLine: ProductL
       getText: () => buildSolutionPlanningPrompt(entities, productLine, entity.id),
       requiredSettings: ["codebasePath", "designSystem"] as SettingsFieldKey[],
       actionName: "Plan & Implement (Solution)",
+      analyticsAction: "plan-implement",
     });
     actions.push({
       id: "identify-assumptions",
@@ -77,7 +84,11 @@ function getActions(entity: Entity, entities: EntityStore, productLine: ProductL
       label: "Build a prototype",
       description: "Design and build a lightweight HTML prototype to test a key assumption before writing production code",
       icon: LayoutTemplate,
-      getText: () => buildPrototypeBuilderPrompt(entities, productLine, entity.id),
+      getText: () => buildPrototypePrompt(entities, productLine, entity.id) ?? "",
+      getGatedText: () => buildPrototypePrompt(entities, productLine, entity.id),
+      requiredSettings: ["designSystem"] as SettingsFieldKey[],
+      actionName: "Build Prototype",
+      analyticsAction: "prototype",
     });
   }
 
@@ -182,13 +193,14 @@ export function AIActionsMenu({ entity, entities, productLine }: AIActionsMenuPr
 
   const handleCopy = async (action: AIAction, closeMenu: () => void) => {
     if (action.requiredSettings && action.requiredSettings.length > 0) {
-      const copied = await runGatedPlanImplement({
+      const copied = await runGatedAIAction({
+        action: action.analyticsAction ?? "plan-implement",
         productLine,
         requiredSettings: action.requiredSettings,
         actionName: action.actionName!,
         returnEntityId: entity.id,
         scope: "solution",
-        buildPrompt: action.getText,
+        buildPrompt: action.getGatedText ?? action.getText,
         openSettingsWithRedirect,
       });
       if (!copied) {
