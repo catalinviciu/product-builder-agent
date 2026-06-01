@@ -6,6 +6,9 @@ import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { buildUserStoryAcWriterPrompt } from "@/app/lib/utils";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { showToast } from "@/components/ui/toast";
+import { useAppStore } from "@/app/lib/store";
+import { isSettingsFieldFilled } from "@/app/lib/settings-redirect";
+import { trackEvent } from "@/app/lib/analytics";
 
 interface StoryMapToolbarProps {
   entityId: string;
@@ -14,6 +17,7 @@ interface StoryMapToolbarProps {
 
 export function StoryMapToolbar({ entityId, stories }: StoryMapToolbarProps) {
   const productLine = useProductLine();
+  const openSettingsWithRedirect = useAppStore((s) => s.openSettingsWithRedirect);
   // Only sliced stories (with narrative) are eligible for the AC writer.
   // Manual stories (no narrative) need refining first — they're handled via the slide-over.
   const slicedStoriesWithoutAcCount = stories.filter(
@@ -27,6 +31,15 @@ export function StoryMapToolbar({ entityId, stories }: StoryMapToolbarProps) {
     : "Pick a scope to plan & implement: whole map, an iteration row, or a single story.";
 
   async function handleCopy() {
+    if (!isSettingsFieldFilled(productLine.settings, "analyticsPlatform")) {
+      openSettingsWithRedirect(productLine.id, {
+        actionName: "Add Acceptance Criteria",
+        missingFields: ["analyticsPlatform"],
+        returnEntityId: entityId,
+      });
+      trackEvent("AIActionBlocked", { Action: "ac-writer", MissingFields: "analyticsPlatform" });
+      return;
+    }
     const text = buildUserStoryAcWriterPrompt(productLine, entityId);
     await navigator.clipboard.writeText(text);
     analyticsEmitter.emit("ac_writer_prompt_copied", {

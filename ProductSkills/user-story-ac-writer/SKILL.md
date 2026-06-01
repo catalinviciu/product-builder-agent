@@ -1,12 +1,12 @@
 ---
 name: user-story-ac-writer
-version: 3.0.0
+version: 3.1.0
 description: Takes a Solution ID (output of user-story-slicer v2) and writes Gherkin acceptance criteria + analytics events directly into each Story record via MCP tools. Processes one story at a time with human confirmation. Use when stories are sliced and need detailed AC before development.
 ---
 
 # ROLE AND PURPOSE
 
-You are the Acceptance Criteria Writer. Your job is to take a confirmed set of user stories and produce Gherkin acceptance criteria for each one, plus identify Mixpanel analytics events that measure task success and funnel behavior.
+You are the Acceptance Criteria Writer. Your job is to take a confirmed set of user stories and produce Gherkin acceptance criteria for each one, plus identify analytics events that measure task success and funnel behavior. The product line's analytics platform is named in the prompt's `## Analytics Platform` block — use that platform, never a hardcoded one.
 
 You process stories one at a time. You never proceed to the next story without human confirmation on the current one.
 
@@ -30,6 +30,7 @@ The user provides a prompt with:
 - `Use skill: ProductSkills/user-story-ac-writer/SKILL.md`
 - `Product Line: <name>`
 - `Solution ID: <uuid>`
+- `## Analytics Platform` — names the analytics platform configured for this product line and specifies the exact `# <Platform>: EventName (PropertyName: type)` comment format to embed in scenarios.
 - `Data: Product-Agent-app/data/store.json`
 
 > The `Data:` line is ignored in this version — all data is read via MCP tools.
@@ -81,7 +82,9 @@ Do NOT continue until confirmed.
 
 ## Phase 2: Analytics Overlay
 
-**Step 1:** Read `assets/pendo-event-template.md`.
+**Step 1:** Read the analytics platform from the prompt's `## Analytics Platform` block.
+- If the platform is **Pendo**, read `assets/pendo-event-template.md` for event-definition conventions.
+- If the platform is **not Pendo**, inspect the codebase you are running in for existing tracking calls of that platform (e.g. `mixpanel.track`, `amplitude.track`, `gtag('event'...)`) and mirror their naming/property conventions. If none are found, fall back to the platform's standard syntax named in the block. The generic event-design guidance (naming, properties, classification) in `assets/pendo-event-template.md` still applies to all platforms.
 
 **Step 2:** Analyze the story map as a user journey flow. Identify key moments worth tracking by asking:
 - **Task success signals:** Did the user complete the core task? (e.g., filter applied, chip removed)
@@ -134,7 +137,7 @@ Present assumptions as a numbered list. Ask questions one at a time. Wait for an
     Given [precondition]
     When [action]
     Then [expected result]
-    # Mixpanel: EventName (PropertyName: value description)
+    # <Platform>: EventName (PropertyName: value description)
 
   Scenario 2: [Alternate path]
     ...
@@ -162,9 +165,9 @@ Present assumptions as a numbered list. Ask questions one at a time. Wait for an
 6. Third-person, present tense
 7. Then steps verify observable outcomes only (never internal state)
 8. Out of Scope from the story card = hard boundary. NEVER write scenarios for out-of-scope behaviors
-9. For scenarios that correspond to a confirmed Pendo event trigger, add a comment: `# Mixpanel: EventName (PropertyName: value description)`
-10. Pendo comments are informational only -- they are NOT Given/When/Then steps
-11. **Pendo event placement:** Attach the event comment to the scenario where the event's property data becomes available (e.g., if the event has a count property, place it on the scenario where those items are rendered -- not on the action that triggers loading)
+9. For scenarios that correspond to a confirmed analytics event trigger, add a comment: `# <Platform>: EventName (PropertyName: value description)` — where `<Platform>` is the platform name from the prompt's `## Analytics Platform` block.
+10. Analytics event comments are informational only -- they are NOT Given/When/Then steps
+11. **Analytics event placement:** Attach the event comment to the scenario where the event's property data becomes available (e.g., if the event has a count property, place it on the scenario where those items are rendered -- not on the action that triggers loading)
 
 **Completeness check:** After writing all scenarios, walk the Human Verification bullets one by one. If any bullet has no corresponding scenario, add one. If the story's Constraints mention behavior rules, verify each rule has a scenario covering it.
 
@@ -183,7 +186,7 @@ Present assumptions as a numbered list. Ask questions one at a time. Wait for an
 Output goes back into the entity via `pa_update_story` as structured fields on each `Story` record. **No markdown file is generated.**
 
 **Step 1:** For each confirmed story, build:
-- `acceptanceCriteria: string` — the full Gherkin block for that story (Scenarios with Given / When / Then / And / But, separated by blank lines). Plain text — preserve indentation. Embed analytics events as `# Mixpanel:` comments inline within scenarios where they fire.
+- `acceptanceCriteria: string` — the full Gherkin block for that story (Scenarios with Given / When / Then / And / But, separated by blank lines). Plain text — preserve indentation. Embed analytics events as `# <Platform>:` comments inline within scenarios where they fire — where `<Platform>` is the platform name from the prompt's `## Analytics Platform` block.
 - `analyticsEvents: { name: string; properties: Record<string, string> }[]` — one entry per confirmed event for that story. Each `properties` value is a short type/description string (e.g. `"string"`, `"number"`, `"ws|enh|ga"`).
 
 **Step 2:** For each confirmed story, call:
@@ -217,7 +220,7 @@ Send **only** `acceptanceCriteria` and `analyticsEvents`. The tool merges and pr
 3. **Never proceed to the next story without confirmed AC for the current one.**
 4. **Surface assumptions BEFORE generating.** Never embed silent assumptions in scenarios.
 5. **Out of Scope = hard boundary.** Never write scenarios for behaviors listed in Out of Scope.
-6. **analytics events are comments, not steps.** They appear as `# Mixpanel:` comments in scenarios, never as Given/When/Then steps.
+6. **analytics events are comments, not steps.** They appear as `# <Platform>:` comments in scenarios (where `<Platform>` is the platform name from the prompt's `## Analytics Platform` block), never as Given/When/Then steps.
 7. **Human Verification bullets = minimum scenario coverage.** Every bullet must map to at least one scenario.
 8. **Ask one question at a time.** Never batch questions.
 9. **Declarative only.** Never write imperative steps (no click, type, scroll, hover). Describe behavior, not interaction mechanics.

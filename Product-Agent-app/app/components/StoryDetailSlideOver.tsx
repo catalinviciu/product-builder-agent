@@ -9,7 +9,8 @@ import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { buildPlanImplementStoryPrompt, buildRefineStoryPrompt, buildWriteAcStoryPrompt } from "@/app/lib/utils";
 import { runGatedAIAction } from "@/app/lib/ai-action-gate";
-import type { SettingsFieldKey } from "@/app/lib/settings-redirect";
+import { isSettingsFieldFilled, type SettingsFieldKey } from "@/app/lib/settings-redirect";
+import { trackEvent } from "@/app/lib/analytics";
 import { showToast } from "@/components/ui/toast";
 import {
   buildBackbone,
@@ -22,9 +23,13 @@ import {
 const GHERKIN_KEYWORDS =
   /\b(Scenario|Feature|Background|Given|When|Then|And|But|Examples|Prerequisites)\b/g;
 
+// Analytics-event comment markers, parametrized per the product line's platform
+// (e.g. `# Mixpanel:`, `# Pendo:`). Highlighted distinctly from generic `#` comments.
+const ANALYTICS_COMMENT = /^# (Mixpanel|Pendo|Amplitude|Google Analytics):/;
+
 function renderGherkinLine(line: string, key: number) {
   const trimmed = line.trimStart();
-  if (trimmed.startsWith("# Mixpanel:")) {
+  if (ANALYTICS_COMMENT.test(trimmed)) {
     return (
       <span key={key} className="text-amber-600 dark:text-amber-400">
         {line}
@@ -109,10 +114,20 @@ function StoryDetailFooter({ story, solutionId, prev, next, navigateStoryDetail,
 
   async function handleWriteAc() {
     if (!solutionId) return;
+    if (!isSettingsFieldFilled(productLine.settings, "analyticsPlatform")) {
+      openSettingsWithRedirect(productLine.id, {
+        actionName: "Write AC",
+        missingFields: ["analyticsPlatform"],
+        returnEntityId: solutionId,
+      });
+      trackEvent("AIActionBlocked", { Action: "ac-writer", MissingFields: "analyticsPlatform" });
+      close();
+      return;
+    }
     const text = buildWriteAcStoryPrompt(entityStore, productLineName, solutionId, {
       id: story.id,
       title: story.title,
-    });
+    }, productLine.settings.analyticsPlatform);
     await navigator.clipboard.writeText(text);
     analyticsEmitter.emit("write_ac_story_prompt_copied", {
       solution_id: solutionId,

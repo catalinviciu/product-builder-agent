@@ -289,6 +289,25 @@ function analyticsPlatformLabel(a: ProductLine["settings"]["analyticsPlatform"])
   return labels[a.platform] ?? "the configured analytics platform";
 }
 
+/** The analytics-platform block injected into the AC writer prompt. Parametrized from the product line's settings. */
+function analyticsPlatformBlock(a: ProductLine["settings"]["analyticsPlatform"]): string {
+  const label = analyticsPlatformLabel(a);
+  if (a.platform === "other") {
+    const name = (a.mode === "manual" ? a.otherName?.trim() : undefined) || "Analytics";
+    return [
+      `**Analytics platform:** ${name}`,
+      `Embed each analytics event as a \`# ${name}: EventName (PropertyName: type)\` comment in the scenario where it fires.`,
+      `${name} has no assumed standard SDK — describe events in platform-neutral terms.`,
+    ].join("\n");
+  }
+  const name = label ?? "Analytics";
+  return [
+    `**Analytics platform:** ${name}`,
+    `Embed each analytics event as a \`# ${name}: EventName (PropertyName: type)\` comment in the scenario where it fires.`,
+    `Mirror the existing ${name} event-tracking conventions in this codebase where present.`,
+  ].join("\n");
+}
+
 export function buildSolutionPlanningPrompt(
   store: EntityStore,
   productLine: ProductLine,
@@ -473,10 +492,6 @@ export function buildPrototypePrompt(
   steps.push(`Use skill: ProductSkills/prototype-builder/SKILL.md`);
   steps.push(designSystemInstruction(settings.designSystem));
   steps.push(`Write the prototype to the Output path above.`);
-  const analytics = analyticsPlatformLabel(settings.analyticsPlatform);
-  if (analytics) {
-    steps.push(`Instrument analytics using ${analytics} (the product line's configured platform).`);
-  }
   sections.push([`## Instructions`, ``, ...steps.map((s, i) => `${i + 1}. ${s}`)].join("\n"));
 
   return sections.join("\n\n---\n\n");
@@ -505,15 +520,17 @@ export function buildUserStoryAcWriterPrompt(productLine: ProductLine, solutionI
   const entity = productLine.entities[solutionId];
   if (!entity || entity.level !== "solution") return "";
 
-  const sections: string[] = [];
-  sections.push(`Use skill: ProductSkills/user-story-ac-writer/SKILL.md`);
-  sections.push([
-    `Product Line: ${productLine.name}`,
-    `Solution ID: ${solutionId}`,
-  ].join("\n"));
-  sections.push(`Data: Product-Agent-app/data/store.json`);
+  const template = [
+    `Use skill: ProductSkills/user-story-ac-writer/SKILL.md`,
+    [
+      `Product Line: ${productLine.name}`,
+      `Solution ID: ${solutionId}`,
+    ].join("\n"),
+    `## Analytics Platform\n\n{{analyticsPlatformBlock}}`,
+    `Data: Product-Agent-app/data/store.json`,
+  ].join("\n\n---\n\n");
 
-  return sections.join("\n\n---\n\n");
+  return template.replace("{{analyticsPlatformBlock}}", analyticsPlatformBlock(productLine.settings.analyticsPlatform));
 }
 
 // ── Refine story prompt for AI agents ───────────────────────────────────
@@ -578,6 +595,7 @@ export function buildWriteAcStoryPrompt(
   productLineName: string,
   solutionId: string,
   story: { id: string; title: string },
+  analyticsPlatform: ProductLine["settings"]["analyticsPlatform"],
 ): string {
   const anchor = buildStoryAnchor(store, productLineName, solutionId, story.id, story.title);
   const sections = [
@@ -589,6 +607,7 @@ export function buildWriteAcStoryPrompt(
       `Skip the multi-story Phase 1 review — go straight to this one story, then write back via`,
       `pa_update_story({ entityId: "${solutionId}", storyId: "${story.id}", patch: { acceptanceCriteria, analyticsEvents } }).`,
     ].join("\n"),
+    `## Analytics Platform\n\n${analyticsPlatformBlock(analyticsPlatform)}`,
   ];
   return anchor ? sections.join("\n\n---\n\n") : sections.slice(1).join("\n\n---\n\n");
 }

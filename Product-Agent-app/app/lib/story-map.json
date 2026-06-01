@@ -894,11 +894,13 @@
           "title": "Add acceptance criteria + analytics events to stories",
           "stories": [
             {
-              "action": "Click the toolbar 'Add acceptance criteria' button to copy the AC writer prompt; the skill writes Gherkin AC and analytics events directly to each story record",
+              "action": "Click the toolbar 'Add acceptance criteria' button — if an analytics platform is configured, copies the AC writer prompt with the platform's event-tracking syntax resolved from product-line settings; otherwise redirects to Settings with a banner listing the missing analytics-platform field",
               "components": [
                 "StoryMapToolbar",
                 "StoriesTab",
-                "buildUserStoryAcWriterPrompt"
+                "buildUserStoryAcWriterPrompt",
+                "settings-redirect",
+                "openSettingsWithRedirect"
               ]
             },
             {
