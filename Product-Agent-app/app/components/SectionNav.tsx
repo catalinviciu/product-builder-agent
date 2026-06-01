@@ -3,7 +3,7 @@
 import React, { useState, useRef, useCallback } from "react";
 import { useClickOutside } from "@/app/lib/hooks/useClickOutside";
 import {
-  ChevronDown, Check, Plus, Settings, X, Trash2,
+  ChevronDown, Check, Plus, X,
 } from "lucide-react";
 import type { Entity } from "@/app/lib/schemas";
 import { LEVEL_META, PRODUCT_LINE_STATUS_META, ENTITY_STATUS_META, DEFAULT_PRODUCT_LINE_SETTINGS } from "@/app/lib/schemas";
@@ -70,15 +70,13 @@ function NewProductLineForm({ onClose }: { onClose: () => void }) {
 
 
 function ProductLineSelector() {
-  const { currentProductLineId, switchProductLine, deleteProductLine, openSettings } = useAppStore();
+  const { currentProductLineId, switchProductLine } = useAppStore();
   const [open, setOpen] = useState(false);
   const [showNewForm, setShowNewForm] = useState(false);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   const handleClickOutside = useCallback(() => {
     setOpen(false);
-    setConfirmDeleteId(null);
   }, []);
   useClickOutside(ref, handleClickOutside, open);
 
@@ -134,7 +132,7 @@ function ProductLineSelector() {
                 )}
               >
                 <button
-                  onClick={() => { switchProductLine(pl.id); setOpen(false); setConfirmDeleteId(null); }}
+                  onClick={() => { switchProductLine(pl.id); setOpen(false); }}
                   className="cursor-pointer flex flex-col gap-0.5 min-w-0 flex-1 text-left"
                 >
                   <span className="text-xs font-medium text-foreground flex items-center gap-1.5">
@@ -147,38 +145,6 @@ function ProductLineSelector() {
                 </button>
                 <div className="flex items-center gap-1 shrink-0">
                   {isActive && <Check size={14} className="text-emerald-600 dark:text-emerald-400" />}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); openSettings(pl.id, "header-link"); setOpen(false); }}
-                    className="cursor-pointer p-1 rounded text-muted-foreground/30 hover:text-foreground opacity-0 group-hover/pl:opacity-100 transition-opacity"
-                    title="Settings"
-                  >
-                    <Settings size={11} />
-                  </button>
-                  {confirmDeleteId === pl.id ? (
-                    <div className="flex gap-1">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteProductLine(pl.id); setOpen(false); setConfirmDeleteId(null); }}
-                        className="cursor-pointer text-[10px] px-1.5 py-0.5 rounded bg-destructive-surface text-destructive hover:bg-destructive-surface-hover"
-                      >
-                        Yes
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }}
-                        className="cursor-pointer text-[10px] px-1.5 py-0.5 rounded bg-surface-hover text-muted-foreground"
-                      >
-                        No
-                      </button>
-                    </div>
-                  ) : (
-                    allLines.length > 1 && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(pl.id); }}
-                        className="cursor-pointer p-1 rounded text-muted-foreground/30 hover:text-destructive opacity-0 group-hover/pl:opacity-100 transition-opacity"
-                      >
-                        <Trash2 size={11} />
-                      </button>
-                    )
-                  )}
                 </div>
               </div>
             );

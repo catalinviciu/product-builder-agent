@@ -4,7 +4,7 @@ import { useEffect, useCallback } from "react";
 import { SectionNav } from "./SectionNav";
 import { EntityView } from "./EntityView";
 import { MetricTreeView } from "./MetricTreeView";
-import { ProductLineSettingsView } from "./ProductLineSettingsView";
+import { SettingsView } from "./SettingsView";
 import { PersonaSlideOver } from "./PersonaSlideOver";
 import { StoryDetailSlideOver } from "./StoryDetailSlideOver";
 import { AccountMenu } from "./AccountMenu";
@@ -33,7 +33,7 @@ export function DashboardLayout() {
   const setSidebarOpen = useAppStore((s) => s.setSidebarOpen);
   const currentEntityId = useAppStore((s) => s.currentEntityId);
   const viewMode = useAppStore((s) => s.viewMode);
-  const settingsProductLineId = useAppStore((s) => s.settingsProductLineId);
+  const settingsOpen = useAppStore((s) => s.settingsOpen);
   const hasProductLine = useAppStore(
     (s) => Boolean(s.productLines[s.currentProductLineId] ?? Object.values(s.productLines)[0])
   );
@@ -75,6 +75,17 @@ export function DashboardLayout() {
             page.
           </p>
         </div>
+      </div>
+    );
+  }
+
+  // Settings is a full-screen takeover: its own left nav sits where the app
+  // sidebar would be, and nothing of the dashboard shell renders behind it.
+  if (settingsOpen) {
+    return (
+      <div className="h-screen overflow-hidden bg-background">
+        <SettingsView />
+        <Toaster />
       </div>
     );
   }
@@ -142,9 +153,7 @@ export function DashboardLayout() {
             {sidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
           </button>
           <AccountMenu />
-          {settingsProductLineId
-            ? <ProductLineSettingsView />
-            : viewMode === "metric-tree" ? <MetricTreeView /> : <EntityView />}
+          {viewMode === "metric-tree" ? <MetricTreeView /> : <EntityView />}
         </main>
 
         <PersonaSlideOver />

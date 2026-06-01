@@ -20,9 +20,11 @@ export interface AppStore {
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setViewMode: (mode: "discovery" | "metric-tree") => void;
-  settingsProductLineId: string | null;
-  openSettings: (plId: string, source: "creation" | "header-link") => void;
+  settingsOpen: boolean;
+  settingsTab: "product-line" | "appearance";
+  openSettings: (source: "creation" | "header-link") => void;
   closeSettings: () => void;
+  setSettingsTab: (tab: "product-line" | "appearance") => void;
   settingsRedirect: {
     actionName: string;
     missingFields: SettingsFieldKey[];
@@ -145,22 +147,29 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
     draft.currentEntityId = null;
     draft.sidebarOpen = mode === "discovery";
   }),
-  settingsProductLineId: null,
-  openSettings: (plId, source) => {
-    set({ settingsProductLineId: plId, currentEntityId: null });
-    analyticsEmitter.emit("SettingsPageOpened", { source, productLineId: plId });
+  settingsOpen: false,
+  settingsTab: "product-line",
+  openSettings: (source) => {
+    set({ settingsOpen: true, settingsTab: "product-line", currentEntityId: null });
+    analyticsEmitter.emit("SettingsPageOpened", { source, productLineId: get().currentProductLineId });
   },
-  closeSettings: () => set({ settingsProductLineId: null, settingsRedirect: null }),
+  closeSettings: () => set({ settingsOpen: false, settingsRedirect: null }),
+  setSettingsTab: (tab) => set({ settingsTab: tab }),
   settingsRedirect: null,
-  openSettingsWithRedirect: (plId, redirect) => set({
-    settingsProductLineId: plId,
-    currentEntityId: null,
-    settingsRedirect: redirect,
+  openSettingsWithRedirect: (plId, redirect) => set((draft) => {
+    if (plId !== draft.currentProductLineId) {
+      draft.currentProductLineId = plId;
+      if (typeof window !== "undefined") localStorage.setItem("pa-current-pl", plId);
+    }
+    draft.settingsOpen = true;
+    draft.settingsTab = "product-line";
+    draft.currentEntityId = null;
+    draft.settingsRedirect = redirect;
   }),
   exitSettingsRedirect: () => set((draft) => {
     const returnId = draft.settingsRedirect?.returnEntityId ?? null;
     draft.settingsRedirect = null;
-    draft.settingsProductLineId = null;
+    draft.settingsOpen = false;
     draft.currentEntityId = returnId;
   }),
   personaPanelOpen: false,
@@ -337,9 +346,9 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
 
   switchProductLine: (id) => {
     if (typeof window !== "undefined") localStorage.setItem("pa-current-pl", id);
-    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null, viewMode: "discovery", sidebarOpen: true, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null, settingsProductLineId: null });
+    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null, viewMode: "discovery", sidebarOpen: true, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null });
   },
-  navigateTo: (id) => set({ currentEntityId: id, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null, settingsProductLineId: null }),
+  navigateTo: (id) => set({ currentEntityId: id, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null, settingsOpen: false }),
   navigateUp: () =>
     set((draft) => {
       if (!draft.currentEntityId) return;
@@ -458,7 +467,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
     });
     // Open settings so user lands on Settings page after creation
     analyticsEmitter.emit("SettingsPageOpened", { source: "creation", productLineId: plWithSettings.id });
-    set({ settingsProductLineId: plWithSettings.id, currentEntityId: null });
+    set({ settingsOpen: true, settingsTab: "product-line", currentEntityId: null });
   },
 
   updateProductLine: (id, updates) =>

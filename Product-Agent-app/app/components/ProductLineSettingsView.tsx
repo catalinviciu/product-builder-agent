@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { FolderOpen, Pencil, Check, ChevronDown, ArrowLeft, HelpCircle, TriangleAlert, CircleCheck } from "lucide-react";
+import { FolderOpen, Pencil, Check, ChevronDown, HelpCircle, TriangleAlert, CircleCheck } from "lucide-react";
 import { useAppStore } from "@/app/lib/store";
 import { analyticsEmitter } from "@/app/lib/analytics-events";
 import { trackEvent } from "@/app/lib/analytics";
@@ -35,14 +35,13 @@ const ANALYTICS_OPTIONS: { label: string; value: AnalyticsPlatform }[] = [
 const STUCK_TIMEOUT_MS = 90_000;
 
 export function ProductLineSettingsView() {
-  const settingsProductLineId = useAppStore((s) => s.settingsProductLineId);
+  const currentProductLineId = useAppStore((s) => s.currentProductLineId);
   const productLines = useAppStore((s) => s.productLines);
   const updateProductLineSettings = useAppStore((s) => s.updateProductLineSettings);
-  const closeSettings = useAppStore((s) => s.closeSettings);
   const settingsRedirect = useAppStore((s) => s.settingsRedirect);
   const exitSettingsRedirect = useAppStore((s) => s.exitSettingsRedirect);
 
-  const pl = settingsProductLineId ? productLines[settingsProductLineId] : null;
+  const pl = productLines[currentProductLineId] ?? null;
   const settings = pl?.settings;
   const savedPath = settings?.codebasePath ?? null;
 
@@ -138,9 +137,9 @@ export function ProductLineSettingsView() {
     };
   }, []);
 
-  if (!pl || !settingsProductLineId) return null;
+  if (!pl) return null;
 
-  const id = settingsProductLineId;
+  const id = currentProductLineId;
 
   // ── Redirect banner state ────────────────────────────────────────────────
   const redirect = settingsRedirect;
@@ -461,20 +460,6 @@ export function ProductLineSettingsView() {
           </div>
         </div>
       )}
-      {/* Header */}
-      <div className="flex items-center mb-8">
-        <button
-          onClick={closeSettings}
-          aria-label="Back to product line"
-          className="cursor-pointer flex items-center gap-1.5 text-sm rounded-md hover:bg-surface-hover active:bg-surface-active focus:outline-2 focus:outline-border-focus transition-colors px-2 py-1 -ml-2"
-        >
-          <ArrowLeft size={14} className="text-muted-foreground" />
-          <span className="text-muted-foreground">{pl.name}</span>
-          <span className="text-muted-foreground/40 mx-0.5">·</span>
-          <span className="text-foreground font-medium">Settings</span>
-        </button>
-      </div>
-
       <div className="flex flex-col gap-8">
         {/* ── Codebase section ── */}
         <div
