@@ -32,6 +32,7 @@ export interface StoreAdapter {
     entityId: string,
     opts?: { ancestors?: boolean; descendantsDepth?: number; productLineMeta?: boolean }
   ): Promise<EntityContext>;
+  getStory(entityId: string, storyId: string): Promise<Story>;
 
   // ── Writes ──────────────────────────────────────────────────────────
   createEntity(input: CreateEntityInput): Promise<Entity>;
@@ -41,4 +42,5 @@ export interface StoreAdapter {
   addBlock(entityId: string, block: Block): Promise<Entity>;
   updateBlock(entityId: string, blockIndex: number, patch: Partial<Block>): Promise<Entity>;
   updateStory(entityId: string, storyId: string, patch: Partial<Story>): Promise<Entity>;
+  deleteStory(entityId: string, storyId: string): Promise<void>;
 }

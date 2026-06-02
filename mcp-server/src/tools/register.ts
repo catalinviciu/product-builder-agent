@@ -97,6 +97,19 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
       ok(await adapter.getContext(entityId, { ancestors, descendantsDepth, productLineMeta }))
   );
 
+  server.registerTool(
+    "pa_get_story",
+    {
+      title: "Get a single story by id",
+      description: "Returns ONE story by id from a solution entity — its narrative, acceptance criteria, context, scope, dependencies, and analytics events. Use this instead of pa_get_entity when you only need a single story.",
+      inputSchema: {
+        entityId: z.string(),
+        storyId: z.string(),
+      },
+    },
+    async ({ entityId, storyId }) => ok(await adapter.getStory(entityId, storyId))
+  );
+
   // ── Writes ───────────────────────────────────────────────────────
 
   server.registerTool(
@@ -194,6 +207,22 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
     },
     async ({ entityId, storyId, patch }) =>
       ok(await adapter.updateStory(entityId, storyId, patch as Partial<Story>))
+  );
+
+  server.registerTool(
+    "pa_delete_story",
+    {
+      title: "Delete a story by id",
+      description: "Deletes ONE story (located by its string id) from a solution entity, leaving every other story untouched.",
+      inputSchema: {
+        entityId: z.string(),
+        storyId: z.string(),
+      },
+    },
+    async ({ entityId, storyId }) => {
+      await adapter.deleteStory(entityId, storyId);
+      return ok({ deleted: storyId });
+    }
   );
 
   server.registerTool(

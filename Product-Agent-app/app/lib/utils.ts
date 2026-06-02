@@ -108,6 +108,7 @@ export function buildEntityAnchor(
   store: EntityStore,
   productLineName: string,
   entityId: string,
+  dataLine?: string,
 ): string {
   const entity = store[entityId];
   if (!entity) return "";
@@ -118,7 +119,7 @@ export function buildEntityAnchor(
     `Product Line: ${productLineName}`,
     `Path: ${pathLabels.join(" > ")}`,
     `Entity: "${entity.title}" (${entity.id})`,
-    `Data: pa_get_entity("${entityId}")`,
+    dataLine ?? `Data: pa_get_entity("${entityId}")`,
   ].join("\n");
 }
 
@@ -167,7 +168,12 @@ export function buildStoryAnchor(
   storyId: string,
   storyTitle: string,
 ): string {
-  const base = buildEntityAnchor(store, productLineName, entityId);
+  const base = buildEntityAnchor(
+    store,
+    productLineName,
+    entityId,
+    `Data: pa_get_story("${entityId}", "${storyId}")`,
+  );
   if (!base) return "";
   return base + `\nStory: ${storyId} — "${storyTitle}"`;
 }
@@ -573,7 +579,7 @@ export function buildRefineStoryPrompt(
     ``,
     `1. Confirm the slot context with the user: does the persona / activity / task / iteration feel right?`,
     `2. Draft the definition fields; ask one clarifying question at a time on genuine ambiguities`,
-    `3. Write back via pa_update_entity({ entityId: "${solutionId}", patch: { stories: <updated array> } }) — match by story.id, preserve all other story fields`,
+    `3. Write back via pa_update_story({ entityId: "${solutionId}", storyId: "${story.id}", patch: <changed fields only> }) — preserves all other story fields`,
     `4. Immediately continue into ProductSkills/user-story-ac-writer/SKILL.md scoped to story id: ${story.id}`,
   ].join("\n");
 
@@ -634,12 +640,12 @@ export function buildPlanImplementStoryPrompt(
     `Path: ${pathLabels.join(" > ")}`,
     `Entity: "${solution.title}" (${solution.id})`,
     `Codebase: ${settings.codebasePath} — locate this folder in the working directory before acting on any other path.`,
-    `Data: pa_get_entity("${solutionId}")`,
+    `Data: pa_get_story("${solutionId}", "${storyId}")`,
     `Story: ${storyId} — "${storyTitle}"`,
   ].join("\n");
 
   const steps: string[] = [];
-  steps.push(`Read story id ${storyId} from pa_get_entity above — read its acceptanceCriteria, context, outOfScope, dependencies, and humanVerification in full before doing anything else`);
+  steps.push(`Read story id ${storyId} from pa_get_story above — read its acceptanceCriteria, context, outOfScope, dependencies, and humanVerification in full before doing anything else`);
   steps.push(`Plan the implementation of that story`);
   if (settings.storyMap.enabled) {
     steps.push(`Follow \`ProductSkills/story-map-updater/SKILL.md\``);

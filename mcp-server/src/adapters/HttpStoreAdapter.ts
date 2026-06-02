@@ -105,6 +105,12 @@ export class HttpStoreAdapter implements StoreAdapter {
     return this.request(`/api/store/context/${encodeURIComponent(entityId)}${q ? `?${q}` : ""}`);
   }
 
+  getStory(entityId: string, storyId: string): Promise<Story> {
+    return this.request(`/api/store/entity/${encodeURIComponent(entityId)}/story/${encodeURIComponent(storyId)}`, {
+      method: "GET",
+    });
+  }
+
   // ── Writes ─────────────────────────────────────────────────────────
 
   createEntity(input: CreateEntityInput): Promise<Entity> {
@@ -142,6 +148,12 @@ export class HttpStoreAdapter implements StoreAdapter {
     return this.request(`/api/store/entity/${encodeURIComponent(entityId)}/story/${encodeURIComponent(storyId)}`, {
       method: "PATCH",
       body: JSON.stringify(patch),
+    });
+  }
+
+  async deleteStory(entityId: string, storyId: string): Promise<void> {
+    await this.request<{ deleted: string }>(`/api/store/entity/${encodeURIComponent(entityId)}/story/${encodeURIComponent(storyId)}`, {
+      method: "DELETE",
     });
   }
 
