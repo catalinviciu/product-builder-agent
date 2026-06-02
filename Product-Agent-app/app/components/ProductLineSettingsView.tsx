@@ -12,6 +12,8 @@ import { PRODUCT_AGENT_DESIGN_TEMPLATE } from "@/app/assets/design-templates/pro
 import { ConfirmDialog } from "./ConfirmDialog";
 import { type SettingsFieldKey, isSettingsFieldFilled, joinFieldLabels } from "@/app/lib/settings-redirect";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { AccordionSection } from "./AccordionSection";
+import { getStoryMapConfig } from "@/app/lib/story-map-config";
 
 /** Confidence chip — glyph encodes level (● high · ◐ medium · ○ low); neutral token color. */
 function ConfidenceChip({ level }: { level: "high" | "medium" | "low" }) {
@@ -140,6 +142,10 @@ export function ProductLineSettingsView() {
   if (!pl) return null;
 
   const id = currentProductLineId;
+
+  // ── Story Map config ─────────────────────────────────────────────────────
+  const storyMapConfig = getStoryMapConfig(id);
+  const showStoryMap = pl?.settings?.storyMap?.enabled && storyMapConfig;
 
   // ── Redirect banner state ────────────────────────────────────────────────
   const redirect = settingsRedirect;
@@ -1092,6 +1098,39 @@ export function ProductLineSettingsView() {
             </TooltipProvider>
           </div>
         </div>
+
+        {/* ── Story Map section ── */}
+        {showStoryMap && storyMapConfig && (
+          <AccordionSection
+            label="Advanced"
+            defaultOpen={false}
+            onToggle={(open) => { if (open) trackEvent("StoryMapInfoExpanded", { productLineId: id }); }}
+          >
+            <div className="flex flex-col gap-4">
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">Story Map</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Predefined for this product line. The Story-map updater reads these paths.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                {[
+                  { label: "JSON source", value: storyMapConfig.jsonPath },
+                  { label: "Generated markdown", value: storyMapConfig.mdPath },
+                  { label: "Regenerate command", value: storyMapConfig.generateCommand },
+                ].map((row) => (
+                  <div key={row.label} className="flex flex-col gap-1">
+                    <span className="text-[11px] font-medium text-muted-foreground/70">{row.label}</span>
+                    <div className="rounded-xl border border-border-default bg-surface-1 px-4 py-3 flex items-center gap-3">
+                      <FolderOpen size={14} className="text-muted-foreground/50 shrink-0" />
+                      <span className="text-xs font-mono text-foreground flex-1">{row.value}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </AccordionSection>
+        )}
       </div>
 
       <ConfirmDialog

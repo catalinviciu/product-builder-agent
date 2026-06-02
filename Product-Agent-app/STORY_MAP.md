@@ -37,6 +37,7 @@
 |  | Review the detected design system and analytics platform, edit the design-system markdown, or override with a manual skill or platform | `ProductLineSettingsView` |
 |  | See a redirect banner when arriving at Settings from a blocked AI action, fill in the missing fields highlighted with a focus ring, and return to the action once all settings are resolved | `ProductLineSettingsView` · `settings-redirect` |
 |  | See the read-only base folder where this product line's prototypes will be saved, with a tooltip explaining the per-prototype subfolder convention | `ProductLineSettingsView` |
+|  | View the predefined Story Map config (JSON path, MD path, generate script) in Settings — read-only, ProductAgent only | `ProductLineSettingsView` · `AccordionSection` |
 | **Change product line status** | Change product line status (active, closed, archived) via the status indicator | `Product Line Selector` |
 | **Delete product line** | Delete a product line from the Product Line Selector | `Product Line Selector` |
 | **Start co-worker setup** | See co-worker intro card on first visit to an empty product line | `CoworkerIntroCard` · `EntityView (RootView)` |

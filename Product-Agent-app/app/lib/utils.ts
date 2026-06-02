@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { Entity, EntityStore, DiscoveryTree, Block, ProductLine } from "./schemas";
 import { LEVEL_META } from "./schemas";
+import { getStoryMapConfig } from "./story-map-config";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -314,6 +315,12 @@ function analyticsPlatformBlock(a: ProductLine["settings"]["analyticsPlatform"])
   ].join("\n");
 }
 
+function storyMapStep(productLineId: string): string | null {
+  const c = getStoryMapConfig(productLineId);
+  if (!c) return null;
+  return `Follow \`ProductSkills/story-map-updater/SKILL.md\` — Story Map JSON: \`${c.jsonPath}\`, Story Map MD: \`${c.mdPath}\`, regenerate with \`${c.generateCommand}\`.`;
+}
+
 export function buildSolutionPlanningPrompt(
   store: EntityStore,
   productLine: ProductLine,
@@ -381,7 +388,8 @@ export function buildSolutionPlanningPrompt(
   const steps: string[] = [];
   steps.push(`Plan the implementation of this solution.`);
   if (settings.storyMap.enabled) {
-    steps.push(`Follow \`ProductSkills/story-map-updater/SKILL.md\` to include story map updates in your plan.`);
+    const s = storyMapStep(productLine.id);
+    if (s) steps.push(s);
   }
   steps.push(`Ask clarifying questions before proceeding if anything is unclear.`);
   steps.push(designSystemInstruction(settings.designSystem));
@@ -648,7 +656,8 @@ export function buildPlanImplementStoryPrompt(
   steps.push(`Read story id ${storyId} from pa_get_story above — read its acceptanceCriteria, context, outOfScope, dependencies, and humanVerification in full before doing anything else`);
   steps.push(`Plan the implementation of that story`);
   if (settings.storyMap.enabled) {
-    steps.push(`Follow \`ProductSkills/story-map-updater/SKILL.md\``);
+    const s = storyMapStep(productLine.id);
+    if (s) steps.push(s);
   }
   steps.push(`Ask clarifying questions before proceeding`);
   steps.push(designSystemInstruction(settings.designSystem));
@@ -666,6 +675,7 @@ export function buildPlanImplementStoryPrompt(
 export function buildPlanImplementIterationPrompt(
   store: EntityStore,
   productLineName: string,
+  productLineId: string,
   solutionId: string,
   iterationLabel: string,
   stories: { id: string; title: string }[],
@@ -675,15 +685,16 @@ export function buildPlanImplementIterationPrompt(
   const header = anchor
     ? `${anchor}\nIteration: ${iterationLabel}\nStories:\n${storyLines}`
     : `Iteration: ${iterationLabel}\nStories:\n${storyLines}`;
-  const instructions = [
+  const smStep = storyMapStep(productLineId);
+  const instructionLines = [
     `1. Plan the implementation of the stories above`,
-    `2. Follow ProductSkills/story-map-updater/SKILL.md`,
-    `3. Ask clarifying questions before proceeding`,
-    `4. Use the .claude/skills/product-agent-design skill for frontend`,
-    `5. Follow existing patterns and conventions`,
-    `6. After plan is ready, dispatch sonnet subagents`,
-  ].join("\n");
-  return `${header}\n\n${instructions}`;
+  ];
+  if (smStep) instructionLines.push(`${instructionLines.length + 1}. ${smStep}`);
+  instructionLines.push(`${instructionLines.length + 1}. Ask clarifying questions before proceeding`);
+  instructionLines.push(`${instructionLines.length + 1}. Use the .claude/skills/product-agent-design skill for frontend`);
+  instructionLines.push(`${instructionLines.length + 1}. Follow existing patterns and conventions`);
+  instructionLines.push(`${instructionLines.length + 1}. After plan is ready, dispatch sonnet subagents`);
+  return `${header}\n\n${instructionLines.join("\n")}`;
 }
 
 // ── WIP briefing prompt for AI agents ────────────────────────────────────

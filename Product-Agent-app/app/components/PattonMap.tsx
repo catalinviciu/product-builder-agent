@@ -37,6 +37,7 @@ export function PattonMap({ entityId, stories, activePersona }: PattonMapProps) 
     const text = buildPlanImplementIterationPrompt(
       entityStore,
       productLineName,
+      productLine?.id ?? "",
       entityId,
       row.label,
       iterStories,

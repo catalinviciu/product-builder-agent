@@ -107,6 +107,9 @@ export type AnalyticsEventMap = {
     FromMode: "detected";
     ToMode: "skill" | "manual" | "edited";
   };
+  StoryMapInfoExpanded: {
+    productLineId: string;
+  };
 };
 
 type ListenerMap = { [K in keyof AnalyticsEventMap]?: Array<Listener<AnalyticsEventMap[K]>> };

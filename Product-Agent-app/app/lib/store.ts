@@ -6,6 +6,7 @@ import type { Entity, Block, MetricBlock, ProductLine, ProductLineSettings, Disc
 import type { SettingsFieldKey } from "./settings-redirect";
 import { analyticsEmitter, type AnalyticsEventMap } from "./analytics-events";
 import { getDescendantIds } from "./utils";
+import { getStoryMapConfig } from "./story-map-config";
 
 export interface AppStore {
   // Data
@@ -314,6 +315,10 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
             }
             // Backfill detectionError (added Story 3)
             pl.settings.detectionError ??= null;
+            // Backfill storyMap.enabled for product lines with a known story map config
+            if (getStoryMapConfig(pl.id)) {
+              pl.settings.storyMap.enabled = true;
+            }
           }
           set({ productLines: data, currentProductLineId, isHydrated: true });
           return;

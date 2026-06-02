@@ -98,6 +98,13 @@
               "components": [
                 "ProductLineSettingsView"
               ]
+            },
+            {
+              "action": "View the predefined Story Map config (JSON path, MD path, generate script) in Settings — read-only, ProductAgent only",
+              "components": [
+                "ProductLineSettingsView",
+                "AccordionSection"
+              ]
             }
           ]
         },

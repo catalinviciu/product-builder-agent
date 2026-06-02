@@ -4,8 +4,9 @@ import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 
-export function AccordionSection({ label, children, defaultOpen = false }: {
+export function AccordionSection({ label, children, defaultOpen = false, onToggle }: {
   label: string; children: React.ReactNode; defaultOpen?: boolean;
+  onToggle?: (open: boolean) => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
 
@@ -15,7 +16,11 @@ export function AccordionSection({ label, children, defaultOpen = false }: {
       open && "border-l-2 border-l-border-strong"
     )}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          const next = !open;
+          setOpen(next);
+          onToggle?.(next);
+        }}
         className="cursor-pointer flex items-center gap-2 w-full px-[var(--spacing-block-px)] py-[var(--spacing-block-py)] bg-surface-1 hover:bg-surface-2 transition-colors"
       >
         <ChevronRight

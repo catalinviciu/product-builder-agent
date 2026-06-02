@@ -14,12 +14,14 @@ You are the Story Map Maintainer for Product Agent. Your job is to keep the User
 
 | File | Role |
 |:-----|:-----|
-| `app/lib/story-map.json` | **Source of truth.** All activities, steps, and stories live here. |
+| `{{STORY_MAP_JSON}}` | **Source of truth.** All activities, steps, and stories live here. |
 | `app/lib/story-map-schema.ts` | TypeScript types that define the JSON shape. |
-| `STORY_MAP.md` | **Generated output.** Never edit directly — always regenerate. |
+| `{{STORY_MAP_MD}}` | **Generated output.** Never edit directly — always regenerate. |
 | `scripts/generate-story-map.ts` | The generator script. |
 
-**Command to regenerate:** `npm run generate:story-map`
+> The `{{STORY_MAP_JSON}}`, `{{STORY_MAP_MD}}`, and `{{GENERATE_COMMAND}}` values are predefined per product line and supplied in the invoking prompt header.
+
+**Command to regenerate:** `{{GENERATE_COMMAND}}`
 
 ---
 
@@ -33,7 +35,7 @@ When entering plan mode or designing a new feature, **read the story map first**
 
 ### Steps
 
-1. **Read** `app/lib/story-map.json` to load the current map.
+1. **Read** `{{STORY_MAP_JSON}}` to load the current map.
 2. **Identify placement** — determine where the new feature sits:
 
    | Situation | What to do |
@@ -55,7 +57,7 @@ When entering plan mode or designing a new feature, **read the story map first**
 4. **Check for the "Refine" pattern.** Activities 3–7 share a common "Refine the entity" step. If the feature adds a new editing capability (e.g., a new block type, a new toolbar action), it likely needs to be added to the Refine step across all relevant activities to keep the pattern consistent.
 
 5. **Include the story map update as a step in the plan.** The plan should end with:
-   > Update `story-map.json` with [described changes] and run `npm run generate:story-map`.
+   > Update `{{STORY_MAP_JSON}}` with [described changes] and run `{{GENERATE_COMMAND}}`.
 
 ## Moment 2: After Implementation (feature shipped)
 
@@ -63,9 +65,9 @@ When the feature code is complete and working, update the story map.
 
 ### Steps
 
-1. **Read** the current `app/lib/story-map.json`.
+1. **Read** the current `{{STORY_MAP_JSON}}`.
 2. **Apply the planned changes** (or adjust if the implementation diverged from the plan):
-   - Edit `story-map.json` directly — add/modify/remove activities, steps, or stories.
+   - Edit `{{STORY_MAP_JSON}}` directly — add/modify/remove activities, steps, or stories.
    - Keep the JSON self-contained: no cross-references between activities. If a step pattern repeats (like "Refine the entity"), duplicate the full story list in each activity.
 3. **Validate structure and quality:**
    - Every activity must have `id`, `title`, `goal`, and `steps[]`.
@@ -73,8 +75,8 @@ When the feature code is complete and working, update the story map.
    - Every story must have `action` (string) and `components` (string array).
    - Activity `id` values must be unique kebab-case strings.
    - **INVEST check:** Review each story against the INVEST criteria. Merge micro-actions that serve a single user intent into one story. Split stories that bundle unrelated intents.
-4. **Run** `npm run generate:story-map` to regenerate `STORY_MAP.md`.
-5. **Read the generated `STORY_MAP.md`** to verify it looks correct.
+4. **Run** `{{GENERATE_COMMAND}}` to regenerate `{{STORY_MAP_MD}}`.
+5. **Read the generated `{{STORY_MAP_MD}}`** to verify it looks correct.
 
 ---
 
@@ -129,7 +131,7 @@ Is this a completely new workflow the user couldn't do before?
 > - "Navigate to an entity from search results" — Independent (requires search but delivers distinct value: navigation), Valuable (user lands on the entity). **Pass.**
 > - NOT split into "Open dialog" / "Type query" / "Click result" — those are sub-tasks of a single intent.
 
-**After implementation:** Edit `story-map.json` → add the step → run `npm run generate:story-map`.
+**After implementation:** Edit `{{STORY_MAP_JSON}}` → add the step → run `{{GENERATE_COMMAND}}`.
 
 ---
 
@@ -154,8 +156,8 @@ Every story must pass the INVEST test. This is the most important quality gate.
 
 # STRICT RULES
 
-1. **Never edit `STORY_MAP.md` directly.** Always edit the JSON and regenerate.
+1. **Never edit `{{STORY_MAP_MD}}` directly.** Always edit the JSON and regenerate.
 2. **Never invent features.** Only add stories for things that are planned (in planning mode) or shipped (in update mode).
 3. **Write INVEST-quality stories.** Each story must represent a meaningful user goal — not a UI micro-interaction. Combine multi-click flows that serve one intent into a single story. See the INVEST criteria above.
 4. **Preserve existing content.** When adding to the map, don't accidentally remove or modify unrelated entries.
-5. **Run the generator.** Every JSON change must be followed by `npm run generate:story-map`.
+5. **Run the generator.** Every JSON change must be followed by `{{GENERATE_COMMAND}}`.
