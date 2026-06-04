@@ -150,6 +150,17 @@ export const BlockPatchSchema = z.object({
   defaultOpen: z.boolean().optional(),
   attribution: z.string().optional(),
   items: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
+  metric: z.string().optional(),
+  currentValue: z.string().optional(),
+  targetValue: z.string().optional(),
+  timeframe: z.string().optional(),
+  frequency: z.enum(["daily", "weekly", "monthly"]).optional(),
+  valueFormat: z.enum(["number", "currency_usd", "currency_eur", "currency_gbp", "percentage"]).optional(),
+  initialValue: z.number().optional(),
+  numericTarget: z.number().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  dataSeries: z.array(z.object({ date: z.string(), value: z.number() })).optional(),
 });
 
 // ── ProductLineSettings partial-update schema ─────────────────────────

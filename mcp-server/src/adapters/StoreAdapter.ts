@@ -40,7 +40,10 @@ export interface StoreAdapter {
   updateProductLineSettings(productLineId: string, patch: Partial<ProductLineSettings>): Promise<ProductLineSettings>;
   deleteEntity(entityId: string): Promise<void>;
   addBlock(entityId: string, block: Block): Promise<Entity>;
-  updateBlock(entityId: string, blockIndex: number, patch: Partial<Block>): Promise<Entity>;
+  updateBlock(entityId: string, blockId: string, patch: Partial<Block>): Promise<Entity>;
+  deleteBlock(entityId: string, blockId: string): Promise<void>;
+  recordMetricValue(entityId: string, blockId: string, date: string, value: number): Promise<Entity>;
+  moveBlock(entityId: string, blockId: string, toIndex: number): Promise<Entity>;
   updateStory(entityId: string, storyId: string, patch: Partial<Story>): Promise<Entity>;
   deleteStory(entityId: string, storyId: string): Promise<void>;
 }

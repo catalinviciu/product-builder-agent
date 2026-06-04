@@ -137,10 +137,30 @@ export class HttpStoreAdapter implements StoreAdapter {
     });
   }
 
-  updateBlock(entityId: string, blockIndex: number, patch: Partial<Block>): Promise<Entity> {
-    return this.request(`/api/store/entity/${encodeURIComponent(entityId)}/block/${blockIndex}`, {
+  updateBlock(entityId: string, blockId: string, patch: Partial<Block>): Promise<Entity> {
+    return this.request(`/api/store/entity/${encodeURIComponent(entityId)}/block/${encodeURIComponent(blockId)}`, {
       method: "PATCH",
       body: JSON.stringify(patch),
+    });
+  }
+
+  async deleteBlock(entityId: string, blockId: string): Promise<void> {
+    await this.request<{ deleted: string }>(`/api/store/entity/${encodeURIComponent(entityId)}/block/${encodeURIComponent(blockId)}`, {
+      method: "DELETE",
+    });
+  }
+
+  recordMetricValue(entityId: string, blockId: string, date: string, value: number): Promise<Entity> {
+    return this.request(`/api/store/entity/${encodeURIComponent(entityId)}/block/${encodeURIComponent(blockId)}/metric-value`, {
+      method: "POST",
+      body: JSON.stringify({ date, value }),
+    });
+  }
+
+  moveBlock(entityId: string, blockId: string, toIndex: number): Promise<Entity> {
+    return this.request(`/api/store/entity/${encodeURIComponent(entityId)}/block/${encodeURIComponent(blockId)}/move`, {
+      method: "POST",
+      body: JSON.stringify({ toIndex }),
     });
   }
 

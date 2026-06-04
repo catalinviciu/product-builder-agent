@@ -126,7 +126,7 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
     "pa_update_entity",
     {
       title: "Update entity fields",
-      description: "Partial update of safe fields on an entity (title, description, status, persona, ICE, assumption/test type). Does NOT touch blocks — use pa_add_block / pa_update_block for those.",
+      description: "Partial update of safe fields on an entity (title, description, status, persona, ICE, assumption/test type). Does NOT touch blocks — use pa_add_block / pa_update_block for those; pa_delete_block, pa_record_metric_value and pa_move_block for block deletion/metric logging/reordering.",
       inputSchema: {
         entityId: z.string(),
         patch: EntityPatchSchema,
@@ -182,16 +182,63 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
   server.registerTool(
     "pa_update_block",
     {
-      title: "Update a block by index",
-      description: "Patches safe fields of an existing block (label, content, items, attribution, defaultOpen). The block's id and type cannot be changed.",
+      title: "Update a block by id",
+      description: "Patches safe fields of an existing block (located by its string id), including metric config fields (currentValue, numericTarget, target, label, etc.). The block's id and type cannot be changed. To log a metric data point use pa_record_metric_value; to reorder use pa_move_block.",
       inputSchema: {
         entityId: z.string(),
-        blockIndex: z.number().int().min(0),
+        blockId: z.string(),
         patch: BlockPatchSchema,
       },
     },
-    async ({ entityId, blockIndex, patch }) =>
-      ok(await adapter.updateBlock(entityId, blockIndex, patch as Partial<Block>))
+    async ({ entityId, blockId, patch }) =>
+      ok(await adapter.updateBlock(entityId, blockId, patch as Partial<Block>))
+  );
+
+  server.registerTool(
+    "pa_delete_block",
+    {
+      title: "Delete a block by id",
+      description: "Deletes ONE block (located by its string id) from an entity, leaving every other block untouched.",
+      inputSchema: {
+        entityId: z.string(),
+        blockId: z.string(),
+      },
+    },
+    async ({ entityId, blockId }) => {
+      await adapter.deleteBlock(entityId, blockId);
+      return ok({ deleted: blockId });
+    }
+  );
+
+  server.registerTool(
+    "pa_record_metric_value",
+    {
+      title: "Record a metric value",
+      description: "Upserts one data point (by date) on a metric block's dataSeries, keeping it sorted. Use this to log a tracked number on a Business/Product Outcome metric instead of editing store.json.",
+      inputSchema: {
+        entityId: z.string(),
+        blockId: z.string(),
+        date: z.string(),
+        value: z.number(),
+      },
+    },
+    async ({ entityId, blockId, date, value }) =>
+      ok(await adapter.recordMetricValue(entityId, blockId, date, value))
+  );
+
+  server.registerTool(
+    "pa_move_block",
+    {
+      title: "Move a block to a new position",
+      description: "Moves a block to a new 0-based position within the entity's blocks array. Blocks are otherwise appended at the end when created.",
+      inputSchema: {
+        entityId: z.string(),
+        blockId: z.string(),
+        toIndex: z.number().int().min(0),
+      },
+    },
+    async ({ entityId, blockId, toIndex }) =>
+      ok(await adapter.moveBlock(entityId, blockId, toIndex))
   );
 
   server.registerTool(

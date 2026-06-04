@@ -331,7 +331,7 @@ export function patchEntity(entity: Entity, patch: Partial<Entity>): Entity {
   return entity;
 }
 
-const SAFE_BLOCK_FIELDS = ["label", "content", "defaultOpen", "attribution", "items"] as const;
+const SAFE_BLOCK_FIELDS = ["label", "content", "defaultOpen", "attribution", "items", "metric", "currentValue", "targetValue", "timeframe", "frequency", "valueFormat", "initialValue", "numericTarget", "startDate", "endDate", "dataSeries"] as const;
 
 export function patchBlock(block: Block, patch: Partial<Block>): Block {
   const blockRec = block as unknown as Record<string, unknown>;
@@ -342,6 +342,15 @@ export function patchBlock(block: Block, patch: Partial<Block>): Block {
     }
   }
   return block;
+}
+
+export function moveBlock(entity: Entity, blockId: string, toIndex: number): Entity {
+  const from = entity.blocks.findIndex((b) => b.id === blockId);
+  if (from < 0) throw new Error("Block not found");
+  const [block] = entity.blocks.splice(from, 1);
+  const clamped = Math.max(0, Math.min(toIndex, entity.blocks.length));
+  entity.blocks.splice(clamped, 0, block);
+  return entity;
 }
 
 const SAFE_STORY_FIELDS = [
