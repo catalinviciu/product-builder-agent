@@ -1295,7 +1295,7 @@
               ]
             },
             {
-              "action": "See each metric's latest value, target and recording cadence on its card, with the attached outcome's title and status when it has one",
+              "action": "Read each card metric-first: the metric name, its current value with how often it is recorded, then the outcome being worked on it, the move that outcome is going for, and chips for its status and the metric's type",
               "components": [
                 "MetricTreeCard"
               ]

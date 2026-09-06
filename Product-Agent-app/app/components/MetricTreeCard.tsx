@@ -190,13 +190,16 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
   const LevelIcon = levelMeta ? LEVEL_ICON_MAP[levelMeta.icon] : Activity;
 
   const last = latestPoint(metric);
-  const currentLabel = last
-    ? formatMetricValue(last.value, metric.valueFormat)
-    : metric.legacyCurrentValue ?? "—";
-  const targetLabel =
-    metric.numericTarget !== undefined
-      ? formatMetricValue(metric.numericTarget, metric.valueFormat)
-      : metric.legacyTargetValue;
+  const fmt = (v: number) => formatMetricValue(v, metric.valueFormat);
+  const currentLabel = last ? fmt(last.value) : metric.legacyCurrentValue ?? "—";
+
+  // The from -> to pair is what the outcome signed up for, so it only shows
+  // when one is attached and a target exists.
+  const fromLabel =
+    metric.initialValue !== undefined ? fmt(metric.initialValue) : metric.legacyCurrentValue;
+  const toLabel =
+    metric.numericTarget !== undefined ? fmt(metric.numericTarget) : metric.legacyTargetValue;
+  const showRange = Boolean(outcome && toLabel);
 
   const editing = mode !== "view";
 
@@ -327,8 +330,8 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
         <AddOutcomeForm metric={metric} onClose={() => setMode("view")} />
       ) : (
         <>
-          {/* Header: icon + name */}
-          <div className="flex items-start gap-2.5 mb-2.5 pr-10">
+          {/* The metric leads: this is a tree of metrics, whoever is working them */}
+          <div className="flex items-start gap-2.5 mb-2 pr-10">
             <div
               className={cn(
                 "w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5",
@@ -339,34 +342,41 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
                 <LevelIcon className={cn("w-3.5 h-3.5", levelMeta?.accentColor ?? "text-muted-foreground")} />
               )}
             </div>
-            <div className="min-w-0">
-              <span className="text-[13px] font-medium leading-snug text-foreground line-clamp-2 block">
-                {outcome ? outcome.title : metric.name}
-              </span>
-              {outcome && (
-                <span className="text-[10px] text-muted-foreground/60 truncate block mt-0.5">{metric.name}</span>
-              )}
-            </div>
+            <span className="text-[13px] font-medium leading-snug text-foreground line-clamp-2 min-w-0">
+              {metric.name}
+            </span>
           </div>
 
-          {/* Current → target */}
-          <div className="flex items-center gap-1.5 mb-2.5 text-sm">
-            <span className="flex items-center gap-1.5">
-              <span
-                className={cn(
-                  "w-1.5 h-1.5 rounded-full flex-shrink-0",
-                  last ? "bg-emerald-500" : "bg-border-default",
-                )}
-              />
-              <span className="font-semibold text-foreground tabular-nums">{currentLabel}</span>
+          {/* Where it stands now, and how often it is read */}
+          <div className="flex items-baseline gap-1.5 mb-2">
+            <span
+              className={cn(
+                "w-1.5 h-1.5 rounded-full flex-shrink-0 self-center",
+                last ? "bg-emerald-500" : "bg-border-default",
+              )}
+            />
+            <span className="text-lg font-semibold text-foreground tabular-nums leading-none">
+              {currentLabel}
             </span>
-            {targetLabel && (
-              <>
-                <span className="text-muted-foreground text-xs">→</span>
-                <span className="text-muted-foreground tabular-nums">{targetLabel}</span>
-              </>
-            )}
+            <span className="text-[10px] text-muted-foreground/60">
+              {METRIC_FREQUENCY_LABELS[metric.frequency].toLowerCase()}
+            </span>
           </div>
+
+          {/* The outcome being worked here, and the move it is going for */}
+          {outcome && (
+            <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2 mb-1.5">
+              {outcome.title}
+            </p>
+          )}
+
+          {showRange && (
+            <div className="flex items-center gap-1.5 mb-2.5 text-xs">
+              <span className="text-muted-foreground tabular-nums">{fromLabel ?? "—"}</span>
+              <span className="text-muted-foreground/50">→</span>
+              <span className="text-foreground font-medium tabular-nums">{toLabel}</span>
+            </div>
+          )}
 
           {/* Finished outcomes worked on this metric */}
           {pastOutcomes.length > 0 && (
@@ -394,9 +404,9 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
             </div>
           )}
 
-          {/* Footer: status badge, or type for a plain metric */}
-          <div className="flex items-center justify-between gap-1.5">
-            {outcome ? (
+          {/* Footer: what kind of metric, and who is working it */}
+          <div className="flex items-center flex-wrap gap-1.5">
+            {outcome && (
               <span
                 className={cn(
                   "inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded border",
@@ -405,13 +415,9 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
               >
                 {ENTITY_STATUS_META[outcome.status].label}
               </span>
-            ) : (
-              <span className="text-[10px] text-muted-foreground bg-surface-2 border border-border-subtle px-1.5 py-0.5 rounded">
-                {METRIC_TYPE_LABELS[metric.metricType]}
-              </span>
             )}
             <span className="text-[10px] text-muted-foreground bg-surface-2 border border-border-subtle px-1.5 py-0.5 rounded">
-              {METRIC_FREQUENCY_LABELS[metric.frequency]}
+              {METRIC_TYPE_LABELS[metric.metricType]}
             </span>
           </div>
         </>

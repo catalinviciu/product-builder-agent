@@ -226,7 +226,7 @@
 |:-----|:------|:-----------|
 | **Switch to Metric Tree view** | Toggle from Discovery Tree to Metric Tree using the sidebar segmented control | `SectionNav` · `ViewModeToggle` |
 | **Browse metric relationships** | View every metric arranged as a recursive tree, with a solid connector into a metric that carries an outcome and a dashed one into a plain tracking metric | `MetricTreeView` · `MetricTreeCard` |
-|  | See each metric's latest value, target and recording cadence on its card, with the attached outcome's title and status when it has one | `MetricTreeCard` |
+|  | Read each card metric-first: the metric name, its current value with how often it is recorded, then the outcome being worked on it, the move that outcome is going for, and chips for its status and the metric's type | `MetricTreeCard` |
 |  | Navigate to an outcome's detail view by clicking its metric card | `MetricTreeCard` · `EntityView` |
 |  | Zoom in or out on large metric trees using the zoom controls | `MetricTreeView` |
 | **Add a metric** | Add a metric at the top of the tree, before any outcome exists, filling in its name, type, cadence, format, starting value, target and date range | `MetricTreeView` · `MetricSettingsForm` |
