@@ -33,6 +33,13 @@ export interface AppStore {
   isHydrated: boolean;
   sidebarOpen: boolean;
   viewMode: "discovery" | "metric-tree";
+  /**
+   * A metric the tree should scroll to and centre on. UI-only, cleared as soon
+   * as the tree has scrolled, so it never fires twice.
+   */
+  focusedMetricId: string | null;
+  focusMetric: (metricId: string) => void;
+  clearFocusedMetric: () => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setViewMode: (mode: "discovery" | "metric-tree") => void;
@@ -178,10 +185,14 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
   isHydrated: false,
   sidebarOpen: true,
   viewMode: "discovery" as "discovery" | "metric-tree",
+  focusedMetricId: null as string | null,
+  focusMetric: (metricId) => set({ focusedMetricId: metricId }),
+  clearFocusedMetric: () => set({ focusedMetricId: null }),
   toggleSidebar: () => set((draft) => { draft.sidebarOpen = !draft.sidebarOpen; }),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   setViewMode: (mode) => set((draft) => {
     draft.viewMode = mode;
+    draft.focusedMetricId = null;
     draft.currentEntityId = null;
     draft.sidebarOpen = mode === "discovery";
   }),
@@ -390,7 +401,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
 
   switchProductLine: (id) => {
     if (typeof window !== "undefined") localStorage.setItem("pa-current-pl", id);
-    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null, viewMode: "discovery", sidebarOpen: true, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null });
+    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null, viewMode: "discovery", sidebarOpen: true, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null, focusedMetricId: null });
   },
   navigateTo: (id) => set({ currentEntityId: id, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null, settingsOpen: false }),
   navigateUp: () =>

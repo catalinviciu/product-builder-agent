@@ -14,9 +14,10 @@ import type { Entity, Metric, ProductLine } from "@/app/lib/schemas";
 import { LEVEL_ICON_MAP } from "@/app/lib/icons";
 import { useAppStore } from "@/app/lib/store";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
-import { canParentMetric, latestPoint, levelForMetric, outcomeForMetric } from "@/app/lib/metrics";
+import { latestPoint, levelForMetric } from "@/app/lib/metrics";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { MetricSettingsForm } from "./MetricSettingsForm";
+import { MetricParentList } from "./MetricParentPicker";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { getPeriodDate } from "@/app/lib/schemas";
 
@@ -29,6 +30,7 @@ interface ReparentDropdownProps {
   onClose: () => void;
 }
 
+/** The card's hover popover. The list itself is shared with the add-metric modal. */
 function ReparentDropdown({ metric, productLine, onSelect, onClose }: ReparentDropdownProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -40,75 +42,22 @@ function ReparentDropdown({ metric, productLine, onSelect, onClose }: ReparentDr
     return () => document.removeEventListener("mousedown", handleClick);
   }, [onClose]);
 
-  const candidates = (productLine.metrics ?? []).filter(
-    (m) => m.id !== metric.id && canParentMetric(productLine, metric.id, m.id),
-  );
-
   return (
     <div
       ref={ref}
       onClick={(e) => e.stopPropagation()}
-      className="absolute top-7 right-0 z-50 w-72 bg-popover border border-border-default rounded-lg shadow-lg overflow-hidden max-h-[360px] overflow-y-auto"
+      onKeyDown={(e) => e.stopPropagation()}
+      className="absolute top-7 right-0 z-50 w-72 bg-popover border border-border-default rounded-lg shadow-lg overflow-hidden"
     >
       <div className="px-3 py-2 text-[11px] font-medium text-muted-foreground border-b border-border-subtle">
         Move under
       </div>
-
-      <div className="px-1 py-1">
-        <button
-          onClick={(e) => { e.stopPropagation(); onSelect(undefined); onClose(); }}
-          disabled={!metric.parentMetricId}
-          className={cn(
-            "w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs rounded transition-colors",
-            !metric.parentMetricId ? "bg-surface-3 text-foreground cursor-default" : "hover:bg-surface-hover text-foreground",
-          )}
-        >
-          <span className="flex-1 truncate">No parent (top of the tree)</span>
-          {!metric.parentMetricId && <span className="text-[10px] text-muted-foreground">current</span>}
-        </button>
-      </div>
-
-      {candidates.length > 0 ? (
-        <div className="px-1 pb-1 border-t border-border-subtle pt-1">
-          {candidates.map((m) => {
-            const outcome = outcomeForMetric(productLine, m.id);
-            const isCurrent = metric.parentMetricId === m.id;
-            const Icon = outcome ? LEVEL_ICON_MAP[LEVEL_META[outcome.level].icon] : Activity;
-            return (
-              <button
-                key={m.id}
-                onClick={(e) => { e.stopPropagation(); if (!isCurrent) onSelect(m.id); onClose(); }}
-                className={cn(
-                  "w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs rounded transition-colors",
-                  isCurrent ? "bg-surface-3 text-foreground cursor-default" : "hover:bg-surface-hover text-foreground",
-                )}
-              >
-                <div
-                  className={cn(
-                    "w-5 h-5 rounded flex items-center justify-center flex-shrink-0",
-                    outcome ? LEVEL_META[outcome.level].iconBg : "bg-surface-3",
-                  )}
-                >
-                  {Icon && (
-                    <Icon
-                      className={cn("w-3 h-3", outcome ? LEVEL_META[outcome.level].accentColor : "text-muted-foreground")}
-                    />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="truncate">{m.name}</div>
-                  {outcome && <div className="text-[10px] text-muted-foreground truncate">{outcome.title}</div>}
-                </div>
-                {isCurrent && <span className="text-[10px] text-muted-foreground">current</span>}
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="px-3 py-3 text-xs text-muted-foreground text-center border-t border-border-subtle">
-          No valid parents available
-        </div>
-      )}
+      <MetricParentList
+        productLine={productLine}
+        value={metric.parentMetricId}
+        excludeMetricId={metric.id}
+        onSelect={(id) => { onSelect(id); onClose(); }}
+      />
     </div>
   );
 }
@@ -184,6 +133,7 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
   const removeMetric = useAppStore((s) => s.removeMetric);
   const addMetric = useAppStore((s) => s.addMetric);
   const recordMetricValue = useAppStore((s) => s.recordMetricValue);
+  const focusMetric = useAppStore((s) => s.focusMetric);
   const productLine = useProductLine();
 
   const levelMeta = outcome ? LEVEL_META[outcome.level] : undefined;
@@ -299,7 +249,10 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
             <ReparentDropdown
               metric={metric}
               productLine={productLine}
-              onSelect={(newParentId) => reparentMetric(metric.id, newParentId)}
+              onSelect={(newParentId) => {
+                reparentMetric(metric.id, newParentId);
+                focusMetric(metric.id);
+              }}
               onClose={() => setReparentOpen(false)}
             />
           )}
@@ -320,9 +273,11 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
           defaults={{ metricType: metric.metricType, frequency: metric.frequency }}
           onCreate={({ currentValue, ...values }) => {
             const id = addMetric({ ...values, parentMetricId: metric.id });
-            if (id && currentValue !== undefined) {
+            if (!id) return;
+            if (currentValue !== undefined) {
               recordMetricValue(id, getPeriodDate(new Date(), values.frequency ?? metric.frequency), currentValue);
             }
+            focusMetric(id);
           }}
           onClose={() => setMode("view")}
         />

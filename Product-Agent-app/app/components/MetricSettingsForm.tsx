@@ -58,6 +58,13 @@ interface MetricSettingsFormProps {
   title?: string;
   submitLabel?: string;
   /**
+   * Rendered under the Type field. Where a metric sits in the tree is the
+   * caller's business, so the parent picker is passed in rather than owned here.
+   */
+  parentField?: React.ReactNode;
+  /** Hide the form's own frame when a modal already provides one. */
+  bare?: boolean;
+  /**
    * A target, a start value and a date range only mean something once an outcome
    * is driving the metric. Without one, the form asks for the current value
    * instead.
@@ -82,6 +89,8 @@ export function MetricSettingsForm({
   title,
   submitLabel,
   hasOutcome = false,
+  parentField,
+  bare = false,
 }: MetricSettingsFormProps) {
   const updateMetric = useAppStore((s) => s.updateMetric);
   const recordMetricValue = useAppStore((s) => s.recordMetricValue);
@@ -155,7 +164,8 @@ export function MetricSettingsForm({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1",
+        "flex flex-col gap-3",
+        !bare && "rounded-xl border border-border-strong p-4 bg-surface-1",
         !compact && "w-full",
       )}
       onClick={(e) => e.stopPropagation()}
@@ -187,6 +197,8 @@ export function MetricSettingsForm({
           options={METRIC_TYPE_LABELS}
         />
       </div>
+
+      {parentField}
 
       <div className={rowClass}>
         <div className="flex flex-col gap-1 flex-1">

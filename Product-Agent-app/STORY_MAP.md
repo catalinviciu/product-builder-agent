@@ -229,8 +229,8 @@
 |  | Read each card metric-first: the metric name, its current value with how often it is recorded, then the outcome being worked on it, the move that outcome is going for, and chips for its status and the metric's type | `MetricTreeCard` |
 |  | Navigate to an outcome's detail view by clicking its metric card | `MetricTreeCard` · `EntityView` |
 |  | Zoom in or out on large metric trees using the zoom controls | `MetricTreeView` |
-| **Add a metric** | Add a metric at the top of the tree, before any outcome exists, filling in its name, type, cadence, format, starting value, target and date range | `MetricTreeView` · `MetricSettingsForm` |
-|  | Add an input metric under an existing metric from the card's actions menu; it inherits the parent's type and cadence as defaults | `MetricTreeCard` · `MetricSettingsForm` |
+| **Add a metric** | Add a metric from a modal, choosing whether it sits at the top of the tree or feeds an existing one, with a searchable parent picker; the tree then scrolls to centre the new card | `MetricTreeView` · `MetricSettingsForm` · `MetricParentPicker` |
+|  | Add an input metric under an existing metric from the card's actions menu; it inherits the parent's type and cadence as defaults, and the tree centres on it once created | `MetricTreeCard` · `MetricSettingsForm` |
 |  | Record a plain metric's current value straight from its edit form, logged against the period you are in now | `MetricSettingsForm` |
 |  | Click a plain metric card to edit it in place: name, type, cadence, format and its current value. Target and date fields only appear once an outcome is driving the metric. | `MetricTreeCard` · `MetricSettingsForm` |
 |  | Label a metric as a business or a product metric and see that label on its card | `MetricSettingsForm` · `MetricTreeCard` |
@@ -240,7 +240,7 @@
 |  | See the new outcome appear in the discovery tree under the outcome on the nearest ancestor metric | `SectionNav` · `EntityView` |
 |  | Mark an outcome done, dropped or archived and watch its metric card go back to being a plain metric, keeping a status-badged link to the finished outcome | `MetricTreeCard` |
 |  | Attach a fresh outcome to a metric whose previous outcome is finished, so the same metric can be worked again later | `MetricTreeCard` · `AddOutcomeForm` |
-| **Reparent a metric** | Move a metric under a different parent, or to the top of the tree, from the reparent dropdown | `MetricTreeCard` · `ReparentDropdown` |
+| **Reparent a metric** | Move a metric under a different parent, or to the top of the tree, from a searchable picker; the tree scrolls to centre the metric wherever it lands | `MetricTreeCard` · `MetricParentPicker` |
 |  | See every outcome on the moved metric follow it in the discovery tree, finished ones included, since the two trees are locked together | `MetricTreeCard` · `SectionNav` |
 |  | Be blocked from a move that would put a Business Outcome underneath a Product Outcome, or create a cycle | `ReparentDropdown` |
 

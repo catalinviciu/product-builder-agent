@@ -1319,14 +1319,15 @@
           "title": "Add a metric",
           "stories": [
             {
-              "action": "Add a metric at the top of the tree, before any outcome exists, filling in its name, type, cadence, format, starting value, target and date range",
+              "action": "Add a metric from a modal, choosing whether it sits at the top of the tree or feeds an existing one, with a searchable parent picker; the tree then scrolls to centre the new card",
               "components": [
                 "MetricTreeView",
-                "MetricSettingsForm"
+                "MetricSettingsForm",
+                "MetricParentPicker"
               ]
             },
             {
-              "action": "Add an input metric under an existing metric from the card's actions menu; it inherits the parent's type and cadence as defaults",
+              "action": "Add an input metric under an existing metric from the card's actions menu; it inherits the parent's type and cadence as defaults, and the tree centres on it once created",
               "components": [
                 "MetricTreeCard",
                 "MetricSettingsForm"
@@ -1403,10 +1404,10 @@
           "title": "Reparent a metric",
           "stories": [
             {
-              "action": "Move a metric under a different parent, or to the top of the tree, from the reparent dropdown",
+              "action": "Move a metric under a different parent, or to the top of the tree, from a searchable picker; the tree scrolls to centre the metric wherever it lands",
               "components": [
                 "MetricTreeCard",
-                "ReparentDropdown"
+                "MetricParentPicker"
               ]
             },
             {

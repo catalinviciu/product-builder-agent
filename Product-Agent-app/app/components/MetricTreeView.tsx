@@ -1,15 +1,18 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
-import { ZoomIn, ZoomOut, Plus } from "lucide-react";
+import { ZoomIn, ZoomOut, Plus, X } from "lucide-react";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/app/lib/utils";
-import { ENTITY_STATUS_META } from "@/app/lib/schemas";
+import { ENTITY_STATUS_META, getPeriodDate } from "@/app/lib/schemas";
 import type { Entity, Metric, ProductLine } from "@/app/lib/schemas";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { useAppStore } from "@/app/lib/store";
 import { getChildMetrics, getRootMetrics, activeMetricToOutcome, pastMetricToOutcomes } from "@/app/lib/metrics";
 import { MetricTreeCard } from "./MetricTreeCard";
 import { MetricSettingsForm } from "./MetricSettingsForm";
+import { MetricParentField } from "./MetricParentPicker";
 
 // ── Status sort ──────────────────────────────────────────────────────────
 
@@ -163,16 +166,115 @@ function Legend() {
   );
 }
 
+// ── Add metric modal ──────────────────────────────────────────────────────
+
+/**
+ * Adding a metric is a modal rather than a panel beside the tree, so choosing a
+ * parent does not fight for space with the tree it is about to change.
+ *
+ * Follows the documented modal spec: overlay with a 4px blur, card surface,
+ * 14px radius, 560px cap, ghost close button, opacity-only transitions. It is
+ * portalled to <body> because the tree canvas is scaled, and a transformed
+ * ancestor would otherwise capture the fixed positioning.
+ */
+function AddMetricModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const addMetric = useAppStore((s) => s.addMetric);
+  const recordMetricValue = useAppStore((s) => s.recordMetricValue);
+  const focusMetric = useAppStore((s) => s.focusMetric);
+  const productLine = useProductLine();
+  const [parentMetricId, setParentMetricId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+            className="fixed inset-0 z-40 bg-overlay backdrop-blur-[4px]"
+            aria-hidden="true"
+          />
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-metric-title"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[min(560px,calc(100vw-32px))] max-h-[calc(100vh-64px)] overflow-y-auto rounded-[14px] border border-border-subtle bg-card p-6 shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h2 id="add-metric-title" className="text-base font-semibold text-foreground">
+                  Add a metric
+                </h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Track a number first. You can attach an outcome to it whenever you decide to move it.
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                aria-label="Close"
+                className="cursor-pointer p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-hover transition-colors shrink-0"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <MetricSettingsForm
+              bare
+              defaults={{ metricType: "business" }}
+              parentField={
+                <MetricParentField
+                  inline
+                  productLine={productLine}
+                  value={parentMetricId}
+                  onChange={setParentMetricId}
+                />
+              }
+              onCreate={({ currentValue, ...values }) => {
+                const id = addMetric({ ...values, parentMetricId });
+                if (!id) return;
+                if (currentValue !== undefined) {
+                  recordMetricValue(id, getPeriodDate(new Date(), values.frequency ?? "monthly"), currentValue);
+                }
+                focusMetric(id);
+              }}
+              onClose={onClose}
+            />
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body,
+  );
+}
+
 // ── MetricTreeView ────────────────────────────────────────────────────────
 
 export function MetricTreeView() {
   const productLine = useProductLine();
 
   const canvasRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [zoom, setZoom] = useState(1);
   const [adding, setAdding] = useState(false);
-  const addMetric = useAppStore((s) => s.addMetric);
 
   const byMetric = useMemo(() => activeMetricToOutcome(productLine), [productLine]);
   const pastByMetric = useMemo(() => pastMetricToOutcomes(productLine), [productLine]);
@@ -208,6 +310,39 @@ export function MetricTreeView() {
     return () => observer.disconnect();
   }, [redrawLines]);
 
+  // Bring a just-added or just-moved metric into the middle of the view, so the
+  // change is where you are looking rather than somewhere off the canvas.
+  const focusedMetricId = useAppStore((s) => s.focusedMetricId);
+  const clearFocusedMetric = useAppStore((s) => s.clearFocusedMetric);
+
+  useEffect(() => {
+    if (!focusedMetricId) return;
+    // Two frames, same as the connector redraw, so the card is laid out first.
+    const frame = requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        const scroller = scrollRef.current;
+        const card = document.getElementById(`metric-tree-node-${focusedMetricId}`);
+        if (scroller && card) {
+          const view = scroller.getBoundingClientRect();
+          const target = card.getBoundingClientRect();
+          scroller.scrollTo({
+            left:
+              scroller.scrollLeft +
+              (target.left + target.width / 2) -
+              (view.left + view.width / 2),
+            top:
+              scroller.scrollTop +
+              (target.top + target.height / 2) -
+              (view.top + view.height / 2),
+            behavior: "smooth",
+          });
+        }
+        clearFocusedMetric();
+      }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [focusedMetricId, clearFocusedMetric]);
+
   const hasContent = roots.length > 0;
 
   return (
@@ -220,29 +355,18 @@ export function MetricTreeView() {
             What you track and what drives it. Attach an outcome to any metric you want to move.
           </p>
         </div>
-        {!adding && (
-          <button
-            onClick={() => setAdding(true)}
-            className="text-xs font-medium text-muted-foreground/60 border border-dashed border-border-default rounded-lg px-3.5 py-1.5 cursor-pointer flex items-center gap-1 shrink-0 hover:text-foreground hover:border-border-strong hover:bg-surface-hover transition-all"
-          >
-            <Plus size={12} /> Add metric
-          </button>
-        )}
+        <button
+          onClick={() => setAdding(true)}
+          className="text-xs font-medium text-muted-foreground/60 border border-dashed border-border-default rounded-lg px-3.5 py-1.5 cursor-pointer flex items-center gap-1 shrink-0 hover:text-foreground hover:border-border-strong hover:bg-surface-hover transition-all"
+        >
+          <Plus size={12} /> Add metric
+        </button>
       </div>
 
-      {adding && (
-        <div className="flex-shrink-0 px-[var(--spacing-page-px)] pb-4 max-w-[460px]">
-          <MetricSettingsForm
-            title="New metric"
-            defaults={{ metricType: "business" }}
-            onCreate={(values) => addMetric(values)}
-            onClose={() => setAdding(false)}
-          />
-        </div>
-      )}
+      <AddMetricModal key={adding ? "open" : "closed"} open={adding} onClose={() => setAdding(false)} />
 
       {/* Tree canvas — scrollable in both directions */}
-      <div className="flex-1 overflow-auto px-[var(--spacing-page-px)]">
+      <div ref={scrollRef} className="flex-1 overflow-auto px-[var(--spacing-page-px)]">
         {hasContent ? (
           <div className="min-w-max pb-8">
             <div
