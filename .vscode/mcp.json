@@ -7,6 +7,10 @@
       "env": {
         "PA_API_URL": "http://localhost:3000"
       }
+    },
+    "kster": {
+      "type": "http",
+      "url": "https://kster.ai/api/mcp"
     }
   }
 }
