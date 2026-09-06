@@ -8,7 +8,7 @@ import {
   Target, Activity, LayoutGrid,
 } from "lucide-react";
 import type { Entity, EntityStatus } from "@/app/lib/schemas";
-import { LEVEL_META, CHILD_LEVEL, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getIceScoreColor, formatMetricValue } from "@/app/lib/schemas";
+import { LEVEL_META, CHILD_LEVEL, PERSONA_LEVELS, MULTI_PERSONA_LEVELS, ASSUMPTION_TYPE_META, TEST_TYPE_META, getIceScoreColor } from "@/app/lib/schemas";
 import { LEVEL_ICON_MAP } from "@/app/lib/icons";
 import { useAppStore } from "@/app/lib/store";
 import { getEntity, getRootEntities, getEntityPreview, cn, buildRootAnchor, buildBlockAnchor, buildWipBriefingPrompt, buildNewProductLineSetupPrompt } from "@/app/lib/utils";
@@ -21,12 +21,12 @@ import { StatusPicker, PersonaPicker, SecondaryPersonaPicker, AssumptionTypePick
 import { EditableText } from "./EditableText";
 import { BlockRenderer, AddBlockButton, BlockList, ProductLineBlockList } from "./EntityBlocks";
 import { MetricCard } from "./MetricCard";
-import type { MetricBlock } from "@/app/lib/schemas";
 import { IceScorePanel } from "./IceScorePanel";
 import { AddChildForm, AddRootEntityForm } from "./EntityForms";
 import { EntityGridView, type CardDisplayProps } from "./EntityGridView";
 import { CoworkerIntroCard, CoworkerEmptyButton } from "./CoworkerIntroCard";
 import { SignalsTab } from "./SignalsTab";
+import { getMetric, getChildMetrics, metricPreview } from "@/app/lib/metrics";
 import { StoriesTab } from "./StoriesTab";
 
 // ── Children grid (now delegates to EntityGridView) ───────────────────────
@@ -54,17 +54,9 @@ function ChildrenGrid({ entity }: { entity: Entity }) {
     let iceScoreTotal: number | undefined;
     let iceScoreColorObj: { text: string; bg: string; border: string } | undefined;
     if (child.level === "product_outcome") {
-      const metricBlock = child.blocks.find((b) => b.type === "metric");
       const childCount = child.children?.length ?? 0;
-      if (metricBlock && metricBlock.type === "metric") {
-        if (metricBlock.frequency && metricBlock.numericTarget !== undefined) {
-          const fmt = (v: number) => formatMetricValue(v, metricBlock.valueFormat);
-          const current = metricBlock.dataSeries?.length ? metricBlock.dataSeries[metricBlock.dataSeries.length - 1].value : metricBlock.initialValue ?? 0;
-          preview = `${fmt(current)} current · ${fmt(metricBlock.initialValue ?? 0)} → ${fmt(metricBlock.numericTarget)}`;
-        } else {
-          preview = `${metricBlock.currentValue} → ${metricBlock.targetValue}${metricBlock.timeframe ? ` · ${metricBlock.timeframe}` : ""}`;
-        }
-      }
+      const metric = child.metricId ? getMetric(productLine, child.metricId) : undefined;
+      if (metric) preview = metricPreview(metric) || preview;
       badge = `${childCount} opportunit${childCount !== 1 ? "ies" : "y"}`;
     }
     if (child.level === "opportunity" && child.iceScore) {
@@ -182,17 +174,11 @@ function RootView() {
 
   function getRootCardProps(entity: Entity): CardDisplayProps {
     const childCount = entity.children?.length ?? 0;
-    const metricBlock = entity.blocks.find((b) => b.type === "metric");
     let preview = "";
     let badge = "";
-    if (entity.level === "business_outcome" && metricBlock && metricBlock.type === "metric") {
-      if (metricBlock.frequency && metricBlock.numericTarget !== undefined) {
-        const fmt = (v: number) => formatMetricValue(v, metricBlock.valueFormat);
-        const current = metricBlock.dataSeries?.length ? metricBlock.dataSeries[metricBlock.dataSeries.length - 1].value : metricBlock.initialValue ?? 0;
-        preview = `${fmt(current)} current · ${fmt(metricBlock.initialValue ?? 0)} → ${fmt(metricBlock.numericTarget)}`;
-      } else {
-        preview = `${metricBlock.currentValue} → ${metricBlock.targetValue}${metricBlock.timeframe ? ` · ${metricBlock.timeframe}` : ""}`;
-      }
+    if (entity.level === "business_outcome") {
+      const metric = entity.metricId ? getMetric(productLine, entity.metricId) : undefined;
+      if (metric) preview = metricPreview(metric);
       badge = `${childCount} product outcome${childCount !== 1 ? "s" : ""}`;
     }
     return { preview: preview || getEntityPreview(entity), badge };
@@ -320,7 +306,7 @@ function RootView() {
 // ── Main component ───────────────────────────────────────────────────────
 
 export function EntityView() {
-  const { currentEntityId, updateEntity, deleteEntity, dropEntityCascade, setEntityStatus, updateBlock, removeBlock, recordMetricValue, addBlock } = useAppStore();
+  const { currentEntityId, updateEntity, deleteEntity, dropEntityCascade, setEntityStatus, updateBlock, removeBlock, addBlock } = useAppStore();
   const productLine = useProductLine();
   const { entities } = productLine;
   const [expanded, setExpanded] = useState(true);
@@ -351,6 +337,11 @@ export function EntityView() {
   const IconComponent = LEVEL_ICON_MAP[levelMeta.icon];
   const hasBlocks = entity.blocks.length > 0;
   const tier = levelMeta.tier;
+
+  // Outcomes extend a metric; the signals tab lists that metric's direct children.
+  const isOutcome = entity.level === "business_outcome" || entity.level === "product_outcome";
+  const outcomeMetric = entity.metricId ? getMetric(productLine, entity.metricId) : undefined;
+  const signalMetrics = entity.metricId ? getChildMetrics(productLine, entity.metricId) : [];
 
   const tierIconClasses = tier === "strategic"
     ? "w-9 h-9 rounded-xl"
@@ -535,14 +526,11 @@ export function EntityView() {
             )}
 
             {/* Collapsed metric card for BO/PO */}
-            {!expanded && (entity.level === "business_outcome" || entity.level === "product_outcome") && (() => {
-              const metricBlock = entity.blocks.find(b => b.type === "metric") as MetricBlock | undefined;
-              return metricBlock ? (
-                <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                  <MetricCard block={metricBlock} entityLevel={entity.level} entityId={entity.id} />
-                </div>
-              ) : null;
-            })()}
+            {!expanded && isOutcome && outcomeMetric && (
+              <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                <MetricCard metric={outcomeMetric} entityLevel={entity.level} entityId={entity.id} />
+              </div>
+            )}
 
             {/* Collapsed hint: block count */}
             {!expanded && hasBlocks && (
@@ -553,14 +541,18 @@ export function EntityView() {
           </div>
 
           {/* View tabs — PO and Solution */}
-          {expanded && (entity.level === "product_outcome" || entity.level === "solution") && (
+          {expanded && (isOutcome || entity.level === "solution") && (
             <div className="flex gap-0 mx-[var(--spacing-entity-px)] border-b border-border-subtle">
-              {entity.level === "product_outcome" ? (
+              {isOutcome ? (
                 ([
-                  { key: "discovery" as const, icon: Target, label: "Product Outcome Metric" },
+                  {
+                    key: "discovery" as const,
+                    icon: Target,
+                    label: entity.level === "business_outcome" ? "Business Outcome Metric" : "Product Outcome Metric",
+                  },
                   { key: "signals" as const, icon: Activity, label: "Signals" },
                 ] as const).map(({ key, icon: Icon, label }) => {
-                  const signalCount = (entity.signals ?? []).length;
+                  const signalCount = signalMetrics.length;
                   const isActive = activeTab === key;
                   return (
                     <button
@@ -625,7 +617,7 @@ export function EntityView() {
                 transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
                 className="overflow-hidden"
               >
-                {entity.level === "product_outcome" && activeTab === "signals" ? (
+                {isOutcome && activeTab === "signals" ? (
                   <div className="px-[var(--spacing-content-px)] pb-[var(--spacing-content-py)] pt-[var(--spacing-content-py)]">
                     <SignalsTab entity={entity} />
                   </div>
@@ -654,29 +646,27 @@ export function EntityView() {
                           <IceScorePanel entityId={entity.id} iceScore={entity.iceScore} />
                         </div>
                         {/* Blocks (without description, already shown above) */}
-                        {entity.blocks.map((block) => {
-                          const isOutcome = entity.level === "business_outcome" || entity.level === "product_outcome";
-                          return (
-                            <BlockRenderer
-                              key={block.id}
-                              block={block}
-                              ownerId={entity.id}
-                              entityLevel={entity.level}
-                              onUpdateBlock={(bid, upd) => updateBlock(entity.id, bid, upd)}
-                              onRemoveBlock={(bid) => removeBlock(entity.id, bid)}
-                              onRecordMetricValue={(bid, date, val) => recordMetricValue(entity.id, bid, date, val)}
-                              onCopyAnchor={() => {
-                                const text = buildBlockAnchor(productLine.entities, productLine.id, productLine.name, entity.id, block.id);
-                                navigator.clipboard.writeText(text);
-                              }}
-                              canDeleteBlock={!(block.type === "metric" && isOutcome)}
-                            />
-                          );
-                        })}
+                        {entity.blocks.map((block) => (
+                          <BlockRenderer
+                            key={block.id}
+                            block={block}
+                            onUpdateBlock={(bid, upd) => updateBlock(entity.id, bid, upd)}
+                            onRemoveBlock={(bid) => removeBlock(entity.id, bid)}
+                            onCopyAnchor={() => {
+                              const text = buildBlockAnchor(productLine.entities, productLine.id, productLine.name, entity.id, block.id);
+                              navigator.clipboard.writeText(text);
+                            }}
+                          />
+                        ))}
                         <AddBlockButton idPrefix={entity.id} onAddBlock={(block) => addBlock(entity.id, block)} />
                       </>
                     ) : (
-                      <BlockList entity={entity} />
+                      <>
+                        {isOutcome && outcomeMetric && (
+                          <MetricCard metric={outcomeMetric} entityLevel={entity.level} entityId={entity.id} />
+                        )}
+                        <BlockList entity={entity} />
+                      </>
                     )}
                   </div>
                 )}

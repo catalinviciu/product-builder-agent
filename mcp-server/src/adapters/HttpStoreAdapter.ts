@@ -1,6 +1,7 @@
 import type {
   Block,
   Entity,
+  Metric,
   ProductLine,
   ProductLineSettings,
   Story,
@@ -9,7 +10,12 @@ import type {
   EntityNode,
   ProductLineSummary,
 } from "../types.js";
-import type { StoreAdapter } from "./StoreAdapter.js";
+import type {
+  StoreAdapter,
+  CreateMetricInput,
+  UpdateMetricPatch,
+  AttachOutcomeInput,
+} from "./StoreAdapter.js";
 
 /**
  * HTTP-backed adapter. Calls the Next.js app's /api/store/* endpoints.
@@ -150,11 +156,58 @@ export class HttpStoreAdapter implements StoreAdapter {
     });
   }
 
-  recordMetricValue(entityId: string, blockId: string, date: string, value: number): Promise<Entity> {
-    return this.request(`/api/store/entity/${encodeURIComponent(entityId)}/block/${encodeURIComponent(blockId)}/metric-value`, {
+  // ── Metrics ─────────────────────────────────────────────────────────
+
+  private metricPath(productLineId: string, metricId?: string): string {
+    const base = `/api/store/product-line/${encodeURIComponent(productLineId)}/metric`;
+    return metricId ? `${base}/${encodeURIComponent(metricId)}` : base;
+  }
+
+  listMetrics(productLineId: string): Promise<Metric[]> {
+    return this.request(this.metricPath(productLineId));
+  }
+
+  createMetric(productLineId: string, input: CreateMetricInput): Promise<Metric> {
+    return this.request(this.metricPath(productLineId), {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  }
+
+  updateMetric(productLineId: string, metricId: string, patch: UpdateMetricPatch): Promise<Metric> {
+    return this.request(this.metricPath(productLineId, metricId), {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    });
+  }
+
+  deleteMetric(productLineId: string, metricId: string): Promise<Metric[]> {
+    return this.request(this.metricPath(productLineId, metricId), { method: "DELETE" });
+  }
+
+  recordMetricValue(productLineId: string, metricId: string, date: string, value: number): Promise<Metric> {
+    return this.request(`${this.metricPath(productLineId, metricId)}/value`, {
       method: "POST",
       body: JSON.stringify({ date, value }),
     });
+  }
+
+  reparentMetric(productLineId: string, metricId: string, parentMetricId: string | null): Promise<Metric> {
+    return this.request(`${this.metricPath(productLineId, metricId)}/reparent`, {
+      method: "POST",
+      body: JSON.stringify({ parentMetricId }),
+    });
+  }
+
+  attachOutcome(productLineId: string, metricId: string, input: AttachOutcomeInput): Promise<Entity> {
+    return this.request(`${this.metricPath(productLineId, metricId)}/outcome`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  }
+
+  detachOutcome(productLineId: string, metricId: string): Promise<Metric> {
+    return this.request(`${this.metricPath(productLineId, metricId)}/outcome`, { method: "DELETE" });
   }
 
   moveBlock(entityId: string, blockId: string, toIndex: number): Promise<Entity> {

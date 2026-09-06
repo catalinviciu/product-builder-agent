@@ -11,8 +11,10 @@ import fs from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 import { PRODUCT_LINES } from "@/app/lib/mock-data";
+import { createMetric } from "@/app/lib/metrics";
 import {
   CHILD_LEVEL,
+  metricTypeForLevel,
   type Block,
   type Entity,
   type EntityLevel,
@@ -241,6 +243,20 @@ export function createEntityIn(store: Store, input: CreateEntityInput): Entity {
   } else {
     pl.tree.rootChildren.push(id);
   }
+
+  // An outcome always arrives with a metric of its own, hung under the parent
+  // outcome's metric so the metric tree matches the discovery tree.
+  if (input.level === "business_outcome" || input.level === "product_outcome") {
+    pl.metrics ??= [];
+    const metric = createMetric(`metric-${id}`, {
+      name: "Key metric",
+      metricType: metricTypeForLevel(input.level),
+      parentMetricId: input.parentId ? pl.entities[input.parentId]?.metricId : undefined,
+    });
+    pl.metrics.push(metric);
+    entity.metricId = metric.id;
+  }
+
   return entity;
 }
 
@@ -290,6 +306,17 @@ export function deleteEntity(store: Store, entityId: string): void {
     throw new EntityHasContentError(
       `Cannot delete: entity has ${entity.stories.length} ${entity.stories.length === 1 ? "story" : "stories"}. Clear the stories first.`
     );
+  }
+
+  // The metric outlives the outcome; only the target the outcome set is cleared.
+  if (entity.metricId) {
+    const metric = (productLine.metrics ?? []).find((m) => m.id === entity.metricId);
+    if (metric) {
+      metric.numericTarget = undefined;
+      metric.endDate = undefined;
+      metric.legacyTargetValue = undefined;
+      metric.legacyTimeframe = undefined;
+    }
   }
 
   // Unlink from parent (or root)

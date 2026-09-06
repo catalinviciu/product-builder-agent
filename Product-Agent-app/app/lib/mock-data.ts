@@ -1,5 +1,15 @@
-import type { EntityStore, DiscoveryTree, ProductLine } from "./schemas";
+import type { Entity, Block, DiscoveryTree, ProductLine, LegacyMetricBlock } from "./schemas";
 import { DEFAULT_PRODUCT_LINE_SETTINGS } from "./schemas";
+import { migrateProductLineToMetrics } from "./metrics";
+
+/**
+ * The seed below is written in the pre-v2 shape — metrics as a block on the
+ * outcome — because that reads well by hand. It is lifted into the metric
+ * registry on export, so what leaves this module is always current-schema.
+ */
+type SeedEntity = Omit<Entity, "blocks"> & { blocks: (Block | LegacyMetricBlock)[] };
+type SeedEntityStore = Record<string, SeedEntity>;
+type SeedProductLine = Omit<ProductLine, "metrics" | "entities"> & { entities: SeedEntityStore };
 
 // ════════════════════════════════════════════════════════════════════════════
 // PRODUCT LINE 1: FreshCart (B2C Grocery Delivery)
@@ -11,7 +21,7 @@ const FRESHCART_TREE: DiscoveryTree = {
   rootChildren: ["bo-1", "bo-2"],
 };
 
-const FRESHCART_ENTITIES: EntityStore = {
+const FRESHCART_ENTITIES: SeedEntityStore = {
   "bo-1": {
     id: "bo-1",
     level: "business_outcome",
@@ -415,7 +425,7 @@ const INSIGHTPULSE_TREE: DiscoveryTree = {
   rootChildren: ["ip-bo-1", "ip-bo-2"],
 };
 
-const INSIGHTPULSE_ENTITIES: EntityStore = {
+const INSIGHTPULSE_ENTITIES: SeedEntityStore = {
   "ip-bo-1": {
     id: "ip-bo-1",
     level: "business_outcome",
@@ -768,7 +778,7 @@ const INSIGHTPULSE_ENTITIES: EntityStore = {
 // EXPORTED PRODUCT LINES
 // ════════════════════════════════════════════════════════════════════════════
 
-export const PRODUCT_LINES: Record<string, ProductLine> = {
+const SEED_PRODUCT_LINES: Record<string, SeedProductLine> = {
   freshcart: {
     id: "freshcart",
     name: "FreshCart",
@@ -800,3 +810,11 @@ export const PRODUCT_LINES: Record<string, ProductLine> = {
 };
 
 // DEFAULT_PRODUCT_LINE_ID moved to schemas.ts
+
+export const PRODUCT_LINES: Record<string, ProductLine> = Object.fromEntries(
+  Object.entries(SEED_PRODUCT_LINES).map(([id, seed]) => {
+    const pl = seed as unknown as ProductLine;
+    migrateProductLineToMetrics(pl);
+    return [id, pl];
+  }),
+);

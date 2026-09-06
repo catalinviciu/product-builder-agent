@@ -89,7 +89,7 @@ You operate in a two-phase workflow. Complete Phase 1, present results, and wait
    - `productLine.id` = the productLineId needed for writing
    - `descendants` = existing solution children (check for duplicates before brainstorming)
 2. Note the opportunity's title, description, and all blocks (Trigger, Current Workaround, Competition View, Expected Outcome).
-3. Note the parent Product Outcome's title, description, and metric block for strategic context.
+3. Note the parent Product Outcome's title, description, and metric for strategic context. The metric lives on the product line — look it up by the PO's `metricId`, or call `pa_list_metrics`.
 4. Read product line personas from `productLine.personas`.
 5. Review `descendants` — note each existing solution's title, description, status, and blocks. Do NOT generate solutions that duplicate these.
 

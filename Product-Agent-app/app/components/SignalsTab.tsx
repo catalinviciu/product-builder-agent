@@ -1,25 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, BarChart3 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, pointerWithin, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, rectSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "../lib/store";
-import { generateId } from "../lib/utils";
 import { METRIC_FREQUENCY_LABELS, METRIC_VALUE_FORMAT_LABELS } from "../lib/schemas";
-import type { Entity, Signal, MetricFrequency, MetricValueFormat } from "../lib/schemas";
+import type { Entity, MetricFrequency, MetricValueFormat } from "../lib/schemas";
+import { useProductLine } from "../lib/hooks/useProductLine";
+import { getChildMetrics, outcomeForMetric } from "../lib/metrics";
 import { SignalCard } from "./SignalCard";
 
 interface SignalsTabProps {
   entity: Entity;
 }
 
+/**
+ * The signals under an outcome: the direct children of its metric, one level
+ * deep. Children that have grown into outcomes of their own are shown here too,
+ * linking through to themselves. The full depth lives in the metric tree.
+ */
 export function SignalsTab({ entity }: SignalsTabProps) {
-  const addSignal = useAppStore((s) => s.addSignal);
-  const updateSignal = useAppStore((s) => s.updateSignal);
-  const reorderSignals = useAppStore((s) => s.reorderSignals);
+  const addMetric = useAppStore((s) => s.addMetric);
+  const reorderMetrics = useAppStore((s) => s.reorderMetrics);
+  const productLine = useProductLine();
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [recordingId, setRecordingId] = useState<string | null>(null);
@@ -30,7 +36,21 @@ export function SignalsTab({ entity }: SignalsTabProps) {
   const [newFrequency, setNewFrequency] = useState<MetricFrequency>("weekly");
   const [newFormat, setNewFormat] = useState<MetricValueFormat>("number");
 
-  const signals = entity.signals ?? [];
+  const signals = useMemo(
+    () => (entity.metricId ? getChildMetrics(productLine, entity.metricId) : []),
+    [productLine, entity.metricId],
+  );
+  // A child metric may carry an outcome of its own, active or finished; either
+  // way the card links through to it.
+  const outcomeByMetric = useMemo(() => {
+    const map: Record<string, Entity> = {};
+    for (const m of signals) {
+      const found = outcomeForMetric(productLine, m.id);
+      if (found) map[m.id] = found;
+    }
+    return map;
+  }, [productLine, signals]);
+
   const activeSignals = signals.filter((s) => s.status === "active");
   const pausedSignals = signals.filter((s) => s.status === "paused");
   const activeSignalIds = activeSignals.map((s) => s.id);
@@ -41,34 +61,30 @@ export function SignalsTab({ entity }: SignalsTabProps) {
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveId(null);
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
+    if (!over || active.id === over.id || !entity.metricId) return;
     const oldIdx = activeSignalIds.indexOf(active.id as string);
     const newIdx = activeSignalIds.indexOf(over.id as string);
     if (oldIdx === -1 || newIdx === -1) return;
-    // Build full signal order: reordered active + paused (unchanged)
     const newActiveIds = arrayMove(activeSignalIds, oldIdx, newIdx);
     const pausedIds = pausedSignals.map((s) => s.id);
-    reorderSignals(entity.id, [...newActiveIds, ...pausedIds]);
+    reorderMetrics(entity.metricId, [...newActiveIds, ...pausedIds]);
   };
 
   const activeCard = activeId ? activeSignals.find((s) => s.id === activeId) : null;
 
-  const handleToggleRecord = (signalId: string | null) => {
-    setRecordingId(signalId);
+  const handleToggleRecord = (metricId: string | null) => {
+    setRecordingId(metricId);
   };
 
   const handleAddSignal = () => {
-    if (!newName.trim()) return;
-    const signal: Signal = {
-      id: generateId(),
+    if (!newName.trim() || !entity.metricId) return;
+    addMetric({
       name: newName.trim(),
+      metricType: "product",
       frequency: newFrequency,
       valueFormat: newFormat,
-      status: "active",
-      dataSeries: [],
-      createdAt: new Date().toISOString().slice(0, 10),
-    };
-    addSignal(entity.id, signal);
+      parentMetricId: entity.metricId,
+    });
     setNewName("");
     setNewFrequency("weekly");
     setNewFormat("number");
@@ -82,13 +98,26 @@ export function SignalsTab({ entity }: SignalsTabProps) {
     setShowAddForm(false);
   };
 
+  // This outcome has no metric to hang signals from — should not happen after
+  // migration, but a hand-edited store could get here.
+  if (!entity.metricId) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-10 px-5 border border-dashed border-border-default rounded-xl text-center">
+        <BarChart3 size={32} className="text-muted-foreground/20" />
+        <p className="text-[13px] text-muted-foreground/60 leading-relaxed max-w-[360px]">
+          This outcome has no metric attached, so there is nothing for signals to sit under. Attach one from the metric tree.
+        </p>
+      </div>
+    );
+  }
+
   // Empty state
   if (signals.length === 0 && !showAddForm) {
     return (
       <div className="flex flex-col items-center gap-3 py-10 px-5 border border-dashed border-border-default rounded-xl text-center">
         <BarChart3 size={32} className="text-muted-foreground/20" />
         <p className="text-[13px] text-muted-foreground/60 leading-relaxed max-w-[360px]">
-          Signals are the diagnostic metrics you watch when your outcome isn&apos;t moving. No target, no deadline — ongoing tracking you can pause anytime.
+          Signals are the metrics that feed this one. They are what you watch when the outcome isn&apos;t moving. Add one here and it appears under this metric in the metric tree.
         </p>
         <button
           onClick={() => setShowAddForm(true)}
@@ -197,12 +226,12 @@ export function SignalsTab({ entity }: SignalsTabProps) {
         >
           <SortableContext items={activeSignalIds} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
-              {activeSignals.map((signal) => (
+              {activeSignals.map((metric) => (
                 <SignalCard
-                  key={signal.id}
-                  signal={signal}
-                  entityId={entity.id}
-                  isRecording={recordingId === signal.id}
+                  key={metric.id}
+                  metric={metric}
+                  outcome={outcomeByMetric[metric.id]}
+                  isRecording={recordingId === metric.id}
                   onToggleRecord={handleToggleRecord}
                   draggable
                 />
@@ -213,8 +242,8 @@ export function SignalsTab({ entity }: SignalsTabProps) {
             {activeCard ? (
               <div className="bg-popover rounded-xl shadow-2xl shadow-black/50">
                 <SignalCard
-                  signal={activeCard}
-                  entityId={entity.id}
+                  metric={activeCard}
+                  outcome={outcomeByMetric[activeCard.id]}
                   isRecording={false}
                   onToggleRecord={() => {}}
                 />
@@ -231,11 +260,11 @@ export function SignalsTab({ entity }: SignalsTabProps) {
             Paused
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-            {pausedSignals.map((signal) => (
+            {pausedSignals.map((metric) => (
               <SignalCard
-                key={signal.id}
-                signal={signal}
-                entityId={entity.id}
+                key={metric.id}
+                metric={metric}
+                outcome={outcomeByMetric[metric.id]}
                 isRecording={false}
                 onToggleRecord={() => {}}
               />

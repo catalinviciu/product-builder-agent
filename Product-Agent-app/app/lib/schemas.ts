@@ -118,11 +118,18 @@ export const PRODUCT_LINE_STATUS_META: Record<ProductLineStatus, { label: string
 };
 
 export const ENTITY_STATUSES: EntityStatus[] = ["draft", "explore", "commit", "done", "archived", "dropped"];
+
+/**
+ * An outcome in one of these statuses is finished. Its metric goes back to being
+ * a plain tracked metric that can take a new outcome, while the finished one
+ * stays linked from the metric's card and keeps its place in the discovery tree.
+ */
+export const CLOSED_OUTCOME_STATUSES: Set<EntityStatus> = new Set(["done", "archived", "dropped"]);
 export const PRODUCT_LINE_STATUSES: ProductLineStatus[] = ["active", "closed", "archived"];
 
 // ── Block system ──────────────────────────────────────────────────────────
 
-export type BlockType = "accordion" | "pills" | "quote" | "metric";
+export type BlockType = "accordion" | "pills" | "quote";
 
 interface BlockBase {
   id: string;
@@ -149,7 +156,7 @@ export interface QuoteBlock extends BlockBase {
 
 // ── Metric tracking ─────────────────────────────────────────────────────
 
-export type MetricFrequency = "daily" | "weekly" | "monthly";
+export type MetricFrequency = "daily" | "weekly" | "monthly" | "quarterly";
 
 export interface MetricDataPoint {
   date: string;   // ISO date YYYY-MM-DD
@@ -160,6 +167,7 @@ export const METRIC_FREQUENCY_LABELS: Record<MetricFrequency, string> = {
   daily: "Daily",
   weekly: "Weekly",
   monthly: "Monthly",
+  quarterly: "Quarterly",
 };
 
 /** Snaps a date to its period boundary based on frequency */
@@ -183,7 +191,17 @@ export function getPeriodDate(date: Date, frequency: MetricFrequency): string {
     }
     case "monthly":
       return `${y}-${m}-01`;
+    case "quarterly": {
+      // Snap to the first day of the quarter: Jan / Apr / Jul / Oct
+      const quarterMonth = date.getMonth() - (date.getMonth() % 3);
+      return `${y}-${String(quarterMonth + 1).padStart(2, "0")}-01`;
+    }
   }
+}
+
+/** 1-4, from a date's month. */
+export function getQuarter(date: Date): number {
+  return Math.floor(date.getMonth() / 3) + 1;
 }
 
 export type MetricValueFormat = "number" | "currency_usd" | "currency_eur" | "currency_gbp" | "percentage";
@@ -196,20 +214,51 @@ export const METRIC_VALUE_FORMAT_LABELS: Record<MetricValueFormat, string> = {
   percentage: "Percentage (%)",
 };
 
-// ── Signal tracking ─────────────────────────────────────────────────────
+// ── Metrics ─────────────────────────────────────────────────────────────
 
-export type SignalStatus = "active" | "paused";
+/** Business metrics sit at the top of the tree; product metrics are what the product moves. */
+export type MetricType = "business" | "product";
+export type MetricStatus = "active" | "paused";
 
-export interface Signal {
+/**
+ * A metric is a first-class object owned by the product line. It exists on its
+ * own, forms the metric tree through `parentMetricId`, and may later have an
+ * outcome attached to it (see `Entity.metricId`). An outcome is an extension of
+ * a metric, never its container.
+ */
+export interface Metric {
   id: string;
   name: string;
+  metricType: MetricType;
+  status: MetricStatus;
   frequency: MetricFrequency;
   valueFormat: MetricValueFormat;
-  status: SignalStatus;
   dataSeries: MetricDataPoint[];
-  createdAt: string; // ISO YYYY-MM-DD
-  /** Optional parent signal id — when set, the signal nests under another signal within the same PO. */
-  parentSignalId?: string;
+  createdAt: string;        // ISO YYYY-MM-DD
+  /** Parent metric — the edge that builds the metric tree. Absent means a root metric. */
+  parentMetricId?: string;
+
+  // Target fields — only meaningful while an outcome is attached.
+  initialValue?: number;
+  numericTarget?: number;
+  startDate?: string;       // ISO YYYY-MM-DD
+  endDate?: string;         // ISO YYYY-MM-DD
+
+  // Carried over from pre-v2 metric blocks that held unparseable strings
+  // ("$1.2M", "<3%"). Display-only fallback; no numbers were invented.
+  legacyCurrentValue?: string;
+  legacyTargetValue?: string;
+  legacyTimeframe?: string;
+}
+
+export const METRIC_TYPE_LABELS: Record<MetricType, string> = {
+  business: "Business metric",
+  product: "Product metric",
+};
+
+/** The metric type an outcome of this level attaches to. */
+export function metricTypeForLevel(level: EntityLevel): MetricType {
+  return level === "business_outcome" ? "business" : "product";
 }
 
 export function formatMetricValue(value: number, format?: MetricValueFormat): string {
@@ -230,6 +279,7 @@ export function formatPeriodTrigger(dateStr: string, frequency: MetricFrequency)
   const month = d.toLocaleString("en", { month: "short" });
   const day = d.getDate();
   const year = d.getFullYear();
+  if (frequency === "quarterly") return `Q${getQuarter(d)} ${year}`;
   if (frequency === "monthly") return `${month} ${year}`;
   if (frequency === "weekly") return `Week of ${month} ${day}`;
   return `${month} ${day}, ${year}`;
@@ -237,6 +287,12 @@ export function formatPeriodTrigger(dateStr: string, frequency: MetricFrequency)
 
 export function formatPeriodHint(dateStr: string, frequency: MetricFrequency): string {
   const d = new Date(dateStr + "T00:00:00");
+  if (frequency === "quarterly") {
+    const endOfQuarter = new Date(d.getFullYear(), d.getMonth() + 2, 1);
+    const startLabel = d.toLocaleString("en", { month: "short" });
+    const endLabel = endOfQuarter.toLocaleString("en", { month: "short" });
+    return `Recording for Q${getQuarter(d)} ${d.getFullYear()} (${startLabel} - ${endLabel})`;
+  }
   if (frequency === "monthly") {
     const monthFull = d.toLocaleString("en", { month: "long", year: "numeric" });
     return `Recording for ${monthFull}`;
@@ -255,16 +311,21 @@ export const CALENDAR_HEADER: Record<MetricFrequency, string> = {
   daily: "Select a day",
   weekly: "Select any day to pick its week",
   monthly: "Select any day to pick its month",
+  quarterly: "Select any day to pick its quarter",
 };
 
-export interface MetricBlock extends BlockBase {
+/**
+ * @deprecated Pre-v2 shape. Metrics used to live as a block on a BO/PO entity.
+ * They are now first-class `Metric` objects on the product line. This type
+ * exists only so the hydrate() migration can read old `store.json` data.
+ */
+export interface LegacyMetricBlock {
+  id: string;
   type: "metric";
-  // Legacy fields (kept for backward compat)
   metric: string;
   currentValue: string;
   targetValue: string;
   timeframe?: string;
-  // Structured tracking fields (optional — absent on legacy metrics)
   frequency?: MetricFrequency;
   valueFormat?: MetricValueFormat;
   initialValue?: number;
@@ -274,7 +335,19 @@ export interface MetricBlock extends BlockBase {
   dataSeries?: MetricDataPoint[];
 }
 
-export type Block = AccordionBlock | PillsBlock | QuoteBlock | MetricBlock;
+/** @deprecated Pre-v2 shape, read only by the hydrate() migration. */
+export interface LegacySignal {
+  id: string;
+  name: string;
+  frequency: MetricFrequency;
+  valueFormat: MetricValueFormat;
+  status: MetricStatus;
+  dataSeries: MetricDataPoint[];
+  createdAt: string;
+  parentSignalId?: string;
+}
+
+export type Block = AccordionBlock | PillsBlock | QuoteBlock;
 
 // ── Personas ─────────────────────────────────────────────────────────────
 
@@ -373,7 +446,8 @@ export interface Entity {
   iceScore?: IceScore;
   children: string[];
   blocks: Block[];
-  signals?: Signal[];
+  /** The metric this outcome extends. Only meaningful on business_outcome / product_outcome. */
+  metricId?: string;
   stories?: Story[];                       // only meaningful when level === "solution"
 }
 
@@ -481,17 +555,15 @@ export function createBlockTemplate(level: EntityLevel, entityId: string): Block
   switch (level) {
     case "business_outcome":
       return [
-        { id: `${entityId}-b${ts}`, type: "metric", metric: "Key Metric", currentValue: "", targetValue: "", frequency: "weekly", valueFormat: "number", initialValue: 0, numericTarget: 0, startDate: "", endDate: "" },
-        { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Strategic Alignment", content: "*How does this outcome connect to the company's strategy or OKRs?*" },
-        { id: `${entityId}-b${ts + 2}`, type: "accordion", label: "Why Now", content: "*What makes this outcome urgent or timely?*" },
-        { id: `${entityId}-b${ts + 3}`, type: "accordion", label: "Risk of Inaction", content: "*What happens if we don't pursue this outcome?*" },
+        { id: `${entityId}-b${ts}`, type: "accordion", label: "Strategic Alignment", content: "*How does this outcome connect to the company's strategy or OKRs?*" },
+        { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Why Now", content: "*What makes this outcome urgent or timely?*" },
+        { id: `${entityId}-b${ts + 2}`, type: "accordion", label: "Risk of Inaction", content: "*What happens if we don't pursue this outcome?*" },
       ];
     case "product_outcome":
       return [
-        { id: `${entityId}-b${ts}`, type: "metric", metric: "Key Metric", currentValue: "", targetValue: "", frequency: "weekly", valueFormat: "number", initialValue: 0, numericTarget: 0, startDate: "", endDate: "" },
-        { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Strategic Alignment", content: "*How does this product outcome map to the business outcome above?*" },
-        { id: `${entityId}-b${ts + 2}`, type: "accordion", label: "Constraints", content: "*What technical, business, or resource constraints shape this outcome?*" },
-        { id: `${entityId}-b${ts + 3}`, type: "accordion", label: "Trade-offs", content: "*What are we choosing not to do? What trade-offs are we accepting?*" },
+        { id: `${entityId}-b${ts}`, type: "accordion", label: "Strategic Alignment", content: "*How does this product outcome map to the business outcome above?*" },
+        { id: `${entityId}-b${ts + 1}`, type: "accordion", label: "Constraints", content: "*What technical, business, or resource constraints shape this outcome?*" },
+        { id: `${entityId}-b${ts + 2}`, type: "accordion", label: "Trade-offs", content: "*What are we choosing not to do? What trade-offs are we accepting?*" },
       ];
     case "opportunity":
       return [
@@ -568,4 +640,10 @@ export interface ProductLine {
   blocks?: Block[];
   tree: DiscoveryTree;
   entities: EntityStore;
+  /** Flat, parent-linked metric registry. The metric tree renders from this. */
+  metrics: Metric[];
+  /** Bumped by hydrate() migrations. 2 = metrics are first-class. */
+  schemaVersion?: number;
 }
+
+export const CURRENT_SCHEMA_VERSION = 2;

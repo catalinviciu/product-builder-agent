@@ -25,10 +25,10 @@ export type AnalyticsEventMap = {
     tests_total_count?: number;
     tests_done_count?: number;
   };
-  "Signal Created": {
+  "Metric Created": {
+    metric_type: string;
+    is_root: boolean;
     frequency: string;
-    value_format: string;
-    signal_count: number;
   };
   slicer_prompt_copied: {
     solution_id: string;

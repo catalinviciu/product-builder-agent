@@ -106,7 +106,7 @@ These are the fields and blocks the app provides for each level. When helping a 
 |-------|-------------|
 | **Title** | The outcome statement — short, outcome-oriented (e.g. "Get 3 paying customers") |
 | **Description** | What measurable business result this product must drive |
-| **Key Metric** *(metric block)* | Metric name + current value + target + timeframe |
+| **Key Metric** *(the attached metric)* | Metric name + starting value + target + end date |
 | **Strategic Alignment** *(block)* | How this connects to company strategy or OKRs |
 | **Why Now** *(block)* | What makes this outcome urgent or timely |
 | **Risk of Inaction** *(block)* | What happens if we don't pursue this |
@@ -117,7 +117,7 @@ These are the fields and blocks the app provides for each level. When helping a 
 | **Title** | The user behaviour change — measurable (e.g. "5 builders actively using the tool in 3 months") |
 | **Description** | What user behaviour change will drive the business outcome |
 | **Persona(s)** | Who the target users are — one or more personas |
-| **Key Metric** *(metric block)* | Metric name + current value + target + timeframe |
+| **Key Metric** *(the attached metric)* | Metric name + starting value + target + end date |
 | **Strategic Alignment** *(block)* | How this maps to the business outcome above |
 | **Constraints** *(block)* | Technical, business, or resource constraints |
 | **Trade-offs** *(block)* | What we're choosing not to do |

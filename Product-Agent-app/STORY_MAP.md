@@ -12,7 +12,7 @@
 
 ## Backbone (Activity Overview)
 
-| 1. Set Up a Product Line | 2. Define Personas | 3. Define a Business Outcome | 4. Define a Product Outcome | 5. Map Opportunities | 6. Design Solutions | 7. Slice the User Journey into Stories | 8. Validate Assumptions | 9. Organize & Prioritize | 10. View & Manage the Metric Tree | 11. Navigate & Review | 12. Manage Preferences | 13. Export Context for AI Agent |
+| 1. Set Up a Product Line | 2. Define Personas | 3. Define a Business Outcome | 4. Define a Product Outcome | 5. Map Opportunities | 6. Design Solutions | 7. Slice the User Journey into Stories | 8. Validate Assumptions | 9. Organize & Prioritize | 10. Map the Metric Tree | 11. Navigate & Review | 12. Manage Preferences | 13. Export Context for AI Agent |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 ---
@@ -69,12 +69,15 @@
 |  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
 |  | Add a content block (accordion, pills, or quote) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
-|  | Configure structured metric tracking with frequency, numeric targets, and date range | `EntityBlocks` · `MetricBlockEditor` · `BlockRenderer` |
-|  | Record a metric data point and view progress in the interactive area chart with hover tooltips | `MetricCard` · `MetricChart` · `RecordValueForm` |
+|  | Configure the outcome's metric — name, cadence, value format, starting value, target and date range — from the metric card | `EntityBlocks` · `MetricSettingsForm` · `BlockRenderer` |
+|  | Record a metric data point and view progress in the interactive area chart with hover tooltips | `MetricCard` · `MetricChart` · `RecordValueForm` · `MetricRecordForm` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |
 |  | Delete the entity (only when it has no children) | `EntityView` |
 |  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
+| **Track signals** | Switch to the Signals tab on a Business Outcome to see the metrics feeding its own | `EntityView` · `SignalsTab` |
+|  | Add a signal inline; it becomes a child metric under this outcome's metric in the metric tree | `SignalsTab` |
+|  | Record a data point on a signal with the inline record form | `SignalCard` |
 | **Add Product Outcome children** | Add a child Product Outcome from the children section | `EntityView` · `Add Child Button` |
 
 
@@ -92,8 +95,8 @@
 |  | Edit the entity description with markdown formatting and preview | `EntityView` · `EditableText` · `MarkdownToolbar` |
 |  | Add a content block (accordion, pills, or quote) | `EntityView` · `Add Block Button` |
 |  | Edit or delete an existing content block | `EntityView` · `Block Toolbar` · `MarkdownToolbar` |
-|  | Configure structured metric tracking with frequency, numeric targets, and date range | `EntityBlocks` · `MetricBlockEditor` · `BlockRenderer` |
-|  | Record a metric data point and view progress in the interactive area chart with hover tooltips | `MetricCard` · `MetricChart` · `RecordValueForm` |
+|  | Configure the outcome's metric — name, cadence, value format, starting value, target and date range — from the metric card | `EntityBlocks` · `MetricSettingsForm` · `BlockRenderer` |
+|  | Record a metric data point and view progress in the interactive area chart with hover tooltips | `MetricCard` · `MetricChart` · `RecordValueForm` · `MetricRecordForm` |
 |  | View solution completion markers on the metric chart showing when child solutions were marked done | `MetricCard` · `MetricChart` |
 |  | Change entity status via the Status Picker | `EntityView` · `Status Picker` |
 |  | Copy the context anchor for AI reference | `AIActionsMenu` · `EntityView` |
@@ -101,10 +104,11 @@
 |  | Mark entity as dropped, cascading the status to all children | `EntityView` · `Status Picker` |
 | **Assign Personas** | Assign a primary persona via the Persona Picker | `EntityView` · `PersonaPicker` |
 |  | Add or remove secondary personas via the multi-select picker | `EntityView` · `SecondaryPersonaPicker` |
-| **Track signals** | Switch to the Signals tab on a Product Outcome to view input tracking | `EntityView` · `SignalsTab` |
-|  | Add a signal inline with name, frequency, and format | `SignalsTab` |
+| **Track signals** | Switch to the Signals tab on a Business or Product Outcome to see the metrics feeding its own | `EntityView` · `SignalsTab` |
+|  | Add a signal inline with name, frequency, and format; it becomes a child metric and appears under this metric in the metric tree | `SignalsTab` |
 |  | Record a data point on a signal with the inline record form | `SignalCard` |
-|  | Pause or resume a signal to temporarily stop tracking without deleting it | `SignalCard` |
+|  | See a signal that has grown into an outcome of its own badged with that outcome's status and linking through to it | `SignalCard` |
+|  | Edit, pause, resume, reorder or delete a signal | `SignalCard` · `SignalsTab` |
 | **Add Opportunity children** | Add a child Opportunity from the children section | `EntityView` · `Add Child Button` |
 
 
@@ -215,17 +219,30 @@
 | **Compare ICE scores** | Compare ICE score badges on opportunity cards to prioritize across the grid | `ChildEntityCard` · `ICE Badge` |
 
 
-### Activity 10: View & Manage the Metric Tree
-> See how all outcomes and signals relate as a metric hierarchy, and adjust driver/driven relationships.
+### Activity 10: Map the Metric Tree
+> Map what you measure and what drives it, then pick the metrics worth moving by attaching outcomes to them.
 
 | Step | Story | Components |
 |:-----|:------|:-----------|
 | **Switch to Metric Tree view** | Toggle from Discovery Tree to Metric Tree using the sidebar segmented control | `SectionNav` · `ViewModeToggle` |
-| **Browse metric relationships** | View all Business and Product Outcomes arranged as a recursive driver/driven tree with connector lines | `MetricTreeView` · `MetricTreeCard` |
-|  | See signal health and latest values as detail rows inside each outcome card | `MetricTreeCard` |
+| **Browse metric relationships** | View every metric arranged as a recursive tree, with a solid connector into a metric that carries an outcome and a dashed one into a plain tracking metric | `MetricTreeView` · `MetricTreeCard` |
+|  | See each metric's latest value, target and recording cadence on its card, with the attached outcome's title and status when it has one | `MetricTreeCard` |
 |  | Navigate to an outcome's detail view by clicking its metric card | `MetricTreeCard` · `EntityView` |
 |  | Zoom in or out on large metric trees using the zoom controls | `MetricTreeView` |
-| **Reparent a metric** | Change a Product Outcome's driver relationship by picking a new parent in the reparent dropdown, updating the tree immediately | `MetricTreeCard` · `ReparentDropdown` |
+| **Add a metric** | Add a metric at the top of the tree, before any outcome exists, filling in its name, type, cadence, format, starting value, target and date range | `MetricTreeView` · `MetricSettingsForm` |
+|  | Add an input metric under an existing metric from the card's actions menu; it inherits the parent's type and cadence as defaults | `MetricTreeCard` · `MetricSettingsForm` |
+|  | Record a plain metric's current value straight from its edit form, logged against the period you are in now | `MetricSettingsForm` |
+|  | Click a plain metric card to edit it in place: name, type, cadence, format and its current value. Target and date fields only appear once an outcome is driving the metric. | `MetricTreeCard` · `MetricSettingsForm` |
+|  | Label a metric as a business or a product metric and see that label on its card | `MetricSettingsForm` · `MetricTreeCard` |
+|  | Record a metric daily, weekly, monthly or quarterly; a value dated mid-period snaps to the period's start | `MetricSettingsForm` · `MetricRecordForm` |
+|  | Delete a metric from its actions menu, confirming in a dialog; its children rise to take its place | `MetricTreeCard` |
+| **Attach an outcome to a metric** | Turn a plain metric into something you are actively moving by naming an outcome for it; the level is derived from the tree, so a metric with no outcome above it becomes a Business Outcome and any other becomes a Product Outcome | `MetricTreeCard` · `AddOutcomeForm` |
+|  | See the new outcome appear in the discovery tree under the outcome on the nearest ancestor metric | `SectionNav` · `EntityView` |
+|  | Mark an outcome done, dropped or archived and watch its metric card go back to being a plain metric, keeping a status-badged link to the finished outcome | `MetricTreeCard` |
+|  | Attach a fresh outcome to a metric whose previous outcome is finished, so the same metric can be worked again later | `MetricTreeCard` · `AddOutcomeForm` |
+| **Reparent a metric** | Move a metric under a different parent, or to the top of the tree, from the reparent dropdown | `MetricTreeCard` · `ReparentDropdown` |
+|  | See every outcome on the moved metric follow it in the discovery tree, finished ones included, since the two trees are locked together | `MetricTreeCard` · `SectionNav` |
+|  | Be blocked from a move that would put a Business Outcome underneath a Product Outcome, or create a cycle | `ReparentDropdown` |
 
 
 ### Activity 11: Navigate & Review

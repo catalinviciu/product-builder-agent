@@ -6,10 +6,13 @@ import {
   CreateEntityInputSchema,
   EntityPatchSchema,
   BlockPatchSchema,
+  CreateMetricInputSchema,
+  MetricPatchSchema,
   ProductLineSettingsPatchSchema,
   StoryPatchSchema,
 } from "./schemas.js";
 import type { Block, Entity, ProductLineSettings, Story } from "../types.js";
+import type { CreateMetricInput, UpdateMetricPatch } from "../adapters/StoreAdapter.js";
 
 /**
  * Registers all Product Agent MCP tools on the given server.
@@ -126,7 +129,7 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
     "pa_update_entity",
     {
       title: "Update entity fields",
-      description: "Partial update of safe fields on an entity (title, description, status, persona, ICE, assumption/test type). Does NOT touch blocks — use pa_add_block / pa_update_block for those; pa_delete_block, pa_record_metric_value and pa_move_block for block deletion/metric logging/reordering.",
+      description: "Partial update of safe fields on an entity (title, description, status, persona, ICE, assumption/test type). Does NOT touch blocks — use pa_add_block / pa_update_block / pa_delete_block / pa_move_block for those, and the pa_*_metric tools for the outcome's metric.",
       inputSchema: {
         entityId: z.string(),
         patch: EntityPatchSchema,
@@ -152,27 +155,16 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
     "pa_add_block",
     {
       title: "Append a block",
-      description: "Appends a new block (accordion/pills/quote/metric) to an entity's blocks array. Use accordion for free-form sections, pills for key/value pairs, metric for tracked numbers, quote for verbatim user quotes.",
+      description: "Appends a new block (accordion/pills/quote) to an entity's blocks array. Use accordion for free-form sections, pills for key/value pairs, quote for verbatim user quotes. Metrics are NOT blocks — they live on the product line, see pa_create_metric.",
       inputSchema: {
         entityId: z.string(),
         block: z.object({
-          type: z.enum(["accordion", "pills", "quote", "metric"]),
+          type: z.enum(["accordion", "pills", "quote"]),
           label: z.string().optional(),
           content: z.string().optional(),
           attribution: z.string().optional(),
           defaultOpen: z.boolean().optional(),
           items: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
-          metric: z.string().optional(),
-          currentValue: z.string().optional(),
-          targetValue: z.string().optional(),
-          timeframe: z.string().optional(),
-          frequency: z.enum(["daily", "weekly", "monthly"]).optional(),
-          valueFormat: z.enum(["number", "currency_usd", "currency_eur", "currency_gbp", "percentage"]).optional(),
-          initialValue: z.number().optional(),
-          numericTarget: z.number().optional(),
-          startDate: z.string().optional(),
-          endDate: z.string().optional(),
-          dataSeries: z.array(z.object({ date: z.string(), value: z.number() })).optional(),
         }),
       },
     },
@@ -183,7 +175,7 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
     "pa_update_block",
     {
       title: "Update a block by id",
-      description: "Patches safe fields of an existing block (located by its string id), including metric config fields (currentValue, numericTarget, target, label, etc.). The block's id and type cannot be changed. To log a metric data point use pa_record_metric_value; to reorder use pa_move_block.",
+      description: "Patches safe fields of an existing block (located by its string id). The block's id and type cannot be changed. To reorder use pa_move_block. Metric config lives on the metric itself — see pa_update_metric.",
       inputSchema: {
         entityId: z.string(),
         blockId: z.string(),
@@ -210,20 +202,123 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
     }
   );
 
+  // ── Metrics ───────────────────────────────────────────────────────────
+  // A metric is a first-class object on the product line. It forms the metric
+  // tree through parentMetricId and exists with or without an outcome. An
+  // outcome (BO/PO) extends a metric via Entity.metricId, adding a target and
+  // a discovery tree; deleting the outcome leaves the metric standing.
+
+  server.registerTool(
+    "pa_list_metrics",
+    {
+      title: "List a product line's metrics",
+      description: "Returns the full metric registry for a product line. Each metric's parentMetricId builds the metric tree; a metric with no parentMetricId is a root. To find which outcome extends a metric, match it against the entities' metricId — several outcomes can share one metric over time, of which at most one is active; the rest are done, dropped or archived.",
+      inputSchema: { productLineId: z.string() },
+    },
+    async ({ productLineId }) => ok(await adapter.listMetrics(productLineId))
+  );
+
+  server.registerTool(
+    "pa_create_metric",
+    {
+      title: "Create a metric",
+      description: "Creates a metric on a product line, optionally under a parent metric (making it an input metric, shown as a 'signal' on the parent's outcome). A metric needs no outcome — map the metric tree first, then attach outcomes to the metrics you want to move with pa_attach_outcome. metricType (business/product) is a label the builder sets; it does not decide the level of any outcome attached later.",
+      inputSchema: {
+        productLineId: z.string(),
+        metric: CreateMetricInputSchema,
+      },
+    },
+    async ({ productLineId, metric }) =>
+      ok(await adapter.createMetric(productLineId, metric as CreateMetricInput))
+  );
+
+  server.registerTool(
+    "pa_update_metric",
+    {
+      title: "Update a metric",
+      description: "Patches a metric's name, recording cadence, value format, status, or its target fields (initialValue, numericTarget, startDate, endDate). Changing frequency re-snaps the existing series onto the new period boundaries. To log a value use pa_record_metric_value.",
+      inputSchema: {
+        productLineId: z.string(),
+        metricId: z.string(),
+        patch: MetricPatchSchema,
+      },
+    },
+    async ({ productLineId, metricId, patch }) =>
+      ok(await adapter.updateMetric(productLineId, metricId, patch as UpdateMetricPatch))
+  );
+
+  server.registerTool(
+    "pa_delete_metric",
+    {
+      title: "Delete a metric",
+      description: "Deletes a metric. Its child metrics rise to take its place rather than being deleted, and any outcome attached to it is detached, not deleted. Returns the remaining registry.",
+      inputSchema: {
+        productLineId: z.string(),
+        metricId: z.string(),
+      },
+    },
+    async ({ productLineId, metricId }) => ok(await adapter.deleteMetric(productLineId, metricId))
+  );
+
   server.registerTool(
     "pa_record_metric_value",
     {
       title: "Record a metric value",
-      description: "Upserts one data point (by date) on a metric block's dataSeries, keeping it sorted. Use this to log a tracked number on a Business/Product Outcome metric instead of editing store.json.",
+      description: "Upserts one data point on a metric, keeping the series sorted. The date is snapped to the metric's recording period, so a Wednesday value on a weekly metric lands on that week's Monday. Use this instead of editing store.json.",
       inputSchema: {
-        entityId: z.string(),
-        blockId: z.string(),
-        date: z.string(),
+        productLineId: z.string(),
+        metricId: z.string(),
+        date: z.string().describe("ISO date, YYYY-MM-DD; snapped to the metric's period (week start, month start, quarter start)"),
         value: z.number(),
       },
     },
-    async ({ entityId, blockId, date, value }) =>
-      ok(await adapter.recordMetricValue(entityId, blockId, date, value))
+    async ({ productLineId, metricId, date, value }) =>
+      ok(await adapter.recordMetricValue(productLineId, metricId, date, value))
+  );
+
+  server.registerTool(
+    "pa_reparent_metric",
+    {
+      title: "Move a metric in the metric tree",
+      description: "Moves a metric under another metric, or to the top of the tree when parentMetricId is null. Any outcome attached at or below the moved metric follows it in the discovery tree, since the two trees are locked together. Rejects cycles and any move that would put a Business Outcome underneath a Product Outcome.",
+      inputSchema: {
+        productLineId: z.string(),
+        metricId: z.string(),
+        parentMetricId: z.string().nullable().describe("Target parent metric id, or null to move to the top"),
+      },
+    },
+    async ({ productLineId, metricId, parentMetricId }) =>
+      ok(await adapter.reparentMetric(productLineId, metricId, parentMetricId))
+  );
+
+  server.registerTool(
+    "pa_attach_outcome",
+    {
+      title: "Attach an outcome to a metric",
+      description: "Turns a metric into something you are actively trying to move, by attaching an outcome to it. Pass entityId to attach an existing Business/Product Outcome, or title to create a new one. The level is derived from tree position, not from metricType: a metric with no outcome above it gets a Business Outcome at the root, otherwise a Product Outcome under the nearest ancestor that has one. A metric holds at most one ACTIVE outcome — once its outcome is done, dropped or archived the metric is free to take a new one, and the finished outcome stays linked to it.",
+      inputSchema: {
+        productLineId: z.string(),
+        metricId: z.string(),
+        entityId: z.string().optional().describe("Attach this existing outcome"),
+        title: z.string().optional().describe("Or create a new outcome with this title"),
+        description: z.string().optional(),
+      },
+    },
+    async ({ productLineId, metricId, entityId, title, description }) =>
+      ok(await adapter.attachOutcome(productLineId, metricId, { entityId, title, description }))
+  );
+
+  server.registerTool(
+    "pa_detach_outcome",
+    {
+      title: "Detach an outcome from its metric",
+      description: "Removes the link between a metric and its outcome. The metric keeps its full history and its children, and its target is cleared. The outcome itself is not deleted.",
+      inputSchema: {
+        productLineId: z.string(),
+        metricId: z.string(),
+      },
+    },
+    async ({ productLineId, metricId }) => ok(await adapter.detachOutcome(productLineId, metricId))
   );
 
   server.registerTool(

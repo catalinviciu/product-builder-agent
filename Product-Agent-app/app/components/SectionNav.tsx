@@ -30,6 +30,7 @@ function NewProductLineForm({ onClose }: { onClose: () => void }) {
       settings: DEFAULT_PRODUCT_LINE_SETTINGS,
       tree: { title: `Product Line: ${name.trim()}`, description: description.trim(), rootChildren: [] },
       entities: {},
+      metrics: [],
     });
     onClose();
   };

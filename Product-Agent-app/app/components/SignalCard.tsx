@@ -1,27 +1,34 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { PlusCircle, Pause, Play, Trash2, Pencil, TrendingUp, TrendingDown, CalendarDays, MoreVertical } from "lucide-react";
+import { PlusCircle, Pause, Play, Trash2, Pencil, TrendingUp, TrendingDown, CalendarDays, MoreVertical, ArrowUpRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { Sparkline } from "@/components/ui/sparkline";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useAppStore } from "../lib/store";
 import {
-  METRIC_FREQUENCY_LABELS, METRIC_VALUE_FORMAT_LABELS,
+  METRIC_FREQUENCY_LABELS, METRIC_VALUE_FORMAT_LABELS, ENTITY_STATUS_META,
   getPeriodDate, formatMetricValue, formatPeriodTrigger, formatPeriodHint, CALENDAR_HEADER,
 } from "../lib/schemas";
-import type { Signal, MetricFrequency, MetricValueFormat } from "../lib/schemas";
+import type { Entity, Metric, MetricFrequency, MetricValueFormat } from "../lib/schemas";
 
+/**
+ * One input metric under an outcome — a "signal" in the product's language.
+ * A signal is just a child metric; when one has grown into an outcome of its
+ * own it carries that outcome's title and links through to it.
+ */
 interface SignalCardProps {
-  signal: Signal;
-  entityId: string;
+  metric: Metric;
+  /** The outcome attached to this metric, when it has become one. */
+  outcome?: Entity;
   isRecording: boolean;
-  onToggleRecord: (signalId: string | null) => void;
+  onToggleRecord: (metricId: string | null) => void;
   draggable?: boolean;
 }
 
@@ -54,50 +61,51 @@ const TREND_ICON = {
   flat: null,
 };
 
-export function SignalCard({ signal, entityId, isRecording, onToggleRecord, draggable }: SignalCardProps) {
-  const updateSignal = useAppStore((s) => s.updateSignal);
-  const removeSignal = useAppStore((s) => s.removeSignal);
-  const recordSignalValue = useAppStore((s) => s.recordSignalValue);
+export function SignalCard({ metric, outcome, isRecording, onToggleRecord, draggable }: SignalCardProps) {
+  const updateMetric = useAppStore((s) => s.updateMetric);
+  const removeMetric = useAppStore((s) => s.removeMetric);
+  const recordMetricValue = useAppStore((s) => s.recordMetricValue);
+  const navigateTo = useAppStore((s) => s.navigateTo);
 
   // Sortable
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: signal.id,
+    id: metric.id,
     disabled: !draggable,
   });
   const sortableStyle = { transform: CSS.Transform.toString(transform), transition };
 
   // Record form state
   const [recordValue, setRecordValue] = useState("");
-  const [recordDate, setRecordDate] = useState(() => getPeriodDate(new Date(), signal.frequency));
+  const [recordDate, setRecordDate] = useState(() => getPeriodDate(new Date(), metric.frequency));
   const [calendarOpen, setCalendarOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(signal.name);
-  const [editFrequency, setEditFrequency] = useState(signal.frequency);
-  const [editFormat, setEditFormat] = useState(signal.valueFormat);
+  const [editName, setEditName] = useState(metric.name);
+  const [editFrequency, setEditFrequency] = useState(metric.frequency);
+  const [editFormat, setEditFormat] = useState(metric.valueFormat);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Reset record form when recording state changes
   useEffect(() => {
     if (isRecording) {
-      setRecordDate(getPeriodDate(new Date(), signal.frequency));
+      setRecordDate(getPeriodDate(new Date(), metric.frequency));
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
       setRecordValue("");
     }
-  }, [isRecording, signal.frequency]);
+  }, [isRecording, metric.frequency]);
 
   // Reset edit form when edit starts
   useEffect(() => {
     if (isEditing) {
-      setEditName(signal.name);
-      setEditFrequency(signal.frequency);
-      setEditFormat(signal.valueFormat);
+      setEditName(metric.name);
+      setEditFrequency(metric.frequency);
+      setEditFormat(metric.valueFormat);
     }
-  }, [isEditing, signal.name, signal.frequency, signal.valueFormat]);
+  }, [isEditing, metric.name, metric.frequency, metric.valueFormat]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Escape") onToggleRecord(null);
@@ -105,49 +113,49 @@ export function SignalCard({ signal, entityId, isRecording, onToggleRecord, drag
 
   const handleCalendarSelect = useCallback((day: Date | undefined) => {
     if (!day) return;
-    setRecordDate(getPeriodDate(day, signal.frequency));
+    setRecordDate(getPeriodDate(day, metric.frequency));
     setCalendarOpen(false);
-  }, [signal.frequency]);
+  }, [metric.frequency]);
 
   const handleSave = () => {
     const val = parseFloat(recordValue);
     if (isNaN(val)) return;
-    recordSignalValue(entityId, signal.id, recordDate, val);
+    recordMetricValue(metric.id, recordDate, val);
     onToggleRecord(null);
   };
 
   const handleEditSave = () => {
     if (!editName.trim()) return;
-    updateSignal(entityId, signal.id, { name: editName.trim(), frequency: editFrequency, valueFormat: editFormat });
+    updateMetric(metric.id, { name: editName.trim(), frequency: editFrequency, valueFormat: editFormat });
     setIsEditing(false);
   };
 
   // Recorded dates for calendar highlights
   const recordedDateObjects = useMemo(
-    () => signal.dataSeries.map((dp) => new Date(dp.date + "T00:00:00")),
-    [signal.dataSeries],
+    () => metric.dataSeries.map((dp) => new Date(dp.date + "T00:00:00")),
+    [metric.dataSeries],
   );
 
   // Pre-fill value if date already recorded
   useEffect(() => {
     if (isRecording) {
-      const existing = signal.dataSeries.find((dp) => dp.date === recordDate);
+      const existing = metric.dataSeries.find((dp) => dp.date === recordDate);
       if (existing) setRecordValue(String(existing.value));
       else setRecordValue("");
     }
-  }, [recordDate, isRecording, signal.dataSeries]);
+  }, [recordDate, isRecording, metric.dataSeries]);
 
-  const isPaused = signal.status === "paused";
-  const latestValue = signal.dataSeries.length > 0 ? signal.dataSeries[signal.dataSeries.length - 1] : null;
-  const trend = getTrend(signal.dataSeries);
+  const isPaused = metric.status === "paused";
+  const latestValue = metric.dataSeries.length > 0 ? metric.dataSeries[metric.dataSeries.length - 1] : null;
+  const trend = getTrend(metric.dataSeries);
   const TrendIcon = TREND_ICON[trend.direction];
-  const fmt = (v: number) => formatMetricValue(v, signal.valueFormat);
+  const fmt = (v: number) => formatMetricValue(v, metric.valueFormat);
 
   const lastRecordedDate = latestValue
     ? new Date(latestValue.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
     : null;
 
-  const recentValues = signal.dataSeries
+  const recentValues = metric.dataSeries
     .slice(-5)
     .reverse()
     .map((d) => fmt(d.value))
@@ -157,32 +165,31 @@ export function SignalCard({ signal, entityId, isRecording, onToggleRecord, drag
   if (isPaused) {
     return (
       <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-surface-1 border border-border-subtle opacity-45 hover:opacity-70 transition-opacity">
-        <span className="text-xs font-medium text-muted-foreground flex-1 truncate">{signal.name}</span>
+        <span className="text-xs font-medium text-muted-foreground flex-1 truncate">{metric.name}</span>
         <span className="text-[13px] font-semibold text-muted-foreground shrink-0">
           {latestValue ? fmt(latestValue.value) : "—"}
         </span>
         <div className="flex items-center gap-1 shrink-0">
           <button
-            onClick={() => updateSignal(entityId, signal.id, { status: "active" })}
+            onClick={() => updateMetric(metric.id, { status: "active" })}
             className="text-[10px] font-medium text-accent-purple cursor-pointer flex items-center gap-1 hover:opacity-70 transition-opacity"
           >
             <Play size={10} /> Resume
           </button>
-          {confirmDelete ? (
-            <span className="flex items-center gap-1 ml-1">
-              <button onClick={() => removeSignal(entityId, signal.id)} className="text-[10px] text-destructive cursor-pointer font-medium">Delete</button>
-              <button onClick={() => setConfirmDelete(false)} className="text-[10px] text-muted-foreground cursor-pointer">Cancel</button>
-            </span>
-          ) : (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="text-[10px] text-muted-foreground/20 cursor-pointer hover:text-destructive transition-colors ml-1"
-              title="Delete signal"
-            >
-              <Trash2 size={10} />
-            </button>
-          )}
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="text-[10px] text-muted-foreground/20 cursor-pointer hover:text-destructive transition-colors ml-1"
+            title="Delete signal"
+          >
+            <Trash2 size={10} />
+          </button>
         </div>
+        <DeleteSignalDialog
+          open={confirmDelete}
+          metric={metric}
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => { setConfirmDelete(false); removeMetric(metric.id); }}
+        />
       </div>
     );
   }
@@ -234,11 +241,32 @@ export function SignalCard({ signal, entityId, isRecording, onToggleRecord, drag
         </div>
       ) : (
         <div className="flex items-start justify-between gap-2">
-          <span className="text-xs font-medium text-muted-foreground leading-tight">{signal.name}</span>
+          <span className="text-xs font-medium text-muted-foreground leading-tight">{metric.name}</span>
           <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-surface-3 text-muted-foreground/50 whitespace-nowrap shrink-0">
-            {METRIC_FREQUENCY_LABELS[signal.frequency]}
+            {METRIC_FREQUENCY_LABELS[metric.frequency]}
           </span>
         </div>
+      )}
+
+      {/* This signal has grown into an outcome of its own */}
+      {!isEditing && outcome && (
+        <button
+          onClick={() => navigateTo(outcome.id)}
+          className="flex items-center gap-1.5 text-left group/link cursor-pointer"
+        >
+          <span
+            className={cn(
+              "inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded border shrink-0",
+              ENTITY_STATUS_META[outcome.status].color,
+            )}
+          >
+            {ENTITY_STATUS_META[outcome.status].label}
+          </span>
+          <span className="text-[10px] text-muted-foreground/60 truncate group-hover/link:text-foreground transition-colors">
+            {outcome.title}
+          </span>
+          <ArrowUpRight size={10} className="text-muted-foreground/40 shrink-0 group-hover/link:text-foreground transition-colors" />
+        </button>
       )}
 
       {/* Value row */}
@@ -248,7 +276,7 @@ export function SignalCard({ signal, entityId, isRecording, onToggleRecord, drag
             <span className="text-[28px] font-bold text-foreground leading-none">
               {latestValue ? fmt(latestValue.value) : "—"}
             </span>
-            {signal.dataSeries.length >= 2 && (
+            {metric.dataSeries.length >= 2 && (
               <span className={cn("inline-flex items-center gap-0.5 text-[10px] font-semibold rounded-[5px] px-1.5 py-0.5", TREND_BADGE_CLASS[trend.direction])}>
                 {TrendIcon && <TrendIcon size={10} />}
                 {trend.label}
@@ -257,7 +285,7 @@ export function SignalCard({ signal, entityId, isRecording, onToggleRecord, drag
           </div>
 
           {/* Sparkline */}
-          <Sparkline dataSeries={signal.dataSeries} color={SPARKLINE_COLORS[trend.direction]} height={40} />
+          <Sparkline dataSeries={metric.dataSeries} color={SPARKLINE_COLORS[trend.direction]} height={40} />
         </>
       )}
 
@@ -269,7 +297,7 @@ export function SignalCard({ signal, entityId, isRecording, onToggleRecord, drag
           </span>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => onToggleRecord(isRecording ? null : signal.id)}
+              onClick={() => onToggleRecord(isRecording ? null : metric.id)}
               className="text-[10px] font-medium text-muted-foreground/50 cursor-pointer flex items-center gap-1 hover:text-foreground transition-colors"
             >
               <PlusCircle size={10} /> Record
@@ -284,18 +312,12 @@ export function SignalCard({ signal, entityId, isRecording, onToggleRecord, drag
                 <DropdownMenuItem onClick={() => setIsEditing(true)} className="text-xs gap-2">
                   <Pencil size={12} /> Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => updateSignal(entityId, signal.id, { status: "paused" })} className="text-xs gap-2">
+                <DropdownMenuItem onClick={() => updateMetric(metric.id, { status: "paused" })} className="text-xs gap-2">
                   <Pause size={12} /> Pause
                 </DropdownMenuItem>
-                {confirmDelete ? (
-                  <DropdownMenuItem onClick={() => removeSignal(entityId, signal.id)} className="text-xs gap-2 text-destructive focus:text-destructive">
-                    <Trash2 size={12} /> Confirm delete
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem onClick={() => setConfirmDelete(true)} className="text-xs gap-2 text-destructive focus:text-destructive">
-                    <Trash2 size={12} /> Delete
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem onClick={() => setConfirmDelete(true)} className="text-xs gap-2 text-destructive focus:text-destructive">
+                  <Trash2 size={12} /> Delete
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -320,12 +342,12 @@ export function SignalCard({ signal, entityId, isRecording, onToggleRecord, drag
                   <PopoverTrigger asChild>
                     <button className="flex items-center gap-1.5 bg-surface-2 border border-border-strong rounded-lg px-2.5 py-1.5 text-[12px] text-foreground cursor-pointer hover:border-border-focus transition-colors w-full text-left">
                       <CalendarDays size={13} className="text-muted-foreground/50 shrink-0" />
-                      {formatPeriodTrigger(recordDate, signal.frequency)}
+                      {formatPeriodTrigger(recordDate, metric.frequency)}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <div className="px-3 pt-3 pb-1">
-                      <span className="text-xs text-muted-foreground">{CALENDAR_HEADER[signal.frequency]}</span>
+                      <span className="text-xs text-muted-foreground">{CALENDAR_HEADER[metric.frequency]}</span>
                     </div>
                     <Calendar
                       mode="single"
@@ -337,7 +359,7 @@ export function SignalCard({ signal, entityId, isRecording, onToggleRecord, drag
                       modifiersClassNames={{ recorded: "metric-calendar-recorded" }}
                     />
                     <div className="px-3 pb-3 pt-1 border-t border-border-subtle">
-                      <span className="text-[11px] text-muted-foreground/60">{formatPeriodHint(recordDate, signal.frequency)}</span>
+                      <span className="text-[11px] text-muted-foreground/60">{formatPeriodHint(recordDate, metric.frequency)}</span>
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -372,6 +394,32 @@ export function SignalCard({ signal, entityId, isRecording, onToggleRecord, drag
           </motion.div>
         )}
       </AnimatePresence>
+
+      <DeleteSignalDialog
+        open={confirmDelete}
+        metric={metric}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => { setConfirmDelete(false); removeMetric(metric.id); }}
+      />
     </div>
+  );
+}
+
+function DeleteSignalDialog({ open, metric, onConfirm, onCancel }: {
+  open: boolean;
+  metric: Metric;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <ConfirmDialog
+      open={open}
+      title="Delete signal"
+      message={`"${metric.name}" and its recorded history will be removed. Anything tracked underneath it moves up to take its place.`}
+      confirmLabel="Delete"
+      destructive
+      onConfirm={onConfirm}
+      onCancel={onCancel}
+    />
   );
 }

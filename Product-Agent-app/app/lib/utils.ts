@@ -148,7 +148,6 @@ export function buildBlockAnchor(
   const chain = getParentChain(store, entityId);
   const pathLabels = [...chain.map((e) => LEVEL_META[e.level].label), LEVEL_META[entity.level].label];
   const blockLabel = block.type === "accordion" ? block.label
-    : block.type === "metric" ? (block.metric || "Metric")
     : block.type === "quote" ? "Evidence quote"
     : "Tags";
   return [
@@ -187,12 +186,6 @@ export function serializeBlocksToText(blocks: Block[]): string {
     switch (block.type) {
       case "accordion":
         if (block.content) parts.push(`### ${block.label}\n${block.content}`);
-        break;
-      case "metric":
-        if (block.metric) {
-          const timeframeSuffix = block.timeframe ? ` (by ${block.timeframe})` : "";
-          parts.push(`**${block.metric}:** ${block.currentValue} → ${block.targetValue}${timeframeSuffix}`);
-        }
         break;
       case "pills":
         if (block.items.length > 0) {

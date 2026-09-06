@@ -24,7 +24,7 @@ The MCP tools you will use here are all read-only:
 | `pa_get_product_line` | The product line "shell": name, personas, root BO ids, top-level blocks | Always — first call after you know the product line id. |
 | `pa_get_subtree` | An entity + all descendants, nested | Once per Business Outcome to fetch its full tree (POs → opps → solutions → assumptions → tests). |
 
-You may read `Product-Agent-app/app/lib/schemas.ts` once if you need to refresh your memory on `Entity`, `MetricBlock`, or status values. Never read it more than once per session.
+You may read `Product-Agent-app/app/lib/schemas.ts` once if you need to refresh your memory on `Entity`, `Metric`, or status values. Never read it more than once per session.
 
 ---
 
@@ -42,13 +42,23 @@ Entity levels:   business_outcome → product_outcome → opportunity → soluti
 Entity statuses: draft | explore | commit | done | archived | dropped
 ```
 
-**MetricBlock** (structured metrics on entities):
-- `frequency`: daily | weekly | monthly
+**Metric** (owned by the product line, in `productLine.metrics[]`):
+- An outcome extends a metric through `entity.metricId`. The metric is not a block and outlives the outcome.
+- `name`: what is being measured
+- `metricType`: business | product - a label the builder sets; it does not decide the outcome level
+- A metric holds at most one *active* outcome. An outcome that is done, dropped or
+  archived is finished: the metric goes back to being plain and can take a new
+  outcome, while the finished one stays linked to it. When reporting on a metric,
+  check the status of the outcome attached to it before calling it in-flight.
+- `frequency`: daily | weekly | monthly | quarterly
 - `dataSeries`: `{ date: string, value: number }[]` — chronological data points
 - `numericTarget`: target value
 - `initialValue`: starting value
 - `startDate` / `endDate`: metric time range (endDate = runway end)
 - `valueFormat`: number | percentage | currency
+- `parentMetricId`: the metric this one feeds. Children of an outcome's metric are its "signals".
+- Metrics migrated from older data may carry `legacyCurrentValue` / `legacyTargetValue` strings
+  instead of `numericTarget` — report those as-is and flag that no target is set.
 
 **StatusHistory** (optional on entities):
 - `statusHistory?: { status: EntityStatus, date: string }[]` — records when status transitions happened
@@ -195,7 +205,7 @@ An opportunity in `explore` status means: either the opportunity is not yet full
 
 For each active PO (status not in {draft, dropped, archived}):
 
-1. Read the PO's metric block (if any) for health data
+1. Read the PO's metric (via its `metricId`, from `productLine.metrics`) for health data
 2. Categorize descendants by status: commit, explore, done
 3. Apply management health rules
 4. Assess done solutions' impact on PO metric

@@ -2,18 +2,14 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useClickOutside } from "@/app/lib/hooks/useClickOutside";
-import { Pencil, Trash2, Plus, X, Check, ChevronDown, CalendarDays, Copy, Quote } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Check, Copy, Quote } from "lucide-react";
 import { cn, buildBlockAnchor } from "@/app/lib/utils";
-import type { Entity, Block, AccordionBlock, PillsBlock, QuoteBlock, MetricBlock, EntityLevel, MetricFrequency, MetricValueFormat } from "@/app/lib/schemas";
-import { METRIC_VALUE_FORMAT_LABELS, METRIC_FREQUENCY_LABELS } from "@/app/lib/schemas";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import type { Entity, Block, AccordionBlock, PillsBlock, QuoteBlock } from "@/app/lib/schemas";
 import { useAppStore } from "@/app/lib/store";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { MarkdownBlock, MarkdownToolbar } from "./MarkdownToolbar";
 import { AccordionSection } from "./AccordionSection";
-import { MetricCard } from "./MetricCard";
 import { Pills } from "./Pills";
 import { EditableText } from "./EditableText";
 
@@ -183,182 +179,12 @@ export function QuoteBlockEditor({ block, onSave, onCancel }: { block: QuoteBloc
 
 // ── Field dropdown (StatusPicker pattern) ────────────────────────────────
 
-function FieldDropdown({ value, onChange, options }: {
-  value: string;
-  onChange: (v: string) => void;
-  options: Record<string, string>;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const handleClickOutside = useCallback(() => setOpen(false), []);
-  useClickOutside(ref, handleClickOutside, open);
-
-  return (
-    <div ref={ref} className="relative flex-1">
-      <button
-        onClick={() => setOpen(!open)}
-        className="cursor-pointer w-full bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-border-focus transition-colors flex items-center justify-between gap-1"
-      >
-        {options[value] ?? value}
-        <ChevronDown size={12} className="text-muted-foreground shrink-0" />
-      </button>
-      {open && (
-        <div className="absolute left-0 top-full mt-1 z-20 rounded-lg border border-border-default bg-popover shadow-xl overflow-hidden min-w-full">
-          {Object.entries(options).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => { onChange(key); setOpen(false); }}
-              className={cn(
-                "cursor-pointer flex items-center w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-hover",
-                value === key ? "bg-surface-3 text-foreground font-medium" : "text-muted-foreground"
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Date picker field (Popover + Calendar pattern) ───────────────────────
-
-function DatePickerField({ value, onChange, label }: {
-  value: string;
-  onChange: (v: string) => void;
-  label: string;
-}) {
-  const [open, setOpen] = useState(false);
-
-  const handleSelect = (day: Date | undefined) => {
-    if (!day) return;
-    const iso = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
-    onChange(iso);
-    setOpen(false);
-  };
-
-  return (
-    <div className="flex flex-col gap-1 flex-1">
-      <label className="text-[10px] text-muted-foreground/50">{label}</label>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button className="cursor-pointer w-full bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-border-focus transition-colors text-left flex items-center gap-2">
-            <CalendarDays size={14} className="text-muted-foreground/50 shrink-0" />
-            {value || "Select date"}
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={value ? new Date(value + "T00:00:00") : undefined}
-            onSelect={handleSelect}
-            defaultMonth={value ? new Date(value + "T00:00:00") : new Date()}
-          />
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-}
-
-export function MetricBlockEditor({ block, onSave, onCancel, entityLevel }: { block: MetricBlock; onSave: (b: Partial<MetricBlock>) => void; onCancel: () => void; entityLevel?: EntityLevel }) {
-  const [metric, setMetric] = useState(block.metric);
-  const [currentValue, setCurrentValue] = useState(block.currentValue);
-  const [targetValue, setTargetValue] = useState(block.targetValue);
-  const [timeframe, setTimeframe] = useState(block.timeframe || "");
-  // Structured fields
-  const isOutcome = entityLevel === "business_outcome" || entityLevel === "product_outcome";
-  const [frequency, setFrequency] = useState<MetricFrequency | "">(block.frequency ?? (isOutcome ? "weekly" : ""));
-  const [valueFormat, setValueFormat] = useState<MetricValueFormat>(block.valueFormat ?? "number");
-  const [initialValue, setInitialValue] = useState(block.initialValue !== undefined ? String(block.initialValue) : "");
-  const [numericTarget, setNumericTarget] = useState(block.numericTarget !== undefined ? String(block.numericTarget) : "");
-  const [startDate, setStartDate] = useState(block.startDate ?? "");
-  const [endDate, setEndDate] = useState(block.endDate ?? "");
-
-  const inputCls = "bg-surface-hover border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border-focus transition-colors";
-
-  const handleSave = () => {
-    const base: Partial<MetricBlock> = { metric };
-    if (isOutcome) {
-      // BO/PO always save structured fields
-      base.frequency = (frequency || "weekly") as MetricFrequency;
-      base.valueFormat = valueFormat;
-      base.initialValue = initialValue ? parseFloat(initialValue) : undefined;
-      base.numericTarget = numericTarget ? parseFloat(numericTarget) : undefined;
-      base.startDate = startDate || undefined;
-      base.endDate = endDate || undefined;
-      // Keep legacy fields for data compatibility but they're not shown
-      base.currentValue = currentValue;
-      base.targetValue = targetValue;
-    } else {
-      base.currentValue = currentValue;
-      base.targetValue = targetValue;
-      base.timeframe = timeframe || undefined;
-    }
-    onSave(base);
-  };
-
-  return (
-    <div className="rounded-xl border border-border-strong p-4 flex flex-col gap-3 bg-surface-1">
-      <input value={metric} onChange={(e) => setMetric(e.target.value)} placeholder="Metric name" className={inputCls} />
-
-      {/* Legacy fields — only for non-outcome levels */}
-      {!isOutcome && (
-        <>
-          <div className="flex gap-2">
-            <input value={currentValue} onChange={(e) => setCurrentValue(e.target.value)} placeholder="Current" className={cn(inputCls, "flex-1")} />
-            <input value={targetValue} onChange={(e) => setTargetValue(e.target.value)} placeholder="Target" className={cn(inputCls, "flex-1")} />
-          </div>
-          <input value={timeframe} onChange={(e) => setTimeframe(e.target.value)} placeholder="Timeframe (optional)" className={cn(inputCls, "text-xs")} />
-        </>
-      )}
-
-      {/* Structured tracking — always shown for outcomes, no "No tracking" option */}
-      {isOutcome && (
-        <>
-          <div className="border-t border-border-subtle pt-3 mt-1">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">Structured Tracking</span>
-          </div>
-          <div className="flex gap-2">
-            <FieldDropdown
-              value={valueFormat}
-              onChange={(v) => setValueFormat(v as MetricValueFormat)}
-              options={METRIC_VALUE_FORMAT_LABELS}
-            />
-            <FieldDropdown
-              value={frequency || "weekly"}
-              onChange={(v) => setFrequency(v as MetricFrequency)}
-              options={METRIC_FREQUENCY_LABELS}
-            />
-          </div>
-          <div className="flex gap-2">
-            <input type="number" value={initialValue} onChange={(e) => setInitialValue(e.target.value)} placeholder="Initial value" className={cn(inputCls, "flex-1 text-xs")} />
-            <input type="number" value={numericTarget} onChange={(e) => setNumericTarget(e.target.value)} placeholder="Numeric target" className={cn(inputCls, "flex-1 text-xs")} />
-          </div>
-          <div className="flex gap-2">
-            <DatePickerField value={startDate} onChange={setStartDate} label="Start date" />
-            <DatePickerField value={endDate} onChange={setEndDate} label="End date" />
-          </div>
-        </>
-      )}
-
-      <div className="flex gap-2">
-        <button onClick={handleSave} className="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-surface-3 hover:bg-surface-active text-foreground transition-colors flex items-center gap-1"><Check size={12} /> Save</button>
-        <button onClick={onCancel} className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:bg-surface-hover text-muted-foreground transition-colors flex items-center gap-1"><X size={12} /> Cancel</button>
-      </div>
-    </div>
-  );
-}
-
 // ── Block renderer ────────────────────────────────────────────────────────
 
-export function BlockRenderer({ block, ownerId, entityLevel, onUpdateBlock, onRemoveBlock, onRecordMetricValue, onCopyAnchor, canDeleteBlock = true }: {
+export function BlockRenderer({ block, onUpdateBlock, onRemoveBlock, onCopyAnchor, canDeleteBlock = true }: {
   block: Block;
-  ownerId: string;
-  entityLevel?: EntityLevel;
   onUpdateBlock: (blockId: string, updates: Partial<Block>) => void;
   onRemoveBlock: (blockId: string) => void;
-  onRecordMetricValue: (blockId: string, date: string, value: number) => void;
   onCopyAnchor?: () => void;
   canDeleteBlock?: boolean;
 }) {
@@ -366,20 +192,6 @@ export function BlockRenderer({ block, ownerId, entityLevel, onUpdateBlock, onRe
 
   const handleSave = (updates: Partial<Block>) => {
     onUpdateBlock(block.id, updates);
-
-    // Auto-seed: when structured tracking is first enabled, seed the start date with initial value
-    if (
-      block.type === "metric" &&
-      "frequency" in updates && updates.frequency &&
-      "startDate" in updates && updates.startDate &&
-      "initialValue" in updates && updates.initialValue !== undefined
-    ) {
-      const currentSeries = (block as MetricBlock).dataSeries ?? [];
-      if (currentSeries.length === 0) {
-        onRecordMetricValue(block.id, updates.startDate as string, updates.initialValue as number);
-      }
-    }
-
     setEditing(false);
   };
   const handleDelete = () => onRemoveBlock(block.id);
@@ -389,7 +201,6 @@ export function BlockRenderer({ block, ownerId, entityLevel, onUpdateBlock, onRe
       case "accordion": return <AccordionBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} labelMaxLength={150} contentMaxLength={5000} />;
       case "pills": return <PillsBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
       case "quote": return <QuoteBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} />;
-      case "metric": return <MetricBlockEditor block={block} onSave={handleSave} onCancel={() => setEditing(false)} entityLevel={entityLevel} />;
     }
   }
 
@@ -412,9 +223,6 @@ export function BlockRenderer({ block, ownerId, entityLevel, onUpdateBlock, onRe
             </div>
           </div>
         </blockquote>
-      )}
-      {block.type === "metric" && (
-        <MetricCard block={block} entityLevel={entityLevel} entityId={ownerId} />
       )}
     </div>
   );
@@ -475,11 +283,10 @@ export function AddBlockButton({ idPrefix, onAddBlock }: { idPrefix: string; onA
 // ── Block list ────────────────────────────────────────────────────────────
 
 export function BlockList({ entity }: { entity: Entity }) {
-  const { updateEntity, updateBlock, removeBlock, recordMetricValue, addBlock } = useAppStore();
+  const { updateEntity, updateBlock, removeBlock, addBlock } = useAppStore();
   const productLine = useProductLine();
   const currentProductLineId = useAppStore((s) => s.currentProductLineId);
 
-  const isOutcome = entity.level === "business_outcome" || entity.level === "product_outcome";
 
   const handleCopyAnchor = (blockId: string) => {
     const text = buildBlockAnchor(productLine.entities, currentProductLineId, productLine.name, entity.id, blockId);
@@ -501,13 +308,9 @@ export function BlockList({ entity }: { entity: Entity }) {
         <BlockRenderer
           key={block.id}
           block={block}
-          ownerId={entity.id}
-          entityLevel={entity.level}
           onUpdateBlock={(bid, upd) => updateBlock(entity.id, bid, upd)}
           onRemoveBlock={(bid) => removeBlock(entity.id, bid)}
-          onRecordMetricValue={(bid, date, val) => recordMetricValue(entity.id, bid, date, val)}
           onCopyAnchor={() => handleCopyAnchor(block.id)}
-          canDeleteBlock={!(block.type === "metric" && isOutcome)}
         />
       ))}
       <AddBlockButton idPrefix={entity.id} onAddBlock={(block) => addBlock(entity.id, block)} />
@@ -523,7 +326,7 @@ export function ProductLineBlockList({ plId, description, onDescriptionSave, blo
   onDescriptionSave: (v: string) => void;
   blocks: Block[];
 }) {
-  const { updateProductLineBlock, removeProductLineBlock, recordProductLineMetricValue, addProductLineBlock } = useAppStore();
+  const { updateProductLineBlock, removeProductLineBlock, addProductLineBlock } = useAppStore();
 
   return (
     <div className="flex flex-col gap-4">
@@ -540,10 +343,8 @@ export function ProductLineBlockList({ plId, description, onDescriptionSave, blo
         <BlockRenderer
           key={block.id}
           block={block}
-          ownerId={plId}
           onUpdateBlock={(bid, upd) => updateProductLineBlock(plId, bid, upd)}
           onRemoveBlock={(bid) => removeProductLineBlock(plId, bid)}
-          onRecordMetricValue={(bid, date, val) => recordProductLineMetricValue(plId, bid, date, val)}
         />
       ))}
       <AddBlockButton idPrefix={plId} onAddBlock={(block) => addProductLineBlock(plId, block)} />

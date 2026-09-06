@@ -1,8 +1,23 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import { DEFAULT_PRODUCT_LINE_ID, DEFAULT_PRODUCT_LINE_SETTINGS } from "./schemas";
-import type { Entity, Block, MetricBlock, ProductLine, ProductLineSettings, DiscoveryTree, Persona, AssumptionType, TestType, IceScore, EntityStatus, Signal } from "./schemas";
+import { DEFAULT_PRODUCT_LINE_ID, DEFAULT_PRODUCT_LINE_SETTINGS, metricTypeForLevel, createBlockTemplate } from "./schemas";
+import type { Entity, Block, ProductLine, ProductLineSettings, DiscoveryTree, Persona, AssumptionType, TestType, IceScore, EntityStatus, Metric, EntityLevel } from "./schemas";
+import {
+  migrateProductLineToMetrics,
+  getMetric,
+  getChildMetrics,
+  outcomeForMetric,
+  activeOutcomeForMetric,
+  nearestOutcomeAncestor,
+  canParentMetric,
+  syncOutcomeParentage,
+  placeOutcome,
+  upsertDataPoint,
+  createMetric,
+  levelForMetric,
+  type NewMetricInput,
+} from "./metrics";
 import type { SettingsFieldKey } from "./settings-redirect";
 import { analyticsEmitter, type AnalyticsEventMap } from "./analytics-events";
 import { getDescendantIds } from "./utils";
@@ -63,10 +78,6 @@ export interface AppStore {
   navigateToChild: (childId: string) => void;
   navigateFromMetricTree: (entityId: string) => void;
   reparentEntity: (entityId: string, newParentId: string) => void;
-  reparentSignal: (
-    signalId: string,
-    target: { poId: string; parentSignalId?: string },
-  ) => void;
 
   // Product Line CRUD
   addProductLine: (pl: ProductLine) => void;
@@ -87,20 +98,24 @@ export interface AppStore {
   addBlock: (entityId: string, block: Block) => void;
   updateBlock: (entityId: string, blockId: string, updates: Partial<Block>) => void;
   removeBlock: (entityId: string, blockId: string) => void;
-  recordMetricValue: (entityId: string, blockId: string, date: string, value: number) => void;
 
-  // Signal CRUD (product_outcome entities)
-  addSignal: (entityId: string, signal: Signal) => void;
-  updateSignal: (entityId: string, signalId: string, updates: Partial<Pick<Signal, "name" | "frequency" | "valueFormat" | "status">>) => void;
-  removeSignal: (entityId: string, signalId: string) => void;
-  recordSignalValue: (entityId: string, signalId: string, date: string, value: number) => void;
-  reorderSignals: (entityId: string, signalIds: string[]) => void;
+  // Metric CRUD — metrics belong to the product line, not to an entity
+  addMetric: (input: NewMetricInput) => string | null;
+  updateMetric: (metricId: string, updates: Partial<Pick<Metric, "name" | "metricType" | "frequency" | "valueFormat" | "status" | "initialValue" | "numericTarget" | "startDate" | "endDate">>) => void;
+  removeMetric: (metricId: string) => void;
+  reparentMetric: (metricId: string, newParentMetricId: string | undefined) => void;
+  recordMetricValue: (metricId: string, date: string, value: number) => void;
+  reorderMetrics: (parentMetricId: string | undefined, metricIds: string[]) => void;
+
+  // Outcome <-> metric linking
+  attachOutcome: (metricId: string, entityId: string) => void;
+  detachOutcome: (entityId: string) => void;
+  createOutcomeForMetric: (metricId: string, title: string) => string | null;
 
   // Product Line Block CRUD
   addProductLineBlock: (plId: string, block: Block) => void;
   updateProductLineBlock: (plId: string, blockId: string, updates: Partial<Block>) => void;
   removeProductLineBlock: (plId: string, blockId: string) => void;
-  recordProductLineMetricValue: (plId: string, blockId: string, date: string, value: number) => void;
 
   // Persona CRUD
   addPersona: (persona: Persona) => void;
@@ -132,6 +147,28 @@ function debouncedSave(productLines: Record<string, ProductLine>) {
       console.warn("[ProductAgent] Failed to save data:", err);
     });
   }, 500);
+}
+
+/** Strips the fields an outcome contributed, leaving a plain tracked metric. */
+function clearMetricTarget(metric: Metric): void {
+  metric.numericTarget = undefined;
+  metric.endDate = undefined;
+  metric.legacyTargetValue = undefined;
+  metric.legacyTimeframe = undefined;
+}
+
+/** A new Business or Product Outcome arrives with a metric of its own. */
+function seedOutcomeMetric(pl: ProductLine, entity: Entity, parentMetricId: string | undefined): void {
+  if (entity.level !== "business_outcome" && entity.level !== "product_outcome") return;
+  if (entity.metricId) return;
+  const metric = createMetric(`metric-${entity.id}`, {
+    name: "Key metric",
+    metricType: metricTypeForLevel(entity.level),
+    parentMetricId,
+  });
+  pl.metrics ??= [];
+  pl.metrics.push(metric);
+  entity.metricId = metric.id;
 }
 
 export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, get) => ({
@@ -272,7 +309,6 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
               if (!entity.statusHistory) {
                 entity.statusHistory = [{ status: entity.status, date: todayIso }];
               }
-              if (!entity.signals) entity.signals = [];
               if (entity.level === "solution" && !entity.stories) entity.stories = [];
               // Migrate iteration string enum → structured { kind, label }
               if (entity.stories) {
@@ -319,6 +355,9 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
             if (getStoryMapConfig(pl.id)) {
               pl.settings.storyMap.enabled = true;
             }
+            // Lift pre-v2 metric blocks and signals into the metric registry
+            migrateProductLineToMetrics(pl);
+            pl.metrics ??= [];
           }
           set({ productLines: data, currentProductLineId, isHydrated: true });
           return;
@@ -390,72 +429,26 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
     // Add to new parent
     newParent.children.push(entityId);
     entity.parentId = newParentId;
+
+    // Keep the metric tree locked to the discovery tree: an outcome that moves
+    // takes its metric with it, landing under the new parent's metric.
+    if (entity.metricId) {
+      const metric = pl.metrics?.find((m) => m.id === entity.metricId);
+      if (metric && canParentMetric(pl, entity.metricId, newParent.metricId)) {
+        metric.parentMetricId = newParent.metricId;
+      }
+    }
   }),
 
-  reparentSignal: (signalId, target) => set((draft) => {
+  reparentMetric: (metricId, newParentMetricId) => set((draft) => {
     const pl = draft.productLines[draft.currentProductLineId];
     if (!pl) return;
-    const targetPo = pl.entities[target.poId];
-    if (!targetPo || targetPo.level !== "product_outcome") return;
-
-    // Find the PO currently holding the signal
-    let currentPoId: string | undefined;
-    for (const [eid, e] of Object.entries(pl.entities)) {
-      if ((e.signals ?? []).some((s) => s.id === signalId)) {
-        currentPoId = eid;
-        break;
-      }
-    }
-    if (!currentPoId) return;
-    const currentPo = pl.entities[currentPoId];
-    const currentSignals = currentPo.signals ?? [];
-    const signal = currentSignals.find((s) => s.id === signalId);
-    if (!signal) return;
-
-    // Compute descendants of the signal (within its current PO)
-    const descendants = new Set<string>();
-    const queue = [signalId];
-    while (queue.length) {
-      const id = queue.shift()!;
-      for (const s of currentSignals) {
-        if (s.parentSignalId === id && !descendants.has(s.id)) {
-          descendants.add(s.id);
-          queue.push(s.id);
-        }
-      }
-    }
-
-    // Validate parent-signal target
-    if (target.parentSignalId) {
-      if (target.parentSignalId === signalId) return;
-      // Only meaningful if target signal is in target PO
-      const targetSignals = targetPo.signals ?? [];
-      const targetParent = targetSignals.find((s) => s.id === target.parentSignalId);
-      if (!targetParent) return;
-      // Cycle check — only applies if same PO (cross-PO moves carry descendants along, so no cycle possible)
-      if (currentPoId === target.poId && descendants.has(target.parentSignalId)) return;
-    }
-
-    // No-op
-    if (
-      currentPoId === target.poId &&
-      (signal.parentSignalId ?? undefined) === (target.parentSignalId ?? undefined)
-    ) return;
-
-    if (currentPoId === target.poId) {
-      // Same-PO move: just reassign parentSignalId
-      signal.parentSignalId = target.parentSignalId;
-      return;
-    }
-
-    // Cross-PO move: carry the full subtree along
-    const movedIds = new Set<string>([signalId, ...descendants]);
-    const moved = currentSignals.filter((s) => movedIds.has(s.id));
-    currentPo.signals = currentSignals.filter((s) => !movedIds.has(s.id));
-    const movedRoot = moved.find((s) => s.id === signalId);
-    if (movedRoot) movedRoot.parentSignalId = target.parentSignalId;
-    if (!targetPo.signals) targetPo.signals = [];
-    targetPo.signals.push(...moved);
+    const metric = getMetric(pl, metricId);
+    if (!metric) return;
+    if ((metric.parentMetricId ?? undefined) === (newParentMetricId ?? undefined)) return;
+    if (!canParentMetric(pl, metricId, newParentMetricId)) return;
+    metric.parentMetricId = newParentMetricId;
+    syncOutcomeParentage(pl, metricId);
   }),
 
   addProductLine: (pl) => {
@@ -529,6 +522,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
       if (!pl) return;
       pl.tree.rootChildren.push(entity.id);
       pl.entities[entity.id] = entity;
+      seedOutcomeMetric(pl, pl.entities[entity.id], undefined);
     });
     analyticsEmitter.emit("Entity Created", {
       entity_type: entity.level,
@@ -551,6 +545,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
       if (!pl || !pl.entities[parentId]) return;
       pl.entities[parentId].children.push(entity.id);
       pl.entities[entity.id] = entity;
+      seedOutcomeMetric(pl, pl.entities[entity.id], pl.entities[parentId].metricId);
     });
     const payload: AnalyticsEventMap["Entity Created"] = {
       entity_type: entity.level,
@@ -580,6 +575,14 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
         if (e) e.children.forEach(collectIds);
       };
       collectIds(id);
+      // Metrics outlive their outcomes. Clear the target the outcome set, keep
+      // the name, the history and the children.
+      for (const did of toDelete) {
+        const metricId = pl.entities[did]?.metricId;
+        if (!metricId) continue;
+        const metric = pl.metrics?.find((m) => m.id === metricId);
+        if (metric) clearMetricTarget(metric);
+      }
       toDelete.forEach((did) => delete pl.entities[did]);
 
       // Remove from parent's children
@@ -673,78 +676,145 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
       pl.entities[entityId].blocks = pl.entities[entityId].blocks.filter((b) => b.id !== blockId);
     }),
 
-  recordMetricValue: (entityId, blockId, date, value) =>
+  // ── Metric CRUD ──────────────────────────────────────────────────────
+
+  addMetric: (input) => {
+    const id = `metric-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    let created = false;
     set((draft) => {
       const pl = draft.productLines[draft.currentProductLineId];
-      if (!pl || !pl.entities[entityId]) return;
-      const block = pl.entities[entityId].blocks.find((b) => b.id === blockId);
-      if (!block || block.type !== "metric") return;
-      if (!block.dataSeries) block.dataSeries = [];
-      const existing = block.dataSeries.find((dp) => dp.date === date);
-      if (existing) {
-        existing.value = value;
-      } else {
-        block.dataSeries.push({ date, value });
-        block.dataSeries.sort((a, b) => a.date.localeCompare(b.date));
-      }
-    }),
-
-  // ── Signal CRUD ──────────────────────────────────────────────────────
-
-  addSignal: (entityId, signal) => {
-    set((draft) => {
-      const pl = draft.productLines[draft.currentProductLineId];
-      if (!pl || !pl.entities[entityId]) return;
-      if (!pl.entities[entityId].signals) pl.entities[entityId].signals = [];
-      pl.entities[entityId].signals!.push(signal);
+      if (!pl) return;
+      if (input.parentMetricId && !getMetric(pl, input.parentMetricId)) return;
+      pl.metrics ??= [];
+      pl.metrics.push(createMetric(id, input));
+      created = true;
     });
-    analyticsEmitter.emit("Signal Created", {
-      frequency: signal.frequency,
-      value_format: signal.valueFormat,
-      signal_count: (() => {
-        const pl = get().productLines[get().currentProductLineId];
-        return (pl?.entities[entityId]?.signals ?? []).length;
-      })(),
+    if (!created) return null;
+    analyticsEmitter.emit("Metric Created", {
+      metric_type: input.metricType,
+      is_root: !input.parentMetricId,
+      frequency: input.frequency ?? "weekly",
     });
+    return id;
   },
 
-  updateSignal: (entityId, signalId, updates) =>
+  updateMetric: (metricId, updates) =>
     set((draft) => {
       const pl = draft.productLines[draft.currentProductLineId];
-      if (!pl || !pl.entities[entityId]) return;
-      const signal = (pl.entities[entityId].signals ?? []).find((s) => s.id === signalId);
-      if (signal) Object.assign(signal, updates);
-    }),
-
-  removeSignal: (entityId, signalId) =>
-    set((draft) => {
-      const pl = draft.productLines[draft.currentProductLineId];
-      if (!pl || !pl.entities[entityId]) return;
-      pl.entities[entityId].signals = (pl.entities[entityId].signals ?? []).filter((s) => s.id !== signalId);
-    }),
-
-  recordSignalValue: (entityId, signalId, date, value) =>
-    set((draft) => {
-      const pl = draft.productLines[draft.currentProductLineId];
-      if (!pl || !pl.entities[entityId]) return;
-      const signal = (pl.entities[entityId].signals ?? []).find((s) => s.id === signalId);
-      if (!signal) return;
-      const existing = signal.dataSeries.find((dp) => dp.date === date);
-      if (existing) {
-        existing.value = value;
-      } else {
-        signal.dataSeries.push({ date, value });
-        signal.dataSeries.sort((a, b) => a.date.localeCompare(b.date));
+      if (!pl) return;
+      const metric = getMetric(pl, metricId);
+      if (!metric) return;
+      Object.assign(metric, updates);
+      // A frequency change re-snaps the series onto the new period boundaries.
+      if (updates.frequency) {
+        const points = metric.dataSeries;
+        metric.dataSeries = [];
+        for (const dp of points) upsertDataPoint(metric, dp.date, dp.value);
       }
     }),
 
-  reorderSignals: (entityId, signalIds) =>
+  removeMetric: (metricId) =>
     set((draft) => {
       const pl = draft.productLines[draft.currentProductLineId];
-      if (!pl?.entities[entityId]?.signals) return;
-      const signalMap = new Map(pl.entities[entityId].signals!.map((s) => [s.id, s]));
-      pl.entities[entityId].signals = signalIds.map((id) => signalMap.get(id)!).filter(Boolean);
+      if (!pl?.metrics) return;
+      const metric = getMetric(pl, metricId);
+      if (!metric) return;
+      // Children rise to take the removed metric's place rather than vanishing.
+      for (const child of getChildMetrics(pl, metricId)) {
+        child.parentMetricId = metric.parentMetricId;
+      }
+      const outcome = outcomeForMetric(pl, metricId);
+      if (outcome) outcome.metricId = undefined;
+      pl.metrics = pl.metrics.filter((m) => m.id !== metricId);
+      if (metric.parentMetricId) syncOutcomeParentage(pl, metric.parentMetricId);
+      else for (const root of pl.metrics.filter((m) => !m.parentMetricId)) syncOutcomeParentage(pl, root.id);
     }),
+
+  recordMetricValue: (metricId, date, value) =>
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl) return;
+      const metric = getMetric(pl, metricId);
+      if (!metric) return;
+      upsertDataPoint(metric, date, value);
+    }),
+
+  reorderMetrics: (parentMetricId, metricIds) =>
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl?.metrics) return;
+      const order = new Map(metricIds.map((id, i) => [id, i]));
+      const siblings = pl.metrics.filter((m) => (m.parentMetricId ?? undefined) === (parentMetricId ?? undefined));
+      const others = pl.metrics.filter((m) => (m.parentMetricId ?? undefined) !== (parentMetricId ?? undefined));
+      siblings.sort((a, b) => (order.get(a.id) ?? 999) - (order.get(b.id) ?? 999));
+      pl.metrics = [...others, ...siblings];
+    }),
+
+  // ── Outcome <-> metric linking ───────────────────────────────────────
+
+  attachOutcome: (metricId, entityId) =>
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl) return;
+      const entity = pl.entities[entityId];
+      const metric = getMetric(pl, metricId);
+      if (!entity || !metric) return;
+      if (entity.level !== "business_outcome" && entity.level !== "product_outcome") return;
+      // One *active* outcome per metric. A finished one leaves the metric free.
+      if (activeOutcomeForMetric(pl, metricId)) return;
+      entity.metricId = metricId;
+      placeOutcome(pl, entity, nearestOutcomeAncestor(pl, metricId)?.id);
+      syncOutcomeParentage(pl, metricId);
+    }),
+
+  detachOutcome: (entityId) =>
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl) return;
+      const entity = pl.entities[entityId];
+      if (!entity?.metricId) return;
+      const metric = getMetric(pl, entity.metricId);
+      if (metric) clearMetricTarget(metric);
+      entity.metricId = undefined;
+    }),
+
+  createOutcomeForMetric: (metricId, title) => {
+    const id = `entity-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    let level: EntityLevel | null = null;
+    set((draft) => {
+      const pl = draft.productLines[draft.currentProductLineId];
+      if (!pl) return;
+      const metric = getMetric(pl, metricId);
+      if (!metric || activeOutcomeForMetric(pl, metricId)) return;
+
+      const outcomeLevel = levelForMetric(pl, metricId);
+      const parent = nearestOutcomeAncestor(pl, metricId);
+      const entity: Entity = {
+        id,
+        level: outcomeLevel,
+        title: title.trim() || metric.name,
+        icon: outcomeLevel === "business_outcome" ? "Target" : "TrendingUp",
+        description: "",
+        status: "draft",
+        statusHistory: [{ status: "draft", date: new Date().toISOString().slice(0, 10) }],
+        children: [],
+        blocks: createBlockTemplate(outcomeLevel, id),
+        metricId,
+      };
+      pl.entities[id] = entity;
+      placeOutcome(pl, entity, parent?.id);
+      syncOutcomeParentage(pl, metricId);
+      level = outcomeLevel;
+    });
+    if (!level) return null;
+    analyticsEmitter.emit("Entity Created", {
+      entity_type: level,
+      status: "draft",
+      has_children: false,
+      child_count: 0,
+    });
+    return id;
+  },
 
   addProductLineBlock: (plId, block) =>
     set((draft) => {
@@ -767,22 +837,6 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
       const pl = draft.productLines[plId];
       if (!pl?.blocks) return;
       pl.blocks = pl.blocks.filter((b) => b.id !== blockId);
-    }),
-
-  recordProductLineMetricValue: (plId, blockId, date, value) =>
-    set((draft) => {
-      const pl = draft.productLines[plId];
-      if (!pl?.blocks) return;
-      const block = pl.blocks.find((b) => b.id === blockId) as MetricBlock | undefined;
-      if (!block || block.type !== "metric") return;
-      if (!block.dataSeries) block.dataSeries = [];
-      const existing = block.dataSeries.find((dp) => dp.date === date);
-      if (existing) {
-        existing.value = value;
-      } else {
-        block.dataSeries.push({ date, value });
-        block.dataSeries.sort((a, b) => a.date.localeCompare(b.date));
-      }
     }),
 
   addPersona: (persona) =>

@@ -1,6 +1,7 @@
 import type {
   Block,
   Entity,
+  Metric,
   ProductLine,
   ProductLineSettings,
   Story,
@@ -36,14 +37,49 @@ export interface StoreAdapter {
 
   // ── Writes ──────────────────────────────────────────────────────────
   createEntity(input: CreateEntityInput): Promise<Entity>;
+
+  // ── Metrics ─────────────────────────────────────────────────────────
+  // Metrics belong to the product line, not to an entity. An outcome extends
+  // a metric through Entity.metricId; the metric outlives the outcome.
+  listMetrics(productLineId: string): Promise<Metric[]>;
+  createMetric(productLineId: string, input: CreateMetricInput): Promise<Metric>;
+  updateMetric(productLineId: string, metricId: string, patch: UpdateMetricPatch): Promise<Metric>;
+  deleteMetric(productLineId: string, metricId: string): Promise<Metric[]>;
+  recordMetricValue(productLineId: string, metricId: string, date: string, value: number): Promise<Metric>;
+  reparentMetric(productLineId: string, metricId: string, parentMetricId: string | null): Promise<Metric>;
+  attachOutcome(productLineId: string, metricId: string, input: AttachOutcomeInput): Promise<Entity>;
+  detachOutcome(productLineId: string, metricId: string): Promise<Metric>;
   updateEntity(entityId: string, patch: Partial<Entity>): Promise<Entity>;
   updateProductLineSettings(productLineId: string, patch: Partial<ProductLineSettings>): Promise<ProductLineSettings>;
   deleteEntity(entityId: string): Promise<void>;
   addBlock(entityId: string, block: Block): Promise<Entity>;
   updateBlock(entityId: string, blockId: string, patch: Partial<Block>): Promise<Entity>;
   deleteBlock(entityId: string, blockId: string): Promise<void>;
-  recordMetricValue(entityId: string, blockId: string, date: string, value: number): Promise<Entity>;
   moveBlock(entityId: string, blockId: string, toIndex: number): Promise<Entity>;
   updateStory(entityId: string, storyId: string, patch: Partial<Story>): Promise<Entity>;
   deleteStory(entityId: string, storyId: string): Promise<void>;
+}
+
+/** Input for creating a metric on a product line. */
+export interface CreateMetricInput {
+  name: string;
+  metricType?: Metric["metricType"];
+  frequency?: Metric["frequency"];
+  valueFormat?: Metric["valueFormat"];
+  parentMetricId?: string;
+  initialValue?: number;
+  numericTarget?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
+export type UpdateMetricPatch = Partial<
+  Pick<Metric, "name" | "frequency" | "valueFormat" | "status" | "initialValue" | "numericTarget" | "startDate" | "endDate">
+>;
+
+/** Attach an existing outcome by id, or create a new one from a title. */
+export interface AttachOutcomeInput {
+  entityId?: string;
+  title?: string;
+  description?: string;
 }

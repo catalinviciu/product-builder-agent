@@ -11,8 +11,8 @@ Input JSON shape:
   "businessOutcome": {
     "title": "...",
     "description": "...",
+    "metric": { "name": "...", "frequency": "monthly", "valueFormat": "number", "initialValue": 0, "numericTarget": 3, "startDate": "2026-04-01", "endDate": "2026-09-30" },
     "blocks": [
-      { "type": "metric", "metric": "...", "frequency": "monthly", "valueFormat": "number", "initialValue": 0, "numericTarget": 3, "startDate": "2026-04-01", "endDate": "2026-09-30" },
       { "type": "accordion", "label": "Strategic Alignment", "content": "..." },
       { "type": "accordion", "label": "Why Now", "content": "..." },
       { "type": "accordion", "label": "Risk of Inaction", "content": "..." }
@@ -22,8 +22,8 @@ Input JSON shape:
     "title": "...",
     "description": "...",
     "personaId": "<optional>",
+    "metric": { "name": "...", "frequency": "weekly", "valueFormat": "number", "initialValue": 0, "numericTarget": 5, "startDate": "2026-04-01", "endDate": "2026-07-31" },
     "blocks": [
-      { "type": "metric", "metric": "...", "frequency": "weekly", "valueFormat": "number", "initialValue": 0, "numericTarget": 5, "startDate": "2026-04-01", "endDate": "2026-07-31" },
       { "type": "accordion", "label": "Strategic Alignment", "content": "..." },
       { "type": "accordion", "label": "Constraints", "content": "..." },
       { "type": "accordion", "label": "Trade-offs", "content": "..." }
@@ -82,55 +82,63 @@ def validate_entity(name: str, entity: dict) -> list[str]:
     elif len(desc) > LIMITS["description"]:
         errors.append(f"{name}: description too long ({len(desc)}/{LIMITS['description']})")
 
+    metric = entity.get("metric")
+    if metric is not None:
+        if not metric.get("name"):
+            errors.append(f"{name} metric: missing 'name'")
+        for field in ("frequency", "valueFormat"):
+            if not metric.get(field):
+                errors.append(f"{name} metric: missing '{field}'")
+
     for bi, block in enumerate(entity.get("blocks", [])):
         if block.get("type") == "metric":
-            # Validate Structured Tracking metric fields
-            if not block.get("metric"):
-                errors.append(f"{name} metric block: missing 'metric' name")
-            for field in ("frequency", "valueFormat"):
-                if not block.get(field):
-                    errors.append(f"{name} metric block: missing '{field}'")
-        else:
-            label_str = block.get("label", "")
-            content = block.get("content", "")
-            if len(label_str) > LIMITS["block_label"]:
-                errors.append(f"{name} block {bi + 1}: label too long ({len(label_str)}/{LIMITS['block_label']})")
-            if len(content) > LIMITS["block_content"]:
-                errors.append(f"{name} block {bi + 1} ({label_str}): content too long ({len(content)}/{LIMITS['block_content']})")
+            errors.append(
+                f"{name}: metrics are no longer blocks. Move it to the entity's 'metric' key."
+            )
+            continue
+        label_str = block.get("label", "")
+        content = block.get("content", "")
+        if len(label_str) > LIMITS["block_label"]:
+            errors.append(f"{name} block {bi + 1}: label too long ({len(label_str)}/{LIMITS['block_label']})")
+        if len(content) > LIMITS["block_content"]:
+            errors.append(f"{name} block {bi + 1} ({label_str}): content too long ({len(content)}/{LIMITS['block_content']})")
 
     return errors
 
 
 def build_blocks(entity_id: str, blocks_spec: list, ts: int) -> list:
+    """Accordion blocks only. Metrics are separate objects — see build_metric."""
     blocks = []
     for i, block in enumerate(blocks_spec):
-        block_id = f"{entity_id}-b{ts}{i + 1}"
-        if block.get("type") == "metric":
-            blocks.append({
-                "id": block_id,
-                "type": "metric",
-                "metric": block["metric"],
-                # Legacy fields for backward compat
-                "currentValue": str(block.get("initialValue", 0)),
-                "targetValue": str(block.get("numericTarget", 0)),
-                "timeframe": "",
-                # Structured Tracking fields
-                "frequency": block.get("frequency", "monthly"),
-                "valueFormat": block.get("valueFormat", "number"),
-                "initialValue": block.get("initialValue", 0),
-                "numericTarget": block.get("numericTarget", 0),
-                "startDate": block.get("startDate", ""),
-                "endDate": block.get("endDate", ""),
-                "dataSeries": [],
-            })
-        else:
-            blocks.append({
-                "id": block_id,
-                "type": "accordion",
-                "label": block["label"],
-                "content": block["content"],
-            })
+        blocks.append({
+            "id": f"{entity_id}-b{ts}{i + 1}",
+            "type": "accordion",
+            "label": block["label"],
+            "content": block["content"],
+        })
     return blocks
+
+
+def build_metric(entity_id: str, spec: dict, metric_type: str, today: str,
+                 parent_metric_id: str = None) -> dict:
+    """A metric lives on the product line; the outcome extends it via metricId."""
+    metric = {
+        "id": f"metric-{entity_id}",
+        "name": spec["name"],
+        "metricType": metric_type,
+        "status": "active",
+        "frequency": spec.get("frequency", "monthly"),
+        "valueFormat": spec.get("valueFormat", "number"),
+        "dataSeries": [],
+        "createdAt": today,
+        "initialValue": spec.get("initialValue", 0),
+        "numericTarget": spec.get("numericTarget", 0),
+        "startDate": spec.get("startDate", ""),
+        "endDate": spec.get("endDate", ""),
+    }
+    if parent_metric_id:
+        metric["parentMetricId"] = parent_metric_id
+    return metric
 
 
 def main():
@@ -188,6 +196,8 @@ def main():
         sys.exit(1)
 
     ts = int(time.time() * 1000)
+    today = time.strftime("%Y-%m-%d")
+    pl.setdefault("metrics", [])
 
     # --- Create Business Outcome ---
     bo_id = str(uuid.uuid4())
@@ -202,6 +212,12 @@ def main():
         "children": [],
         "blocks": bo_blocks,
     }
+    bo_metric_id = None
+    if bo_spec.get("metric"):
+        bo_metric = build_metric(bo_id, bo_spec["metric"], "business", today)
+        pl["metrics"].append(bo_metric)
+        bo_entity["metricId"] = bo_metric["id"]
+        bo_metric_id = bo_metric["id"]
     pl["entities"][bo_id] = bo_entity
     pl["tree"]["rootChildren"].append(bo_id)
     print(f"Created Business Outcome '{bo_spec['title']}' ({bo_id})")
@@ -220,6 +236,10 @@ def main():
         "children": [],
         "blocks": po_blocks,
     }
+    if po_spec.get("metric"):
+        po_metric = build_metric(po_id, po_spec["metric"], "product", today, bo_metric_id)
+        pl["metrics"].append(po_metric)
+        po_entity["metricId"] = po_metric["id"]
     if po_spec.get("personaId"):
         po_entity["personaId"] = po_spec["personaId"]
     pl["entities"][po_id] = po_entity

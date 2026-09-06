@@ -34,28 +34,44 @@ const QuoteBlockSchema = z.object({
   attribution: z.string().optional(),
 });
 
-const MetricBlockSchema = z.object({
-  id: z.string(),
-  type: z.literal("metric"),
-  metric: z.string(),
-  currentValue: z.string(),
-  targetValue: z.string(),
-  timeframe: z.string().optional(),
-  frequency: z.enum(["daily", "weekly", "monthly"]).optional(),
-  valueFormat: z.enum(["number", "currency_usd", "currency_eur", "currency_gbp", "percentage"]).optional(),
-  initialValue: z.number().optional(),
-  numericTarget: z.number().optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  dataSeries: z.array(z.object({ date: z.string(), value: z.number() })).optional(),
-});
-
 export const BlockSchema = z.discriminatedUnion("type", [
   AccordionBlockSchema,
   PillsBlockSchema,
   QuoteBlockSchema,
-  MetricBlockSchema,
 ]);
+
+// ── Metrics ───────────────────────────────────────────────────────────
+// A metric is a first-class object on the product line, not a block. An
+// outcome extends a metric via Entity.metricId and the metric outlives it.
+
+export const MetricFrequencySchema = z.enum(["daily", "weekly", "monthly", "quarterly"]);
+export const MetricValueFormatSchema = z.enum([
+  "number", "currency_usd", "currency_eur", "currency_gbp", "percentage",
+]);
+
+export const CreateMetricInputSchema = z.object({
+  name: z.string().min(1),
+  metricType: z.enum(["business", "product"]).optional(),
+  frequency: MetricFrequencySchema.optional(),
+  valueFormat: MetricValueFormatSchema.optional(),
+  parentMetricId: z.string().optional(),
+  initialValue: z.number().optional(),
+  numericTarget: z.number().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+
+export const MetricPatchSchema = z.object({
+  name: z.string().min(1).optional(),
+  metricType: z.enum(["business", "product"]).optional(),
+  frequency: MetricFrequencySchema.optional(),
+  valueFormat: MetricValueFormatSchema.optional(),
+  status: z.enum(["active", "paused"]).optional(),
+  initialValue: z.number().optional(),
+  numericTarget: z.number().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
 
 // ── Create-entity input ───────────────────────────────────────────────
 
@@ -150,17 +166,6 @@ export const BlockPatchSchema = z.object({
   defaultOpen: z.boolean().optional(),
   attribution: z.string().optional(),
   items: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
-  metric: z.string().optional(),
-  currentValue: z.string().optional(),
-  targetValue: z.string().optional(),
-  timeframe: z.string().optional(),
-  frequency: z.enum(["daily", "weekly", "monthly"]).optional(),
-  valueFormat: z.enum(["number", "currency_usd", "currency_eur", "currency_gbp", "percentage"]).optional(),
-  initialValue: z.number().optional(),
-  numericTarget: z.number().optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  dataSeries: z.array(z.object({ date: z.string(), value: z.number() })).optional(),
 });
 
 // ── ProductLineSettings partial-update schema ─────────────────────────

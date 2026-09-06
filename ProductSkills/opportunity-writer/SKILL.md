@@ -99,8 +99,9 @@ These are practical maximums to keep the UI readable. The app's `getEntityPrevie
    - `productLine` = the product line with personas
    - `descendants` = existing opportunities under this PO
    - `productLine.id` = the productLineId you'll need for writing
-2. Review the PO title, description, metric block, and status.
-3. Review the BO title, description, and metric block.
+2. Review the PO title, description, metric, and status.
+3. Review the BO title, description, and metric.
+   The outcome's metric is on the product line — look it up by the entity's `metricId`, or call `pa_list_metrics`.
 4. Note the personas attached to the product line.
 5. Scan `descendants` (existing opportunities) — note their titles and statuses.
 

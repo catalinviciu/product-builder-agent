@@ -57,8 +57,8 @@ export function startAnalyticsSubscribers(): void {
     trackEvent("Status Change", props);
   });
 
-  analyticsEmitter.on("Signal Created", (props) => {
-    trackEvent("Signal Created", props);
+  analyticsEmitter.on("Metric Created", (props) => {
+    trackEvent("Metric Created", props);
   });
 
   analyticsEmitter.on("slicer_prompt_copied", (props) => {

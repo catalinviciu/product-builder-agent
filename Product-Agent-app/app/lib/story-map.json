@@ -290,10 +290,10 @@
               ]
             },
             {
-              "action": "Configure structured metric tracking with frequency, numeric targets, and date range",
+              "action": "Configure the outcome's metric — name, cadence, value format, starting value, target and date range — from the metric card",
               "components": [
                 "EntityBlocks",
-                "MetricBlockEditor",
+                "MetricSettingsForm",
                 "BlockRenderer"
               ]
             },
@@ -302,7 +302,8 @@
               "components": [
                 "MetricCard",
                 "MetricChart",
-                "RecordValueForm"
+                "RecordValueForm",
+                "MetricRecordForm"
               ]
             },
             {
@@ -330,6 +331,30 @@
               "components": [
                 "EntityView",
                 "Status Picker"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Track signals",
+          "stories": [
+            {
+              "action": "Switch to the Signals tab on a Business Outcome to see the metrics feeding its own",
+              "components": [
+                "EntityView",
+                "SignalsTab"
+              ]
+            },
+            {
+              "action": "Add a signal inline; it becomes a child metric under this outcome's metric in the metric tree",
+              "components": [
+                "SignalsTab"
+              ]
+            },
+            {
+              "action": "Record a data point on a signal with the inline record form",
+              "components": [
+                "SignalCard"
               ]
             }
           ]
@@ -411,10 +436,10 @@
               ]
             },
             {
-              "action": "Configure structured metric tracking with frequency, numeric targets, and date range",
+              "action": "Configure the outcome's metric — name, cadence, value format, starting value, target and date range — from the metric card",
               "components": [
                 "EntityBlocks",
-                "MetricBlockEditor",
+                "MetricSettingsForm",
                 "BlockRenderer"
               ]
             },
@@ -423,7 +448,8 @@
               "components": [
                 "MetricCard",
                 "MetricChart",
-                "RecordValueForm"
+                "RecordValueForm",
+                "MetricRecordForm"
               ]
             },
             {
@@ -485,14 +511,14 @@
           "title": "Track signals",
           "stories": [
             {
-              "action": "Switch to the Signals tab on a Product Outcome to view input tracking",
+              "action": "Switch to the Signals tab on a Business or Product Outcome to see the metrics feeding its own",
               "components": [
                 "EntityView",
                 "SignalsTab"
               ]
             },
             {
-              "action": "Add a signal inline with name, frequency, and format",
+              "action": "Add a signal inline with name, frequency, and format; it becomes a child metric and appears under this metric in the metric tree",
               "components": [
                 "SignalsTab"
               ]
@@ -504,9 +530,16 @@
               ]
             },
             {
-              "action": "Pause or resume a signal to temporarily stop tracking without deleting it",
+              "action": "See a signal that has grown into an outcome of its own badged with that outcome's status and linking through to it",
               "components": [
                 "SignalCard"
+              ]
+            },
+            {
+              "action": "Edit, pause, resume, reorder or delete a signal",
+              "components": [
+                "SignalCard",
+                "SignalsTab"
               ]
             }
           ]
@@ -1236,8 +1269,8 @@
     },
     {
       "id": "manage-metric-tree",
-      "title": "View & Manage the Metric Tree",
-      "goal": "See how all outcomes and signals relate as a metric hierarchy, and adjust driver/driven relationships.",
+      "title": "Map the Metric Tree",
+      "goal": "Map what you measure and what drives it, then pick the metrics worth moving by attaching outcomes to them.",
       "steps": [
         {
           "title": "Switch to Metric Tree view",
@@ -1255,14 +1288,14 @@
           "title": "Browse metric relationships",
           "stories": [
             {
-              "action": "View all Business and Product Outcomes arranged as a recursive driver/driven tree with connector lines",
+              "action": "View every metric arranged as a recursive tree, with a solid connector into a metric that carries an outcome and a dashed one into a plain tracking metric",
               "components": [
                 "MetricTreeView",
                 "MetricTreeCard"
               ]
             },
             {
-              "action": "See signal health and latest values as detail rows inside each outcome card",
+              "action": "See each metric's latest value, target and recording cadence on its card, with the attached outcome's title and status when it has one",
               "components": [
                 "MetricTreeCard"
               ]
@@ -1283,12 +1316,109 @@
           ]
         },
         {
+          "title": "Add a metric",
+          "stories": [
+            {
+              "action": "Add a metric at the top of the tree, before any outcome exists, filling in its name, type, cadence, format, starting value, target and date range",
+              "components": [
+                "MetricTreeView",
+                "MetricSettingsForm"
+              ]
+            },
+            {
+              "action": "Add an input metric under an existing metric from the card's actions menu; it inherits the parent's type and cadence as defaults",
+              "components": [
+                "MetricTreeCard",
+                "MetricSettingsForm"
+              ]
+            },
+            {
+              "action": "Record a plain metric's current value straight from its edit form, logged against the period you are in now",
+              "components": [
+                "MetricSettingsForm"
+              ]
+            },
+            {
+              "action": "Click a plain metric card to edit it in place: name, type, cadence, format and its current value. Target and date fields only appear once an outcome is driving the metric.",
+              "components": [
+                "MetricTreeCard",
+                "MetricSettingsForm"
+              ]
+            },
+            {
+              "action": "Label a metric as a business or a product metric and see that label on its card",
+              "components": [
+                "MetricSettingsForm",
+                "MetricTreeCard"
+              ]
+            },
+            {
+              "action": "Record a metric daily, weekly, monthly or quarterly; a value dated mid-period snaps to the period's start",
+              "components": [
+                "MetricSettingsForm",
+                "MetricRecordForm"
+              ]
+            },
+            {
+              "action": "Delete a metric from its actions menu, confirming in a dialog; its children rise to take its place",
+              "components": [
+                "MetricTreeCard"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Attach an outcome to a metric",
+          "stories": [
+            {
+              "action": "Turn a plain metric into something you are actively moving by naming an outcome for it; the level is derived from the tree, so a metric with no outcome above it becomes a Business Outcome and any other becomes a Product Outcome",
+              "components": [
+                "MetricTreeCard",
+                "AddOutcomeForm"
+              ]
+            },
+            {
+              "action": "See the new outcome appear in the discovery tree under the outcome on the nearest ancestor metric",
+              "components": [
+                "SectionNav",
+                "EntityView"
+              ]
+            },
+            {
+              "action": "Mark an outcome done, dropped or archived and watch its metric card go back to being a plain metric, keeping a status-badged link to the finished outcome",
+              "components": [
+                "MetricTreeCard"
+              ]
+            },
+            {
+              "action": "Attach a fresh outcome to a metric whose previous outcome is finished, so the same metric can be worked again later",
+              "components": [
+                "MetricTreeCard",
+                "AddOutcomeForm"
+              ]
+            }
+          ]
+        },
+        {
           "title": "Reparent a metric",
           "stories": [
             {
-              "action": "Change a Product Outcome's driver relationship by picking a new parent in the reparent dropdown, updating the tree immediately",
+              "action": "Move a metric under a different parent, or to the top of the tree, from the reparent dropdown",
               "components": [
                 "MetricTreeCard",
+                "ReparentDropdown"
+              ]
+            },
+            {
+              "action": "See every outcome on the moved metric follow it in the discovery tree, finished ones included, since the two trees are locked together",
+              "components": [
+                "MetricTreeCard",
+                "SectionNav"
+              ]
+            },
+            {
+              "action": "Be blocked from a move that would put a Business Outcome underneath a Product Outcome, or create a cycle",
+              "components": [
                 "ReparentDropdown"
               ]
             }
