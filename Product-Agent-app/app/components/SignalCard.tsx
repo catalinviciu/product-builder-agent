@@ -66,6 +66,7 @@ export function SignalCard({ metric, outcome, isRecording, onToggleRecord, dragg
   const removeMetric = useAppStore((s) => s.removeMetric);
   const recordMetricValue = useAppStore((s) => s.recordMetricValue);
   const navigateTo = useAppStore((s) => s.navigateTo);
+  const openMetricTreeAt = useAppStore((s) => s.openMetricTreeAt);
 
   // Sortable
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -87,6 +88,36 @@ export function SignalCard({ metric, outcome, isRecording, onToggleRecord, dragg
   const [editFormat, setEditFormat] = useState(metric.valueFormat);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  /**
+   * The card body opens the metric tree centred on this metric, so you can see
+   * what it feeds and what feeds it.
+   *
+   * Every control on the card is a button or a field, and the actions menu
+   * renders in a portal (whose clicks still bubble through React), so anything
+   * interactive is excluded rather than relying on the DOM position of the
+   * click.
+   */
+  const cardIsBusy = isEditing || isRecording || menuOpen || confirmDelete;
+
+  const fromControl = (target: EventTarget | null) =>
+    (target as Element | null)?.closest?.(
+      'button, input, select, textarea, label, [role="menuitem"], [role="dialog"]',
+    ) != null;
+
+  const openInTree = (e: React.MouseEvent | React.KeyboardEvent) => {
+    if (cardIsBusy || fromControl(e.target)) return;
+    e.stopPropagation();
+    openMetricTreeAt(metric.id);
+  };
+
+  const handleCardKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    if (cardIsBusy || fromControl(e.target)) return;
+    e.preventDefault();
+    openInTree(e);
+  };
 
   // Reset record form when recording state changes
   useEffect(() => {
@@ -164,7 +195,14 @@ export function SignalCard({ metric, outcome, isRecording, onToggleRecord, dragg
   // Paused — compact single-row card
   if (isPaused) {
     return (
-      <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-surface-1 border border-border-subtle opacity-45 hover:opacity-70 transition-opacity">
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={`Show ${metric.name} in the metric tree`}
+        onClick={openInTree}
+        onKeyDown={handleCardKeyDown}
+        className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-surface-1 border border-border-subtle opacity-45 hover:opacity-70 cursor-pointer transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]"
+      >
         <span className="text-xs font-medium text-muted-foreground flex-1 truncate">{metric.name}</span>
         <span className="text-[13px] font-semibold text-muted-foreground shrink-0">
           {latestValue ? fmt(latestValue.value) : "—"}
@@ -198,9 +236,14 @@ export function SignalCard({ metric, outcome, isRecording, onToggleRecord, dragg
     <div
       ref={setNodeRef}
       style={sortableStyle}
-      {...(draggable ? { ...listeners, ...attributes } : {})}
+      {...(draggable ? { ...listeners, ...attributes } : { role: "button", tabIndex: 0 })}
+      aria-label={`Show ${metric.name} in the metric tree`}
+      onClick={openInTree}
+      onKeyDown={handleCardKeyDown}
       className={cn(
         "flex flex-col gap-2 rounded-xl p-3.5 border transition-all",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]",
+        cardIsBusy ? "cursor-default" : "cursor-pointer",
         isRecording || isEditing
           ? "border-border-strong bg-surface-2"
           : "bg-surface-1 border-border-subtle hover:bg-surface-hover hover:border-border-default hover:shadow-[0_0_20px_var(--shadow-color)]",
@@ -302,7 +345,7 @@ export function SignalCard({ metric, outcome, isRecording, onToggleRecord, dragg
             >
               <PlusCircle size={10} /> Record
             </button>
-            <DropdownMenu>
+            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <button className="text-muted-foreground/30 cursor-pointer hover:text-muted-foreground transition-colors p-0.5 rounded hover:bg-surface-hover">
                   <MoreVertical size={12} />

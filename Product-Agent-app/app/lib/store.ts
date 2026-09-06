@@ -40,6 +40,8 @@ export interface AppStore {
   focusedMetricId: string | null;
   focusMetric: (metricId: string) => void;
   clearFocusedMetric: () => void;
+  /** Switch to the metric tree and centre it on one metric. */
+  openMetricTreeAt: (metricId: string) => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setViewMode: (mode: "discovery" | "metric-tree") => void;
@@ -188,6 +190,12 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
   focusedMetricId: null as string | null,
   focusMetric: (metricId) => set({ focusedMetricId: metricId }),
   clearFocusedMetric: () => set({ focusedMetricId: null }),
+  openMetricTreeAt: (metricId) => set((draft) => {
+    draft.viewMode = "metric-tree";
+    draft.currentEntityId = null;
+    draft.sidebarOpen = false;
+    draft.focusedMetricId = metricId;
+  }),
   toggleSidebar: () => set((draft) => { draft.sidebarOpen = !draft.sidebarOpen; }),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   setViewMode: (mode) => set((draft) => {

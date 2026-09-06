@@ -356,6 +356,13 @@
               "components": [
                 "SignalCard"
               ]
+            },
+            {
+              "action": "Click a signal card to jump to the metric tree with that metric centred, to see what it feeds and what feeds it",
+              "components": [
+                "SignalCard",
+                "MetricTreeView"
+              ]
             }
           ]
         },
@@ -540,6 +547,13 @@
               "components": [
                 "SignalCard",
                 "SignalsTab"
+              ]
+            },
+            {
+              "action": "Click a signal card to jump to the metric tree with that metric centred, to see what it feeds and what feeds it",
+              "components": [
+                "SignalCard",
+                "MetricTreeView"
               ]
             }
           ]

@@ -78,6 +78,7 @@
 | **Track signals** | Switch to the Signals tab on a Business Outcome to see the metrics feeding its own | `EntityView` · `SignalsTab` |
 |  | Add a signal inline; it becomes a child metric under this outcome's metric in the metric tree | `SignalsTab` |
 |  | Record a data point on a signal with the inline record form | `SignalCard` |
+|  | Click a signal card to jump to the metric tree with that metric centred, to see what it feeds and what feeds it | `SignalCard` · `MetricTreeView` |
 | **Add Product Outcome children** | Add a child Product Outcome from the children section | `EntityView` · `Add Child Button` |
 
 
@@ -109,6 +110,7 @@
 |  | Record a data point on a signal with the inline record form | `SignalCard` |
 |  | See a signal that has grown into an outcome of its own badged with that outcome's status and linking through to it | `SignalCard` |
 |  | Edit, pause, resume, reorder or delete a signal | `SignalCard` · `SignalsTab` |
+|  | Click a signal card to jump to the metric tree with that metric centred, to see what it feeds and what feeds it | `SignalCard` · `MetricTreeView` |
 | **Add Opportunity children** | Add a child Opportunity from the children section | `EntityView` · `Add Child Button` |
 
 
