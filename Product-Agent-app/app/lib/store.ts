@@ -52,6 +52,10 @@ export interface AppStore {
   clearTreeFocus: () => void;
   /** Switch to the metric tree and centre it on one metric. */
   openMetricTreeAt: (metricId: string) => void;
+  /** Explicit expand/collapse overrides on top of the default fold. UI-only, never persisted. */
+  expandedMetricIds: Record<string, boolean>;
+  toggleMetricExpanded: (metricId: string, expanded: boolean) => void;
+  resetMetricExpansion: () => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setViewMode: (mode: "discovery" | "metric-tree") => void;
@@ -202,12 +206,12 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
   clearFocusedMetric: () => set({ focusedMetricId: null }),
   treeFocusMetricId: null as string | null,
   setTreeFocus: (metricId) => {
-    set({ treeFocusMetricId: metricId });
+    set({ treeFocusMetricId: metricId, expandedMetricIds: {} });
     writeTreeFocus(get().currentProductLineId, metricId);
   },
   // No memory write here: null means "go back to root", and the tree
   // re-resolves to the root metric itself when it sees a null focus.
-  clearTreeFocus: () => set({ treeFocusMetricId: null }),
+  clearTreeFocus: () => set({ treeFocusMetricId: null, expandedMetricIds: {} }),
   openMetricTreeAt: (metricId) => set((draft) => {
     draft.viewMode = "metric-tree";
     draft.currentEntityId = null;
@@ -217,7 +221,14 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
     // only the in-memory field is updated here. The localStorage write
     // happens the next time the builder focuses a metric from the tree view.
     draft.treeFocusMetricId = metricId;
+    draft.expandedMetricIds = {};
   }),
+  expandedMetricIds: {},
+  toggleMetricExpanded: (metricId, expanded) =>
+    set((draft) => {
+      draft.expandedMetricIds[metricId] = expanded;
+    }),
+  resetMetricExpansion: () => set({ expandedMetricIds: {} }),
   toggleSidebar: () => set((draft) => { draft.sidebarOpen = !draft.sidebarOpen; }),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   setViewMode: (mode) => set((draft) => {
@@ -434,7 +445,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
 
   switchProductLine: (id) => {
     if (typeof window !== "undefined") localStorage.setItem("pa-current-pl", id);
-    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null, viewMode: "discovery", sidebarOpen: true, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null, focusedMetricId: null, treeFocusMetricId: null });
+    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null, viewMode: "discovery", sidebarOpen: true, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null, focusedMetricId: null, treeFocusMetricId: null, expandedMetricIds: {} });
   },
   navigateTo: (id) => set({ currentEntityId: id, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null, settingsOpen: false }),
   navigateUp: () =>

@@ -80,6 +80,34 @@ export function focusFamilyIds(pl: ProductLine, metricId: string | null): Set<st
 }
 
 /**
+ * The metrics whose children are rendered when the tree opens: the focused
+ * metric and every ancestor above it. Everything else starts collapsed, so a
+ * branch the builder is not reading takes up no width.
+ */
+export function defaultExpandedMetricIds(pl: ProductLine, metricId: string | null): Set<string> {
+  const out = new Set<string>();
+  if (!metricId) return out;
+  let current: Metric | undefined = getMetric(pl, metricId);
+  const seen = new Set<string>();
+  while (current && !seen.has(current.id)) {
+    seen.add(current.id);
+    out.add(current.id);
+    current = current.parentMetricId ? getMetric(pl, current.parentMetricId) : undefined;
+  }
+  return out;
+}
+
+/** How many active metrics sit under this one, at any depth. */
+export function activeDescendantCount(pl: ProductLine, metricId: string): number {
+  const ids = getMetricDescendantIds(pl, metricId);
+  let n = 0;
+  for (const m of pl.metrics ?? []) {
+    if (ids.has(m.id) && m.status === "active") n += 1;
+  }
+  return n;
+}
+
+/**
  * Outcome lookup comes in two flavours, because two different questions were
  * being asked of one function:
  *

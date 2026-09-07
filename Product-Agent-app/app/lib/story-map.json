@@ -1365,6 +1365,13 @@
                 "MetricTreeView",
                 "tree-focus-memory"
               ]
+            },
+            {
+              "action": "See the tree open folded to just the focused metric and its ancestors, with every other branch collapsed behind a pill showing how many active metrics are hidden underneath, and expand or collapse a branch without losing your place or changing focus",
+              "components": [
+                "MetricTreeView",
+                "BranchToggle"
+              ]
             }
           ]
         },

@@ -236,6 +236,7 @@
 |  | Hover a shrunken tile to read its full card in a popover, so you can find your way around the rest of the tree without leaving the metric you are on | `MetricTilePreview` · `MetricTreeCard` |
 |  | Click a shrunken tile to move the focus there, or press Escape to go back to the root | `MetricTreeView` · `MetricTreeCard` |
 |  | Return to the tree later and find it focused on the metric you left it on | `MetricTreeView` · `tree-focus-memory` |
+|  | See the tree open folded to just the focused metric and its ancestors, with every other branch collapsed behind a pill showing how many active metrics are hidden underneath, and expand or collapse a branch without losing your place or changing focus | `MetricTreeView` · `BranchToggle` |
 | **Add a metric** | Add a metric from a modal, choosing whether it sits at the top of the tree or feeds an existing one, with a searchable parent picker; the tree then scrolls to centre the new card | `MetricTreeView` · `MetricSettingsForm` · `MetricParentPicker` |
 |  | Add an input metric under an existing metric from the card's actions menu; it inherits the parent's type and cadence as defaults, and the tree centres on it once created | `MetricTreeCard` · `MetricSettingsForm` |
 |  | Record a plain metric's current value straight from its edit form, logged against the period you are in now | `MetricSettingsForm` |

@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback, useMemo } from "react";
-import { ZoomIn, ZoomOut, Plus, X } from "lucide-react";
+import { useRef, useEffect, useLayoutEffect, useState, useCallback, useMemo } from "react";
+import { ZoomIn, ZoomOut, Plus, X, ChevronDown, ChevronUp } from "lucide-react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/app/lib/utils";
@@ -9,7 +9,15 @@ import { ENTITY_STATUS_META, getPeriodDate } from "@/app/lib/schemas";
 import type { Entity, Metric, ProductLine } from "@/app/lib/schemas";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { useAppStore } from "@/app/lib/store";
-import { getChildMetrics, getRootMetrics, activeMetricToOutcome, pastMetricToOutcomes, focusFamilyIds } from "@/app/lib/metrics";
+import {
+  getChildMetrics,
+  getRootMetrics,
+  activeMetricToOutcome,
+  pastMetricToOutcomes,
+  focusFamilyIds,
+  defaultExpandedMetricIds,
+  activeDescendantCount,
+} from "@/app/lib/metrics";
 import { readTreeFocus } from "@/app/lib/tree-focus-memory";
 import { MetricTreeCard } from "./MetricTreeCard";
 import { MetricSettingsForm } from "./MetricSettingsForm";
@@ -47,23 +55,103 @@ interface SubtreeProps {
   pastByMetric: Record<string, Entity[]>;
   family: Set<string>;
   focusedId: string | null;
+  isExpanded: (metricId: string) => boolean;
+  onToggle: (metricId: string, expanded: boolean) => void;
 }
 
-function MetricSubtree({ metric, productLine, byMetric, pastByMetric, family, focusedId }: SubtreeProps) {
+/**
+ * The control that opens or closes one branch. It hangs in the gap below the
+ * card rather than inside it, so it works the same on a full card and on an
+ * 88px tile, and so a click on it never reaches the card's own focus handler.
+ */
+function BranchToggle({
+  expanded,
+  hiddenCount,
+  metricName,
+  onToggle,
+}: {
+  expanded: boolean;
+  hiddenCount: number;
+  metricName: string;
+  onToggle: () => void;
+}) {
+  return (
+    // The surface tokens are alpha tints, so the connector running underneath
+    // would show straight through the pill. The wrapper lays down an opaque
+    // page ground first and the button keeps its token surface on top.
+    <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 z-10 rounded-full bg-background">
+      <button
+        type="button"
+        aria-expanded={expanded}
+        aria-label={
+          expanded
+            ? `Collapse the metrics under ${metricName}`
+            : `Show ${hiddenCount} metric${hiddenCount === 1 ? "" : "s"} under ${metricName}`
+        }
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
+        className={cn(
+          "flex items-center gap-0.5 cursor-pointer",
+          "rounded-full border border-border-default bg-surface-2 py-0.5 text-[10px] text-muted-foreground",
+          expanded ? "px-1.5" : "pl-1.5 pr-2",
+          "hover:bg-surface-hover hover:text-foreground hover:border-border-strong active:bg-surface-active transition-colors",
+          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]",
+        )}
+      >
+        {expanded ? (
+          <ChevronUp size={12} />
+        ) : (
+          <>
+            <ChevronDown size={12} />
+            <span className="font-mono tabular-nums">{hiddenCount}</span>
+          </>
+        )}
+      </button>
+    </span>
+  );
+}
+
+function MetricSubtree({
+  metric,
+  productLine,
+  byMetric,
+  pastByMetric,
+  family,
+  focusedId,
+  isExpanded,
+  onToggle,
+}: SubtreeProps) {
   const children = getChildMetrics(productLine, metric.id)
     .filter((m) => m.status === "active")
     .sort(makeMetricSort(byMetric));
 
+  const expanded = isExpanded(metric.id);
+  const hiddenCount = expanded ? 0 : activeDescendantCount(productLine, metric.id);
+
   return (
     <div className="flex flex-col items-center">
-      <MetricTreeCard
-        metric={metric}
-        outcome={byMetric[metric.id]}
-        pastOutcomes={pastByMetric[metric.id]}
-        display={family.size === 0 || family.has(metric.id) ? "full" : "tile"}
-        focused={metric.id === focusedId}
-      />
-      {children.length > 0 && (
+      {/* relative: the branch toggle hangs off the card's bottom edge without
+          taking part in the column layout, so folding never shifts the rows. */}
+      <div className="relative">
+        <MetricTreeCard
+          metric={metric}
+          outcome={byMetric[metric.id]}
+          pastOutcomes={pastByMetric[metric.id]}
+          display={family.size === 0 || family.has(metric.id) ? "full" : "tile"}
+          focused={metric.id === focusedId}
+        />
+        {children.length > 0 && (
+          <BranchToggle
+            expanded={expanded}
+            hiddenCount={hiddenCount}
+            metricName={metric.name}
+            onToggle={() => onToggle(metric.id, !expanded)}
+          />
+        )}
+      </div>
+      {expanded && children.length > 0 && (
         // items-start: a tile next to a full card would otherwise stretch to the
         // full card's height (flex default is stretch), and the connector maths
         // anchors each child edge at childRect.top, which needs level tops.
@@ -77,6 +165,8 @@ function MetricSubtree({ metric, productLine, byMetric, pastByMetric, family, fo
               pastByMetric={pastByMetric}
               family={family}
               focusedId={focusedId}
+              isExpanded={isExpanded}
+              onToggle={onToggle}
             />
           ))}
         </div>
@@ -305,15 +395,55 @@ export function MetricTreeView() {
     [productLine, treeFocusMetricId],
   );
 
+  // Folding: the focus and its ancestors are open, everything else is closed
+  // until the builder opens it. A branch nobody is reading takes up no width.
+  const expandedMetricIds = useAppStore((s) => s.expandedMetricIds);
+  const toggleMetricExpanded = useAppStore((s) => s.toggleMetricExpanded);
+  const defaultExpanded = useMemo(
+    () => defaultExpandedMetricIds(productLine, treeFocusMetricId),
+    [productLine, treeFocusMetricId],
+  );
+  const isExpanded = useCallback(
+    (id: string) => expandedMetricIds[id] ?? defaultExpanded.has(id),
+    [expandedMetricIds, defaultExpanded],
+  );
+
+  // Every level is centred, so opening a branch pushes its siblings sideways
+  // and the card that was just clicked slides out from under the pointer.
+  // Remember where it was and put it back on the same pixel after the render.
+  const anchorRef = useRef<{ id: string; x: number } | null>(null);
+
+  const handleToggle = useCallback(
+    (id: string, next: boolean) => {
+      const el = document.getElementById(`metric-tree-node-${id}`);
+      anchorRef.current = el ? { id, x: el.getBoundingClientRect().left } : null;
+      toggleMetricExpanded(id, next);
+    },
+    [toggleMetricExpanded],
+  );
+
+  useLayoutEffect(() => {
+    const anchor = anchorRef.current;
+    anchorRef.current = null;
+    if (!anchor) return;
+    const scroller = scrollRef.current;
+    const el = document.getElementById(`metric-tree-node-${anchor.id}`);
+    if (!scroller || !el) return;
+    scroller.scrollLeft += el.getBoundingClientRect().left - anchor.x;
+  }, [expandedMetricIds]);
+
   const redrawLines = useCallback(() => {
     drawLines(canvasRef.current, svgRef.current, productLine, byMetric, zoom);
   }, [productLine, byMetric, zoom]);
 
-  // Redraw after render (double rAF ensures DOM has painted)
+  // Redraw after render (double rAF ensures DOM has painted). Folding is in the
+  // deps because connectors come from live DOM rects, and drawLines takes no
+  // expansion argument of its own.
   useEffect(() => {
+    void expandedMetricIds;
     const id = requestAnimationFrame(() => requestAnimationFrame(redrawLines));
     return () => cancelAnimationFrame(id);
-  }, [redrawLines]);
+  }, [redrawLines, expandedMetricIds]);
 
   // Redraw on window resize
   useEffect(() => {
@@ -525,6 +655,8 @@ export function MetricTreeView() {
                       pastByMetric={pastByMetric}
                       family={family}
                       focusedId={treeFocusMetricId}
+                      isExpanded={isExpanded}
+                      onToggle={handleToggle}
                     />
                   ))}
                 </div>
