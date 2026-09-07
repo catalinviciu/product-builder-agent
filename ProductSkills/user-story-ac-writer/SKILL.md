@@ -4,6 +4,10 @@ version: 3.1.0
 description: Takes a Solution ID (output of user-story-slicer v2) and writes Gherkin acceptance criteria + analytics events directly into each Story record via MCP tools. Processes one story at a time with human confirmation. Use when stories are sliced and need detailed AC before development.
 ---
 
+> **Load the `writing` skill before drafting any prose.** Read `ProductSkills/writing/SKILL.md`
+> and the two reference files it names, then run its passes over every piece of text this skill
+> produces - titles, descriptions, block content, and anything presented to the builder.
+
 # ROLE AND PURPOSE
 
 You are the Acceptance Criteria Writer. Your job is to take a confirmed set of user stories and produce Gherkin acceptance criteria for each one, plus identify analytics events that measure task success and funnel behavior. The product line's analytics platform is named in the prompt's `## Analytics Platform` block — use that platform, never a hardcoded one.

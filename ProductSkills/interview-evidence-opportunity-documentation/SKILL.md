@@ -5,6 +5,10 @@ author: Cata Viciu
 description: Takes a finished Interview Snapshot plus an Outcome anchor (a Product Outcome entity whose children are the opportunities) and routes the interview's evidence onto each opportunity as pro/against Customer Evidence, using the Product Agent MCP tools. Consolidates scattered evidence blocks into one per opportunity, scopes every verdict to a persona/segment, never changes priorities or status without explicit confirmation, and raises red flags when evidence conflicts with an opportunity. Use when the user gives an interview snapshot and an outcome/opportunity anchor and asks to log or distribute evidence to the tree.
 ---
 
+> **Load the `writing` skill before drafting any prose.** Read `ProductSkills/writing/SKILL.md`
+> and the two reference files it names, then run its passes over every piece of text this skill
+> produces - titles, descriptions, block content, and anything presented to the builder.
+
 # Evidence Router
 
 ## Role

@@ -4,6 +4,10 @@ description: Reads the existing User Story Map, determines where a new or change
 version: 1.0
 ---
 
+> **Load the `writing` skill before drafting any prose.** Read `ProductSkills/writing/SKILL.md`
+> and the two reference files it names, then run its passes over every piece of text this skill
+> produces - titles, descriptions, block content, and anything presented to the builder.
+
 # ROLE AND PURPOSE
 
 You are the Story Map Maintainer for Product Agent. Your job is to keep the User Story Map accurate as features are planned and shipped. The story map follows Jeff Patton's User Story Mapping format and lives as structured data with a generated markdown view.

@@ -1315,7 +1315,7 @@
               ]
             },
             {
-              "action": "Navigate to an outcome's detail view by clicking its metric card",
+              "action": "Open an outcome's detail view from its title on the metric card, or from Open outcome in the card's actions menu",
               "components": [
                 "MetricTreeCard",
                 "EntityView"
@@ -1325,6 +1325,45 @@
               "action": "Zoom in or out on large metric trees using the zoom controls",
               "components": [
                 "MetricTreeView"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Focus on one metric",
+          "stories": [
+            {
+              "action": "Click a metric to read it alongside its parent and all of its children at full size, while every other card shrinks to a tile that keeps its place in the tree",
+              "components": [
+                "MetricTreeView",
+                "MetricTreeCard"
+              ]
+            },
+            {
+              "action": "See the board scroll so the focused metric and its family sit in the middle of the view",
+              "components": [
+                "MetricTreeView"
+              ]
+            },
+            {
+              "action": "Hover a shrunken tile to read its full card in a popover, so you can find your way around the rest of the tree without leaving the metric you are on",
+              "components": [
+                "MetricTilePreview",
+                "MetricTreeCard"
+              ]
+            },
+            {
+              "action": "Click a shrunken tile to move the focus there, or press Escape to go back to the root",
+              "components": [
+                "MetricTreeView",
+                "MetricTreeCard"
+              ]
+            },
+            {
+              "action": "Return to the tree later and find it focused on the metric you left it on",
+              "components": [
+                "MetricTreeView",
+                "tree-focus-memory"
               ]
             }
           ]
@@ -1354,7 +1393,7 @@
               ]
             },
             {
-              "action": "Click a plain metric card to edit it in place: name, type, cadence, format and its current value. Target and date fields only appear once an outcome is driving the metric.",
+              "action": "Edit a metric in place from its actions menu: name, type, cadence, format and its current value. Target and date fields only appear once an outcome is driving the metric.",
               "components": [
                 "MetricTreeCard",
                 "MetricSettingsForm"

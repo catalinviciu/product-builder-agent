@@ -53,6 +53,33 @@ export function getMetricDescendantIds(pl: ProductLine, metricId: string): Set<s
 }
 
 /**
+ * The metrics that stay full size when the tree is focused on one metric:
+ * the metric itself, its parent, and its direct children. Everything else in
+ * the tree shrinks to a tile, which is what gives the family room to sit
+ * together on one screen.
+ */
+export function focusFamilyIds(pl: ProductLine, metricId: string | null): Set<string> {
+  const out = new Set<string>();
+  if (!metricId) return out;
+
+  const metric = getMetric(pl, metricId);
+  if (!metric) return out;
+
+  if (metric.status === "active") out.add(metric.id);
+
+  if (metric.parentMetricId) {
+    const parent = getMetric(pl, metric.parentMetricId);
+    if (parent && parent.status === "active") out.add(parent.id);
+  }
+
+  for (const child of getChildMetrics(pl, metricId)) {
+    if (child.status === "active") out.add(child.id);
+  }
+
+  return out;
+}
+
+/**
  * Outcome lookup comes in two flavours, because two different questions were
  * being asked of one function:
  *

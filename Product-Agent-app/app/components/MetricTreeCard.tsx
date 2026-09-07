@@ -19,6 +19,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { MetricSettingsForm } from "./MetricSettingsForm";
 import { MetricParentList } from "./MetricParentPicker";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { MetricTilePreview } from "./MetricTilePreview";
 import { getPeriodDate } from "@/app/lib/schemas";
 
 // ── ReparentDropdown ────────────────────────────────────────────────────────
@@ -112,6 +113,12 @@ interface MetricTreeCardProps {
   outcome?: Entity;
   /** Outcomes that were worked here and are now done, dropped or archived. */
   pastOutcomes?: Entity[];
+  /** "tile" is the shrunken state used for every metric outside the focused family. */
+  display?: "full" | "tile";
+  /** The hover preview renders a read-only copy of this card; it takes no clicks and shows no chrome. */
+  interactive?: boolean;
+  /** True when this card is the one the tree is focused on. */
+  focused?: boolean;
 }
 
 type CardMode = "view" | "edit" | "add-outcome" | "add-child";
@@ -122,11 +129,21 @@ type CardMode = "view" | "edit" | "add-outcome" | "add-child";
  * to being a plain metric that can take a new one, keeping a link to what came
  * before.
  */
-export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTreeCardProps) {
+export function MetricTreeCard({
+  metric,
+  outcome,
+  pastOutcomes = [],
+  display = "full",
+  interactive = true,
+  focused = false,
+}: MetricTreeCardProps) {
   const [reparentOpen, setReparentOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mode, setMode] = useState<CardMode>("view");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [previewAnchor, setPreviewAnchor] = useState<HTMLDivElement | null>(null);
+  const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const navigateFromMetricTree = useAppStore((s) => s.navigateFromMetricTree);
   const reparentMetric = useAppStore((s) => s.reparentMetric);
@@ -134,6 +151,7 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
   const addMetric = useAppStore((s) => s.addMetric);
   const recordMetricValue = useAppStore((s) => s.recordMetricValue);
   const focusMetric = useAppStore((s) => s.focusMetric);
+  const setTreeFocus = useAppStore((s) => s.setTreeFocus);
   const productLine = useProductLine();
 
   const levelMeta = outcome ? LEVEL_META[outcome.level] : undefined;
@@ -152,15 +170,15 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
   const showRange = Boolean(outcome && toLabel);
 
   const editing = mode !== "view";
+  const isTile = display === "tile" && !editing;
 
   /**
-   * Clicking through goes to the outcome being worked here. A plain metric has
-   * nowhere to go, so it opens its own settings — turning it into an outcome is
-   * a deliberate choice from the actions menu, not the default click.
+   * A click picks what to read, it does not leave the tree. Opening the outcome
+   * is an explicit choice from the title link or the actions menu, so the click
+   * target and the reading target stay the same thing.
    */
   function open() {
-    if (outcome) navigateFromMetricTree(outcome.id);
-    else setMode("edit");
+    setTreeFocus(metric.id);
   }
 
   /**
@@ -184,25 +202,64 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
     open();
   }
 
+  /**
+   * The preview is only worth showing for a tile the builder can't already
+   * read, and only on pointers that can hover — a tap on touch focuses the
+   * tile directly instead, which is the whole touch answer.
+   */
+  function clearPreviewTimer() {
+    if (previewTimer.current) {
+      clearTimeout(previewTimer.current);
+      previewTimer.current = null;
+    }
+  }
+
+  function handleCardMouseEnter() {
+    if (!isTile || !interactive) return;
+    if (typeof window !== "undefined" && window.matchMedia("(hover: none)").matches) return;
+    clearPreviewTimer();
+    previewTimer.current = setTimeout(() => setPreviewAnchor(cardRef.current), 120);
+  }
+
+  function handleCardMouseLeave() {
+    clearPreviewTimer();
+    setPreviewAnchor(null);
+  }
+
+  useEffect(() => clearPreviewTimer, []);
+
   return (
     <div
-      id={`metric-tree-node-${metric.id}`}
-      role="button"
-      tabIndex={editing ? -1 : 0}
-      aria-label={outcome ? `Open ${outcome.title}` : `Edit ${metric.name}`}
-      onClick={handleCardClick}
-      onKeyDown={handleCardKeyDown}
+      ref={cardRef}
+      // The hover preview renders a second copy of this card. Only the one in the
+      // tree may carry the id, or `drawLines` would measure the floating preview
+      // and hang the connectors off it.
+      id={interactive ? `metric-tree-node-${metric.id}` : undefined}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive && !editing ? 0 : -1}
+      aria-hidden={interactive ? undefined : true}
+      aria-label={interactive ? `Focus ${metric.name}` : undefined}
+      onClick={interactive ? handleCardClick : undefined}
+      onKeyDown={interactive ? handleCardKeyDown : undefined}
+      onMouseEnter={handleCardMouseEnter}
+      onMouseLeave={handleCardMouseLeave}
       className={cn(
-        "group relative rounded-xl border p-3.5 select-none transition-all duration-150",
-        editing ? "w-[320px] cursor-default" : "w-[260px] cursor-pointer",
+        "group relative rounded-xl border select-none",
+        "transition-[width,background-color,border-color,color] duration-250 ease-[cubic-bezier(0.32,0.72,0.24,1)]",
+        editing
+          ? "w-[320px] p-3.5 cursor-default"
+          : isTile
+            ? "w-[88px] p-2 cursor-pointer"
+            : "w-[260px] p-3.5 cursor-pointer",
         "hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)]",
         outcome && levelMeta
           ? cn("border-border-default border-l-[3px] hover:border-border-strong", levelMeta.bgTint, levelMeta.borderTint)
           : "border-border-subtle bg-surface-1 hover:border-border-default",
+        focused && "border-border-strong bg-surface-active",
       )}
     >
-      {/* Actions — visible on hover */}
-      {mode === "view" && (
+      {/* Actions — visible on hover, hidden entirely in tile mode: too small for them */}
+      {mode === "view" && !isTile && (
         <div className="card-actions absolute top-2.5 right-2.5 flex items-center gap-0.5">
           <button
             onClick={(e) => { e.stopPropagation(); setReparentOpen((v) => !v); }}
@@ -225,6 +282,11 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[170px]">
+              {outcome && (
+                <DropdownMenuItem onClick={() => navigateFromMetricTree(outcome.id)} className="text-xs gap-2">
+                  <ArrowUpRight size={12} /> Open outcome
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => setMode("add-child")} className="text-xs gap-2">
                 <Plus size={12} /> Add input metric
               </DropdownMenuItem>
@@ -283,6 +345,31 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
         />
       ) : mode === "add-outcome" ? (
         <AddOutcomeForm metric={metric} onClose={() => setMode("view")} />
+      ) : isTile ? (
+        // Tile mode keeps only what reads at a glance: the tier icon, the
+        // name, and whether it has data. Everything else needs the hover
+        // preview or a focus click to reach.
+        <div className="flex flex-col items-center gap-1.5">
+          <div
+            className={cn(
+              "w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0",
+              levelMeta?.iconBg ?? "bg-surface-3",
+            )}
+          >
+            {LevelIcon && (
+              <LevelIcon className={cn("w-3.5 h-3.5", levelMeta?.accentColor ?? "text-muted-foreground")} />
+            )}
+          </div>
+          <span className="text-[10px] font-medium leading-snug text-foreground line-clamp-2 text-center">
+            {metric.name}
+          </span>
+          <span
+            className={cn(
+              "w-1.5 h-1.5 rounded-full flex-shrink-0",
+              last ? "bg-emerald-500" : "bg-border-default",
+            )}
+          />
+        </div>
       ) : (
         <>
           {/* The metric leads: this is a tree of metrics, whoever is working them */}
@@ -320,9 +407,15 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
 
           {/* The outcome being worked here, and the move it is going for */}
           {outcome && (
-            <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2 mb-1.5">
-              {outcome.title}
-            </p>
+            <button
+              onClick={(e) => { e.stopPropagation(); navigateFromMetricTree(outcome.id); }}
+              className="card-actions group/open flex items-start gap-1 text-left cursor-pointer mb-1.5"
+            >
+              <span className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
+                {outcome.title}
+              </span>
+              <ArrowUpRight className="w-2.5 h-2.5 text-muted-foreground/40 shrink-0 mt-0.5 group-hover/open:text-foreground transition-colors" />
+            </button>
           )}
 
           {showRange && (
@@ -391,6 +484,17 @@ export function MetricTreeCard({ metric, outcome, pastOutcomes = [] }: MetricTre
         onConfirm={() => { setConfirmDelete(false); removeMetric(metric.id); }}
         onCancel={() => setConfirmDelete(false)}
       />
+
+      {/* Stays mounted while this is a tile so the preview's exit fade can run;
+          `anchor` going null is what closes it. */}
+      {isTile && interactive && (
+        <MetricTilePreview
+          metric={metric}
+          outcome={outcome}
+          pastOutcomes={pastOutcomes}
+          anchor={previewAnchor}
+        />
+      )}
     </div>
   );
 }

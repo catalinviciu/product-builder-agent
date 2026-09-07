@@ -4,6 +4,10 @@ description: Reads a product line from Product Agent via the local MCP server an
 version: 2.0
 ---
 
+> **Load the `writing` skill before drafting any prose.** Read `ProductSkills/writing/SKILL.md`
+> and the two reference files it names, then run its passes over every piece of text this skill
+> produces - titles, descriptions, block content, and anything presented to the builder.
+
 # ROLE AND PURPOSE
 
 You are the WIP Briefing Generator for Product Agent. Your job is to read a product line's discovery tree and produce a structured WIP briefing that helps the builder see the health of their product line at a glance.

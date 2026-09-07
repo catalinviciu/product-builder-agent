@@ -229,12 +229,17 @@
 | **Switch to Metric Tree view** | Toggle from Discovery Tree to Metric Tree using the sidebar segmented control | `SectionNav` · `ViewModeToggle` |
 | **Browse metric relationships** | View every metric arranged as a recursive tree, with a solid connector into a metric that carries an outcome and a dashed one into a plain tracking metric | `MetricTreeView` · `MetricTreeCard` |
 |  | Read each card metric-first: the metric name, its current value with how often it is recorded, then the outcome being worked on it, the move that outcome is going for, and chips for its status and the metric's type | `MetricTreeCard` |
-|  | Navigate to an outcome's detail view by clicking its metric card | `MetricTreeCard` · `EntityView` |
+|  | Open an outcome's detail view from its title on the metric card, or from Open outcome in the card's actions menu | `MetricTreeCard` · `EntityView` |
 |  | Zoom in or out on large metric trees using the zoom controls | `MetricTreeView` |
+| **Focus on one metric** | Click a metric to read it alongside its parent and all of its children at full size, while every other card shrinks to a tile that keeps its place in the tree | `MetricTreeView` · `MetricTreeCard` |
+|  | See the board scroll so the focused metric and its family sit in the middle of the view | `MetricTreeView` |
+|  | Hover a shrunken tile to read its full card in a popover, so you can find your way around the rest of the tree without leaving the metric you are on | `MetricTilePreview` · `MetricTreeCard` |
+|  | Click a shrunken tile to move the focus there, or press Escape to go back to the root | `MetricTreeView` · `MetricTreeCard` |
+|  | Return to the tree later and find it focused on the metric you left it on | `MetricTreeView` · `tree-focus-memory` |
 | **Add a metric** | Add a metric from a modal, choosing whether it sits at the top of the tree or feeds an existing one, with a searchable parent picker; the tree then scrolls to centre the new card | `MetricTreeView` · `MetricSettingsForm` · `MetricParentPicker` |
 |  | Add an input metric under an existing metric from the card's actions menu; it inherits the parent's type and cadence as defaults, and the tree centres on it once created | `MetricTreeCard` · `MetricSettingsForm` |
 |  | Record a plain metric's current value straight from its edit form, logged against the period you are in now | `MetricSettingsForm` |
-|  | Click a plain metric card to edit it in place: name, type, cadence, format and its current value. Target and date fields only appear once an outcome is driving the metric. | `MetricTreeCard` · `MetricSettingsForm` |
+|  | Edit a metric in place from its actions menu: name, type, cadence, format and its current value. Target and date fields only appear once an outcome is driving the metric. | `MetricTreeCard` · `MetricSettingsForm` |
 |  | Label a metric as a business or a product metric and see that label on its card | `MetricSettingsForm` · `MetricTreeCard` |
 |  | Record a metric daily, weekly, monthly or quarterly; a value dated mid-period snaps to the period's start | `MetricSettingsForm` · `MetricRecordForm` |
 |  | Delete a metric from its actions menu, confirming in a dialog; its children rise to take its place | `MetricTreeCard` |

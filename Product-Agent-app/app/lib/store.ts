@@ -22,6 +22,7 @@ import type { SettingsFieldKey } from "./settings-redirect";
 import { analyticsEmitter, type AnalyticsEventMap } from "./analytics-events";
 import { getDescendantIds } from "./utils";
 import { getStoryMapConfig } from "./story-map-config";
+import { writeTreeFocus } from "./tree-focus-memory";
 
 export interface AppStore {
   // Data
@@ -40,6 +41,15 @@ export interface AppStore {
   focusedMetricId: string | null;
   focusMetric: (metricId: string) => void;
   clearFocusedMetric: () => void;
+  /**
+   * The metric the tree is currently "zoomed" into — sticky across
+   * navigation and persisted per product line so the tree reopens where the
+   * builder left it. Distinct from `focusedMetricId`, which is a one-shot
+   * scroll trigger.
+   */
+  treeFocusMetricId: string | null;
+  setTreeFocus: (metricId: string | null) => void;
+  clearTreeFocus: () => void;
   /** Switch to the metric tree and centre it on one metric. */
   openMetricTreeAt: (metricId: string) => void;
   toggleSidebar: () => void;
@@ -190,11 +200,23 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
   focusedMetricId: null as string | null,
   focusMetric: (metricId) => set({ focusedMetricId: metricId }),
   clearFocusedMetric: () => set({ focusedMetricId: null }),
+  treeFocusMetricId: null as string | null,
+  setTreeFocus: (metricId) => {
+    set({ treeFocusMetricId: metricId });
+    writeTreeFocus(get().currentProductLineId, metricId);
+  },
+  // No memory write here: null means "go back to root", and the tree
+  // re-resolves to the root metric itself when it sees a null focus.
+  clearTreeFocus: () => set({ treeFocusMetricId: null }),
   openMetricTreeAt: (metricId) => set((draft) => {
     draft.viewMode = "metric-tree";
     draft.currentEntityId = null;
     draft.sidebarOpen = false;
     draft.focusedMetricId = metricId;
+    // Immer draft can't call setTreeFocus (it's a plain set-based action), so
+    // only the in-memory field is updated here. The localStorage write
+    // happens the next time the builder focuses a metric from the tree view.
+    draft.treeFocusMetricId = metricId;
   }),
   toggleSidebar: () => set((draft) => { draft.sidebarOpen = !draft.sidebarOpen; }),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -216,6 +238,9 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
   openSettingsWithRedirect: (plId, redirect) => set((draft) => {
     if (plId !== draft.currentProductLineId) {
       draft.currentProductLineId = plId;
+      // The focused metric belongs to the line we are leaving, so drop it and let
+      // the tree re-resolve from the new line's own memory.
+      draft.treeFocusMetricId = null;
       if (typeof window !== "undefined") localStorage.setItem("pa-current-pl", plId);
     }
     draft.settingsOpen = true;
@@ -409,7 +434,7 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
 
   switchProductLine: (id) => {
     if (typeof window !== "undefined") localStorage.setItem("pa-current-pl", id);
-    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null, viewMode: "discovery", sidebarOpen: true, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null, focusedMetricId: null });
+    set({ currentProductLineId: id, currentEntityId: null, personaPanelOpen: false, personaPanelId: null, viewMode: "discovery", sidebarOpen: true, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null, focusedMetricId: null, treeFocusMetricId: null });
   },
   navigateTo: (id) => set({ currentEntityId: id, storyDetailOpen: false, storyDetailSolutionId: null, storyDetailStoryId: null, settingsOpen: false }),
   navigateUp: () =>

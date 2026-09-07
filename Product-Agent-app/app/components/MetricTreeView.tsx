@@ -9,7 +9,8 @@ import { ENTITY_STATUS_META, getPeriodDate } from "@/app/lib/schemas";
 import type { Entity, Metric, ProductLine } from "@/app/lib/schemas";
 import { useProductLine } from "@/app/lib/hooks/useProductLine";
 import { useAppStore } from "@/app/lib/store";
-import { getChildMetrics, getRootMetrics, activeMetricToOutcome, pastMetricToOutcomes } from "@/app/lib/metrics";
+import { getChildMetrics, getRootMetrics, activeMetricToOutcome, pastMetricToOutcomes, focusFamilyIds } from "@/app/lib/metrics";
+import { readTreeFocus } from "@/app/lib/tree-focus-memory";
 import { MetricTreeCard } from "./MetricTreeCard";
 import { MetricSettingsForm } from "./MetricSettingsForm";
 import { MetricParentField } from "./MetricParentPicker";
@@ -44,9 +45,11 @@ interface SubtreeProps {
   productLine: ProductLine;
   byMetric: Record<string, Entity>;
   pastByMetric: Record<string, Entity[]>;
+  family: Set<string>;
+  focusedId: string | null;
 }
 
-function MetricSubtree({ metric, productLine, byMetric, pastByMetric }: SubtreeProps) {
+function MetricSubtree({ metric, productLine, byMetric, pastByMetric, family, focusedId }: SubtreeProps) {
   const children = getChildMetrics(productLine, metric.id)
     .filter((m) => m.status === "active")
     .sort(makeMetricSort(byMetric));
@@ -57,9 +60,14 @@ function MetricSubtree({ metric, productLine, byMetric, pastByMetric }: SubtreeP
         metric={metric}
         outcome={byMetric[metric.id]}
         pastOutcomes={pastByMetric[metric.id]}
+        display={family.size === 0 || family.has(metric.id) ? "full" : "tile"}
+        focused={metric.id === focusedId}
       />
       {children.length > 0 && (
-        <div className="flex gap-5 justify-center mt-14">
+        // items-start: a tile next to a full card would otherwise stretch to the
+        // full card's height (flex default is stretch), and the connector maths
+        // anchors each child edge at childRect.top, which needs level tops.
+        <div className="flex gap-5 justify-center items-start mt-14">
           {children.map((child) => (
             <MetricSubtree
               key={child.id}
@@ -67,6 +75,8 @@ function MetricSubtree({ metric, productLine, byMetric, pastByMetric }: SubtreeP
               productLine={productLine}
               byMetric={byMetric}
               pastByMetric={pastByMetric}
+              family={family}
+              focusedId={focusedId}
             />
           ))}
         </div>
@@ -284,6 +294,17 @@ export function MetricTreeView() {
     [productLine, byMetric],
   );
 
+  // Looking-glass focus: one metric (plus its parent and direct children) stays
+  // full size, everything else shrinks to a tile. This is what keeps a wide
+  // branch legible once it no longer fits the viewport at full card width.
+  const treeFocusMetricId = useAppStore((s) => s.treeFocusMetricId);
+  const setTreeFocus = useAppStore((s) => s.setTreeFocus);
+  const clearTreeFocus = useAppStore((s) => s.clearTreeFocus);
+  const family = useMemo(
+    () => focusFamilyIds(productLine, treeFocusMetricId),
+    [productLine, treeFocusMetricId],
+  );
+
   const redrawLines = useCallback(() => {
     drawLines(canvasRef.current, svgRef.current, productLine, byMetric, zoom);
   }, [productLine, byMetric, zoom]);
@@ -309,6 +330,100 @@ export function MetricTreeView() {
     observer.observe(el);
     return () => observer.disconnect();
   }, [redrawLines]);
+
+  // The tree is always focused on something. When there is no focus yet
+  // (fresh load, or a click on the canvas cleared it) resolve one: the
+  // remembered metric if it still exists and is active, else the first root.
+  useEffect(() => {
+    if (roots.length === 0) return;
+    // A focus can go stale: the metric was deleted, archived, or belonged to a
+    // product line we have since left. Re-resolve rather than leaving the board
+    // with nothing focused.
+    const current = treeFocusMetricId
+      ? productLine.metrics?.find((m) => m.id === treeFocusMetricId)
+      : undefined;
+    if (current && current.status === "active") return;
+    const remembered = readTreeFocus(productLine.id);
+    const rememberedMetric = remembered
+      ? productLine.metrics?.find((m) => m.id === remembered)
+      : undefined;
+    const resolvedId =
+      rememberedMetric && rememberedMetric.status === "active" ? rememberedMetric.id : roots[0]?.id;
+    if (resolvedId) setTreeFocus(resolvedId);
+  }, [productLine, treeFocusMetricId, roots, setTreeFocus]);
+
+  // Cards animate their width over 250ms when the focus changes. drawLines
+  // reads live rects so its own maths needs no change, but it has to run every
+  // frame while the widths are moving or the connectors trail behind the
+  // cards. Bounded to the transition window, so it never fires on hover (the
+  // hover preview is an overlay that moves no card).
+  useEffect(() => {
+    if (!treeFocusMetricId) return;
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      redrawLines();
+      if (now - start < 300) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [treeFocusMetricId, redrawLines]);
+
+  // Centre the focused family once the width transition has settled, so the
+  // whole family (not just the focused card) sits in the middle of the view.
+  const firstFocusDoneForPL = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!treeFocusMetricId) return;
+    const timer = setTimeout(() => {
+      const scroller = scrollRef.current;
+      if (!scroller) return;
+      const rects = Array.from(family)
+        .map((id) => document.getElementById(`metric-tree-node-${id}`))
+        .filter((el): el is HTMLElement => el !== null)
+        .map((el) => el.getBoundingClientRect());
+      if (rects.length === 0) return;
+
+      const view = scroller.getBoundingClientRect();
+      let left = Math.min(...rects.map((r) => r.left));
+      let right = Math.max(...rects.map((r) => r.right));
+      let top = Math.min(...rects.map((r) => r.top));
+      let bottom = Math.max(...rects.map((r) => r.bottom));
+
+      // If the family is wider or taller than the viewport, centring the
+      // union would push the focused card itself off-screen. Clamp the box
+      // to a viewport-sized window around the focused card instead.
+      const focusedEl = document.getElementById(`metric-tree-node-${treeFocusMetricId}`);
+      if (focusedEl) {
+        const fRect = focusedEl.getBoundingClientRect();
+        if (right - left > view.width) {
+          const cx = fRect.left + fRect.width / 2;
+          left = cx - view.width / 2;
+          right = cx + view.width / 2;
+        }
+        if (bottom - top > view.height) {
+          const cy = fRect.top + fRect.height / 2;
+          top = cy - view.height / 2;
+          bottom = cy + view.height / 2;
+        }
+      }
+
+      const isFirstForPL = firstFocusDoneForPL.current !== productLine.id;
+      firstFocusDoneForPL.current = productLine.id;
+
+      scroller.scrollTo({
+        left: scroller.scrollLeft + (left + right) / 2 - (view.left + view.width / 2),
+        top: scroller.scrollTop + (top + bottom) / 2 - (view.top + view.height / 2),
+        behavior: isFirstForPL ? "auto" : "smooth",
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+    // `family` is deliberately not a dependency: it is a fresh Set on every store
+    // write, and re-centring the board every time a value is recorded would yank
+    // the view out from under the builder. A newly added or moved metric is
+    // centred by the `focusedMetricId` effect below instead.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [treeFocusMetricId, productLine.id]);
 
   // Bring a just-added or just-moved metric into the middle of the view, so the
   // change is where you are looking rather than somewhere off the canvas.
@@ -366,7 +481,14 @@ export function MetricTreeView() {
       <AddMetricModal key={adding ? "open" : "closed"} open={adding} onClose={() => setAdding(false)} />
 
       {/* Tree canvas — scrollable in both directions */}
-      <div ref={scrollRef} className="flex-1 overflow-auto px-[var(--spacing-page-px)]">
+      <div
+        ref={scrollRef}
+        tabIndex={-1}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") clearTreeFocus();
+        }}
+        className="flex-1 overflow-auto px-[var(--spacing-page-px)]"
+      >
         {hasContent ? (
           <div className="min-w-max pb-8">
             <div
@@ -379,6 +501,12 @@ export function MetricTreeView() {
               <div
                 ref={canvasRef}
                 className="relative inline-flex justify-center w-full pt-2 pb-16"
+                onClick={(e) => {
+                  // Click landed on the canvas background itself, not on a card
+                  // or anything inside one. Clear the focus, which the effect
+                  // above then re-resolves to the root metric, not "unfocused".
+                  if (e.target === e.currentTarget) clearTreeFocus();
+                }}
               >
                 <svg
                   ref={svgRef}
@@ -387,7 +515,7 @@ export function MetricTreeView() {
                   aria-hidden="true"
                 />
                 {/* Root row */}
-                <div className="flex gap-5 justify-center">
+                <div className="flex gap-5 justify-center items-start">
                   {roots.map((root) => (
                     <MetricSubtree
                       key={root.id}
@@ -395,6 +523,8 @@ export function MetricTreeView() {
                       productLine={productLine}
                       byMetric={byMetric}
                       pastByMetric={pastByMetric}
+                      family={family}
+                      focusedId={treeFocusMetricId}
                     />
                   ))}
                 </div>
