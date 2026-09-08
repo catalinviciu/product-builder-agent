@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { withStoreMutex } from "@/app/lib/storeAccess";
-import { getMetric, upsertDataPoint } from "@/app/lib/metrics";
+import { getMetric, upsertDataPoint, snapToPeriod } from "@/app/lib/metrics";
 
 /**
  * Upserts one data point on a metric.
@@ -30,6 +30,41 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       const metric = getMetric(pl, metricId);
       if (!metric) throw new Error("Metric not found");
       upsertDataPoint(metric, date, value);
+      return { store, result: metric };
+    });
+
+    return NextResponse.json({ ok: true, data: updated });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/not found/.test(msg)) return NextResponse.json({ ok: false, error: msg }, { status: 404 });
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+  }
+}
+
+/**
+ * Deletes one data point by date, read from a query param since DELETE bodies
+ * are awkward. The date is snapped the same way a write would be, so the
+ * caller doesn't need to know which day a period landed on.
+ */
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string; metricId: string }> }) {
+  try {
+    const { id, metricId } = await params;
+    const date = new URL(req.url).searchParams.get("date");
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return NextResponse.json({ ok: false, error: "date query param must be an ISO date (YYYY-MM-DD)" }, { status: 400 });
+    }
+
+    const updated = await withStoreMutex(async (store) => {
+      const pl = store[id];
+      if (!pl) throw new Error("Product line not found");
+      const metric = getMetric(pl, metricId);
+      if (!metric) throw new Error("Metric not found");
+
+      const snapped = snapToPeriod(date, metric.frequency);
+      const before = metric.dataSeries.length;
+      metric.dataSeries = metric.dataSeries.filter((dp) => dp.date !== snapped);
+      if (metric.dataSeries.length === before) throw new Error("Data point not found");
+
       return { store, result: metric };
     });
 

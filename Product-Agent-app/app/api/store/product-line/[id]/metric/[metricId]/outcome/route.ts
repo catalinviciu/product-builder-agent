@@ -9,6 +9,7 @@ import {
   placeOutcome,
   syncOutcomeParentage,
 } from "@/app/lib/metrics";
+import { createBlockTemplate } from "@/app/lib/schemas";
 import type { Entity } from "@/app/lib/schemas";
 
 /**
@@ -63,7 +64,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           status: "draft",
           statusHistory: [{ status: "draft", date: today }],
           children: [],
-          blocks: [],
+          blocks: createBlockTemplate(level, newId),
         };
         pl.entities[newId] = entity;
       }
@@ -84,18 +85,42 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 }
 
-/** Detaches the outcome from this metric. The metric keeps its data and children. */
-export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string; metricId: string }> }) {
+/**
+ * Detaches an outcome from this metric. The metric keeps its data and children.
+ *
+ * With no `entityId` query param, detaches today's active outcome (the
+ * original behaviour). With `entityId`, detaches that specific outcome —
+ * active or already finished — as long as it is the one attached to this
+ * metric. The metric's target fields are only cleared when the outcome
+ * being detached was the active one; a finished outcome carries no target.
+ */
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string; metricId: string }> }) {
   try {
     const { id, metricId } = await params;
+    const entityId = new URL(req.url).searchParams.get("entityId");
 
     const metric = await withStoreMutex(async (store) => {
       const pl = store[id];
       if (!pl) throw new Error("Product line not found");
       const found = getMetric(pl, metricId);
       if (!found) throw new Error("Metric not found");
-      const outcome = activeOutcomeForMetric(pl, metricId);
-      if (outcome) outcome.metricId = undefined;
+
+      const active = activeOutcomeForMetric(pl, metricId);
+
+      if (entityId) {
+        const entity = pl.entities[entityId];
+        if (!entity || entity.metricId !== metricId) throw new Error("Outcome not found on this metric");
+        entity.metricId = undefined;
+        if (active?.id === entity.id) {
+          found.numericTarget = undefined;
+          found.endDate = undefined;
+          found.legacyTargetValue = undefined;
+          found.legacyTimeframe = undefined;
+        }
+        return { store, result: found };
+      }
+
+      if (active) active.metricId = undefined;
       found.numericTarget = undefined;
       found.endDate = undefined;
       found.legacyTargetValue = undefined;

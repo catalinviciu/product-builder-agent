@@ -182,6 +182,29 @@ export function latestPoint(metric: Metric): MetricDataPoint | undefined {
   return metric.dataSeries.length ? metric.dataSeries[metric.dataSeries.length - 1] : undefined;
 }
 
+/**
+ * A metric with its recorded series replaced by a three-field digest. List
+ * reads return these: a product line with fifty metrics carries thousands of
+ * data points, which is far more than any caller listing metrics asked for.
+ * Read the series itself one metric at a time, through the single-metric GET.
+ */
+export type MetricSummary = Omit<Metric, "dataSeries"> & {
+  pointCount: number;
+  latestDate?: string;
+  latestValue?: number;
+};
+
+/** Strips the recorded series off a metric, keeping a digest of it. */
+export function toMetricSummary(metric: Metric): MetricSummary {
+  const { dataSeries, ...rest } = metric;
+  const last = latestPoint(metric);
+  return {
+    ...rest,
+    pointCount: dataSeries.length,
+    ...(last ? { latestDate: last.date, latestValue: last.value } : {}),
+  };
+}
+
 /** True once a metric carries a real target — the structured shape. Legacy metrics carry strings instead. */
 export function hasTarget(metric: Metric): boolean {
   return metric.numericTarget !== undefined;
@@ -332,6 +355,7 @@ export function snapToPeriod(date: string, frequency: MetricFrequency): string {
 export interface NewMetricInput {
   name: string;
   metricType: Metric["metricType"];
+  status?: Metric["status"];
   frequency?: MetricFrequency;
   valueFormat?: MetricValueFormat;
   parentMetricId?: string;
@@ -346,7 +370,7 @@ export function createMetric(id: string, input: NewMetricInput): Metric {
     id,
     name: input.name.trim(),
     metricType: input.metricType,
-    status: "active",
+    status: input.status ?? "active",
     frequency: input.frequency ?? "weekly",
     valueFormat: input.valueFormat ?? "number",
     dataSeries: [],

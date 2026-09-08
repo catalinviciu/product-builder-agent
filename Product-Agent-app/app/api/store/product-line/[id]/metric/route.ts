@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { withStoreMutex } from "@/app/lib/storeAccess";
-import { createMetric, getMetric } from "@/app/lib/metrics";
-import type { MetricFrequency, MetricValueFormat, MetricType } from "@/app/lib/schemas";
+import { withStoreMutex, withStoreRead } from "@/app/lib/storeAccess";
+import { createMetric, getMetric, toMetricSummary } from "@/app/lib/metrics";
+import type { MetricFrequency, MetricValueFormat, MetricType, Metric } from "@/app/lib/schemas";
 
 const FREQUENCIES = ["daily", "weekly", "monthly", "quarterly"];
 const FORMATS = ["number", "currency_usd", "currency_eur", "currency_gbp", "percentage"];
+const STATUSES = ["active", "paused"];
 
 /** Creates a metric on a product line, optionally under a parent metric. */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -14,7 +15,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!body || typeof body !== "object") {
       return NextResponse.json({ ok: false, error: "Invalid body" }, { status: 400 });
     }
-    const { name, metricType, frequency, valueFormat, parentMetricId, initialValue, numericTarget, startDate, endDate } =
+    const { name, metricType, status, frequency, valueFormat, parentMetricId, initialValue, numericTarget, startDate, endDate } =
       body as Record<string, unknown>;
 
     if (typeof name !== "string" || !name.trim()) {
@@ -22,6 +23,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
     if (metricType !== undefined && metricType !== "business" && metricType !== "product") {
       return NextResponse.json({ ok: false, error: "metricType must be 'business' or 'product'" }, { status: 400 });
+    }
+    if (status !== undefined && !STATUSES.includes(status as string)) {
+      return NextResponse.json({ ok: false, error: `status must be one of ${STATUSES.join(", ")}` }, { status: 400 });
     }
     if (frequency !== undefined && !FREQUENCIES.includes(frequency as string)) {
       return NextResponse.json({ ok: false, error: `frequency must be one of ${FREQUENCIES.join(", ")}` }, { status: 400 });
@@ -40,6 +44,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       const metric = createMetric(`metric-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, {
         name: name.trim(),
         metricType: (metricType as MetricType) ?? "product",
+        status: status as Metric["status"] | undefined,
         frequency: frequency as MetricFrequency | undefined,
         valueFormat: valueFormat as MetricValueFormat | undefined,
         parentMetricId: parentMetricId as string | undefined,
@@ -60,14 +65,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 }
 
-/** Lists the metric registry for a product line. */
+/**
+ * Lists the metric registry for a product line, each metric digested rather
+ * than carrying its full recorded series. Read one metric's series through
+ * GET /metric/[metricId].
+ */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const metrics = await withStoreMutex(async (store) => {
+    const metrics = await withStoreRead((store) => {
       const pl = store[id];
       if (!pl) throw new Error("Product line not found");
-      return { store, result: pl.metrics ?? [] };
+      return (pl.metrics ?? []).map(toMetricSummary);
     });
     return NextResponse.json({ ok: true, data: metrics });
   } catch (err) {

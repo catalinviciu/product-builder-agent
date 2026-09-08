@@ -45,7 +45,7 @@ description: ≤800 chars — what measurable business result this product must 
 status: "draft"
 icon: "TrendingUp"
 metric: { name: string, metricType: "business"|"product", frequency: "daily"|"weekly"|"monthly"|"quarterly", valueFormat: "number"|"currency_usd"|"currency_eur"|"currency_gbp"|"percentage", initialValue: number, numericTarget: number, startDate: "YYYY-MM-DD", endDate: "YYYY-MM-DD" }
-  — created separately with pa_create_metric, then linked with pa_attach_outcome. Not a block.
+  — not a block. A BO/PO arrives from pa_create_entity with a metric already attached; configure that one with pa_update_metric.
 blocks:
   - { type: "accordion", label: "Strategic Alignment", content: string }
   - { type: "accordion", label: "Why Now", content: string }
@@ -61,7 +61,7 @@ status: "draft"
 icon: "TrendingUp"
 personaId?: string  — ID of the persona this PO targets (if identified during interview)
 metric: { name: string, metricType: "business"|"product", frequency: "daily"|"weekly"|"monthly"|"quarterly", valueFormat: "number"|"currency_usd"|"currency_eur"|"currency_gbp"|"percentage", initialValue: number, numericTarget: number, startDate: "YYYY-MM-DD", endDate: "YYYY-MM-DD" }
-  — created separately with pa_create_metric, then linked with pa_attach_outcome. Not a block.
+  — not a block. A BO/PO arrives from pa_create_entity with a metric already attached; configure that one with pa_update_metric.
 blocks:
   - { type: "accordion", label: "Strategic Alignment", content: string }
   - { type: "accordion", label: "Constraints", content: string }
@@ -272,13 +272,15 @@ Call `pa_create_entity`:
 
 The tool returns the created entity. Save the returned `id` as `boId`.
 
-### Step 2: Create the BO metric, then its blocks
+### Step 2: Configure the BO metric, then add its blocks
 
-A metric is not a block. It lives on the product line and the outcome extends
-it, so it is created and linked in two calls:
+A metric is not a block. Every Business and Product Outcome is created with a
+metric of its own already attached, named "Key metric" — the entity returned by
+`pa_create_entity` carries its id in `metricId`. Save that as `boMetricId` and
+fill it in:
 
 ```
-pa_create_metric({ productLineId, metric: {
+pa_update_metric({ productLineId, metricId: boMetricId, patch: {
   "name": "<metric name>",
   "metricType": "business",
   "frequency": "daily|weekly|monthly|quarterly",
@@ -288,12 +290,16 @@ pa_create_metric({ productLineId, metric: {
   "startDate": "YYYY-MM-DD",
   "endDate": "YYYY-MM-DD"
 }})
-pa_attach_outcome({ productLineId, metricId, entityId: boId })
 ```
 
-For a Product Outcome, pass `"metricType": "product"` and set
-`parentMetricId` to the parent BO's metric id so the metric tree matches the
-discovery tree.
+Do not call `pa_create_metric` here, and do not call `pa_attach_outcome` — the
+outcome already has its metric, and attaching a second one is rejected. A
+Product Outcome works the same way, with `"metricType": "product"`; because the
+PO is created under the BO, its metric is already hung under the BO's metric, so
+the metric tree matches the discovery tree with no extra call.
+
+`pa_create_metric` is for tracking metrics that no outcome sits on, which this
+setup flow does not create.
 
 Then add the accordion blocks with `pa_add_block({ entityId: boId, block: { ... } })`:
 
@@ -319,10 +325,10 @@ Call `pa_create_entity`:
 
 Save the returned `id` as `poId`.
 
-### Step 4: Add PO blocks
+### Step 4: Configure the PO metric and add PO blocks
 
-Same pattern as Step 2, using `entityId: poId`. Blocks:
-- Metric block (same shape)
+Same pattern as Step 2, using `poId` and the `metricId` the PO was created with.
+Blocks:
 - `{ "type": "accordion", "label": "Strategic Alignment", "content": "..." }`
 - `{ "type": "accordion", "label": "Constraints", "content": "..." }`
 - `{ "type": "accordion", "label": "Trade-offs", "content": "..." }`
@@ -360,11 +366,11 @@ The Next.js app polls for changes every 3s — the builder will see the new enti
 4. **Always confirm before writing** — present the proposed structure and wait for explicit approval.
 5. **Opportunities are drafts only** — status = "draft", brief description is fine, full blocks not required.
 6. **If no BO/PO desired** — propose a placeholder and proceed to Opportunities.
-7. **Always create metrics fully populated.** Every BO and PO metric must include: `name`, `metricType`, `frequency`, `valueFormat`, `initialValue`, `numericTarget`, `startDate`, `endDate`. Propose a complete metric with reasoning — don't ask the builder to fill in fields. Metrics are created with `pa_create_metric` and linked with `pa_attach_outcome`; they are never blocks.
+7. **Always leave metrics fully populated.** Every BO and PO metric must end up with: `name`, `metricType`, `frequency`, `valueFormat`, `initialValue`, `numericTarget`, `startDate`, `endDate`. Propose a complete metric with reasoning — don't ask the builder to fill in fields. The metric already exists on the outcome, so you fill it in with `pa_update_metric`; metrics are never blocks.
 8. **Gate before injection:** Do not proceed to Phase 4 until you have no remaining clarifying questions and can populate all fields — titles, descriptions, blocks, and metrics — with quality context. If you're not there yet, keep asking.
 9. **Early exit — always create Structured Tracking, highlight gaps.** If the builder forces creation before metric refinement is complete:
-   - Always create the metric with `pa_create_metric` and attach it.
-   - Use sensible defaults for missing fields: `frequency: "monthly"`, `valueFormat: "number"`, `initialValue: 0`, `numericTarget: 0`, `startDate: today's date`, `endDate: ""`.
+   - Always fill the outcome's metric in with `pa_update_metric`.
+   - Use sensible defaults for missing fields: `frequency: "monthly"`, `valueFormat: "number"`, `initialValue: 0`, `numericTarget: 0`, `startDate: today's date`. Leave `endDate` out entirely rather than sending an empty string — it must be a real date or absent.
    - After injection, print a clear warning listing which fields used defaults and need refinement:
      > "Heads up — I created your metrics in tracking format, but these need your input: **[list of defaulted fields]**. The metrics won't chart properly until you set a target and end date. Open them in Product Agent to refine."
 10. **Never read `Product-Agent-app/data/store.json` directly.** All reads and writes go through MCP tools.

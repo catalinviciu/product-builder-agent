@@ -212,7 +212,7 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
     "pa_list_metrics",
     {
       title: "List a product line's metrics",
-      description: "Returns the full metric registry for a product line. Each metric's parentMetricId builds the metric tree; a metric with no parentMetricId is a root. To find which outcome extends a metric, match it against the entities' metricId — several outcomes can share one metric over time, of which at most one is active; the rest are done, dropped or archived.",
+      description: "Returns the full metric registry for a product line, each metric digested — its recorded series is replaced by pointCount, latestDate and latestValue. Call pa_get_metric for one metric's full series. Each metric's parentMetricId builds the metric tree; a metric with no parentMetricId is a root. To find which outcome extends a metric, match it against the entities' metricId — several outcomes can share one metric over time, of which at most one is active; the rest are done, dropped or archived. Prefer pa_get_metric_tree when you want the shape rather than a flat list.",
       inputSchema: { productLineId: z.string() },
     },
     async ({ productLineId }) => ok(await adapter.listMetrics(productLineId))
@@ -222,7 +222,7 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
     "pa_create_metric",
     {
       title: "Create a metric",
-      description: "Creates a metric on a product line, optionally under a parent metric (making it an input metric, shown as a 'signal' on the parent's outcome). A metric needs no outcome — map the metric tree first, then attach outcomes to the metrics you want to move with pa_attach_outcome. metricType (business/product) is a label the builder sets; it does not decide the level of any outcome attached later.",
+      description: "Creates a metric on a product line, optionally under a parent metric (making it an input metric, shown as a 'signal' on the parent's outcome). A metric needs no outcome — map the metric tree first, then attach outcomes to the metrics you want to move with pa_attach_outcome. metricType (business/product) is a label the builder sets; it does not decide the level of any outcome attached later. The target fields (initialValue, numericTarget, startDate, endDate) only mean something once an outcome is attached — a reading is logged with pa_record_metric_value, not written as a target.",
       inputSchema: {
         productLineId: z.string(),
         metric: CreateMetricInputSchema,
@@ -236,7 +236,7 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
     "pa_update_metric",
     {
       title: "Update a metric",
-      description: "Patches a metric's name, recording cadence, value format, status, or its target fields (initialValue, numericTarget, startDate, endDate). Changing frequency re-snaps the existing series onto the new period boundaries. To log a value use pa_record_metric_value.",
+      description: "Patches a metric's name, metricType, recording cadence, value format, status, or its target fields (initialValue, numericTarget, startDate, endDate). Changing frequency re-snaps the existing series onto the new period boundaries. Passing null on a target field clears it; the other fields reject null. Target fields only mean something while an outcome is attached — a reading is logged with pa_record_metric_value, not written as a target. To read one metric use pa_get_metric.",
       inputSchema: {
         productLineId: z.string(),
         metricId: z.string(),
@@ -248,10 +248,33 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
   );
 
   server.registerTool(
+    "pa_get_metric",
+    {
+      title: "Get a single metric",
+      description: "Returns one metric by id, including its full recorded dataSeries — the list and tree reads digest the series away, so this is where you read it. Use this when you already know the metric id and only need that metric, not the whole registry.",
+      inputSchema: {
+        productLineId: z.string(),
+        metricId: z.string(),
+      },
+    },
+    async ({ productLineId, metricId }) => ok(await adapter.getMetric(productLineId, metricId))
+  );
+
+  server.registerTool(
+    "pa_get_metric_tree",
+    {
+      title: "Get the metric tree, nested",
+      description: "Returns the metric tree nested from the roots down, each node carrying a digested metric (recorded series replaced by pointCount, latestDate, latestValue) plus trimmed outcome summaries (id, title, level, status) instead of whole entities — cheap by design. This is the recommended way to read the metric tree; prefer it over pa_list_metrics plus cross-referencing entities yourself. For one metric's full series, follow up with pa_get_metric.",
+      inputSchema: { productLineId: z.string() },
+    },
+    async ({ productLineId }) => ok(await adapter.getMetricTree(productLineId))
+  );
+
+  server.registerTool(
     "pa_delete_metric",
     {
       title: "Delete a metric",
-      description: "Deletes a metric. Its child metrics rise to take its place rather than being deleted, and any outcome attached to it is detached, not deleted. Returns the remaining registry.",
+      description: "Deletes a metric. Its child metrics rise to take its place rather than being deleted, and every outcome attached to it — the active one and any finished ones — is detached, not deleted. Returns what changed: the deleted id, where its children were re-hung, the detached outcome ids and how many metrics remain.",
       inputSchema: {
         productLineId: z.string(),
         metricId: z.string(),
@@ -274,6 +297,36 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
     },
     async ({ productLineId, metricId, date, value }) =>
       ok(await adapter.recordMetricValue(productLineId, metricId, date, value))
+  );
+
+  server.registerTool(
+    "pa_delete_metric_value",
+    {
+      title: "Delete a recorded metric value",
+      description: "Deletes one data point from a metric's series by date. The date is snapped to the metric's recording period, same as recording, so you don't need to know which day a period landed on. Returns 404 if no point exists for that period.",
+      inputSchema: {
+        productLineId: z.string(),
+        metricId: z.string(),
+        date: z.string().describe("ISO date, YYYY-MM-DD; snapped to the metric's period before matching"),
+      },
+    },
+    async ({ productLineId, metricId, date }) =>
+      ok(await adapter.deleteMetricValue(productLineId, metricId, date))
+  );
+
+  server.registerTool(
+    "pa_reorder_metrics",
+    {
+      title: "Reorder sibling metrics",
+      description: "Reorders the children of one parent metric (or the roots, when parentMetricId is null) to match the given metricIds order. Every id must already be a sibling under that parent, or the call is rejected. Siblings you leave out keep their relative order after the ones you listed. Returns just that sibling row, digested, not the whole registry.",
+      inputSchema: {
+        productLineId: z.string(),
+        parentMetricId: z.string().nullable().describe("The parent whose children are being reordered, or null for the roots"),
+        metricIds: z.array(z.string()).min(1).describe("Every sibling under that parent, in the desired order"),
+      },
+    },
+    async ({ productLineId, parentMetricId, metricIds }) =>
+      ok(await adapter.reorderMetrics(productLineId, parentMetricId, metricIds))
   );
 
   server.registerTool(
@@ -312,13 +365,15 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
     "pa_detach_outcome",
     {
       title: "Detach an outcome from its metric",
-      description: "Removes the link between a metric and its outcome. The metric keeps its full history and its children, and its target is cleared. The outcome itself is not deleted.",
+      description: "Removes the link between a metric and its outcome. With no entityId, detaches today's active outcome (the metric's target is cleared). With entityId, detaches that specific outcome instead — active or already finished, as long as it is attached to this metric — and only clears the metric's target when the one detached was the active one. The outcome itself is not deleted.",
       inputSchema: {
         productLineId: z.string(),
         metricId: z.string(),
+        entityId: z.string().optional().describe("Detach this specific outcome instead of the active one"),
       },
     },
-    async ({ productLineId, metricId }) => ok(await adapter.detachOutcome(productLineId, metricId))
+    async ({ productLineId, metricId, entityId }) =>
+      ok(await adapter.detachOutcome(productLineId, metricId, entityId))
   );
 
   server.registerTool(

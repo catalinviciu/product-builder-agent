@@ -37,7 +37,7 @@ export type {
 
 export { CHILD_LEVEL } from "../../Product-Agent-app/app/lib/schemas.js";
 
-import type { ProductLine, Entity } from "../../Product-Agent-app/app/lib/schemas.js";
+import type { ProductLine, Entity, EntityLevel, Metric } from "../../Product-Agent-app/app/lib/schemas.js";
 
 /** Lightweight summary used by list endpoints. */
 export interface ProductLineSummary {
@@ -64,6 +64,47 @@ export interface EntityContext {
   ancestors: Entity[];
   entity: Entity;
   descendants: EntityNode[];
+}
+
+/**
+ * A metric with its recorded series replaced by a three-field digest. Every
+ * list-shaped metric read returns these; the series itself comes back one
+ * metric at a time from pa_get_metric. Mirrors MetricSummary in
+ * Product-Agent-app/app/lib/metrics.ts.
+ */
+export type MetricSummary = Omit<Metric, "dataSeries"> & {
+  pointCount: number;
+  latestDate?: string;
+  latestValue?: number;
+};
+
+/** What pa_delete_metric reports back, instead of the whole surviving registry. */
+export interface DeleteMetricResult {
+  deleted: string;
+  /** Where the deleted metric's children were re-hung; null when it was a root. */
+  reparentedTo: string | null;
+  reparentedChildren: string[];
+  /** Every outcome that let go of the metric, active and finished alike. */
+  detachedOutcomes: string[];
+  remainingCount: number;
+}
+
+/** Trimmed outcome summary used in the metric tree, instead of a whole entity. */
+export interface OutcomeSummary {
+  id: string;
+  title: string;
+  level: EntityLevel;
+  status: Entity["status"];
+}
+
+/** One node of the metric tree returned by pa_get_metric_tree. */
+export interface MetricTreeNode {
+  metric: MetricSummary;
+  activeOutcome: OutcomeSummary | null;
+  pastOutcomes: OutcomeSummary[];
+  levelIfAttached: "business_outcome" | "product_outcome";
+  canTakeOutcome: boolean;
+  children: MetricTreeNode[];
 }
 
 /** Input shape for creating a new entity. */

@@ -9,6 +9,9 @@ import type {
   EntityContext,
   EntityNode,
   ProductLineSummary,
+  MetricTreeNode,
+  MetricSummary,
+  DeleteMetricResult,
 } from "../types.js";
 
 /**
@@ -41,14 +44,18 @@ export interface StoreAdapter {
   // ── Metrics ─────────────────────────────────────────────────────────
   // Metrics belong to the product line, not to an entity. An outcome extends
   // a metric through Entity.metricId; the metric outlives the outcome.
-  listMetrics(productLineId: string): Promise<Metric[]>;
+  listMetrics(productLineId: string): Promise<MetricSummary[]>;
+  getMetric(productLineId: string, metricId: string): Promise<Metric>;
+  getMetricTree(productLineId: string): Promise<MetricTreeNode[]>;
   createMetric(productLineId: string, input: CreateMetricInput): Promise<Metric>;
   updateMetric(productLineId: string, metricId: string, patch: UpdateMetricPatch): Promise<Metric>;
-  deleteMetric(productLineId: string, metricId: string): Promise<Metric[]>;
+  deleteMetric(productLineId: string, metricId: string): Promise<DeleteMetricResult>;
   recordMetricValue(productLineId: string, metricId: string, date: string, value: number): Promise<Metric>;
+  deleteMetricValue(productLineId: string, metricId: string, date: string): Promise<Metric>;
+  reorderMetrics(productLineId: string, parentMetricId: string | null, metricIds: string[]): Promise<MetricSummary[]>;
   reparentMetric(productLineId: string, metricId: string, parentMetricId: string | null): Promise<Metric>;
   attachOutcome(productLineId: string, metricId: string, input: AttachOutcomeInput): Promise<Entity>;
-  detachOutcome(productLineId: string, metricId: string): Promise<Metric>;
+  detachOutcome(productLineId: string, metricId: string, entityId?: string): Promise<Metric>;
   updateEntity(entityId: string, patch: Partial<Entity>): Promise<Entity>;
   updateProductLineSettings(productLineId: string, patch: Partial<ProductLineSettings>): Promise<ProductLineSettings>;
   deleteEntity(entityId: string): Promise<void>;
@@ -64,6 +71,7 @@ export interface StoreAdapter {
 export interface CreateMetricInput {
   name: string;
   metricType?: Metric["metricType"];
+  status?: Metric["status"];
   frequency?: Metric["frequency"];
   valueFormat?: Metric["valueFormat"];
   parentMetricId?: string;
@@ -73,9 +81,18 @@ export interface CreateMetricInput {
   endDate?: string;
 }
 
+/**
+ * Fields a metric patch may set. The four target fields also accept null,
+ * which clears them — the API deletes the key rather than storing null.
+ */
 export type UpdateMetricPatch = Partial<
-  Pick<Metric, "name" | "frequency" | "valueFormat" | "status" | "initialValue" | "numericTarget" | "startDate" | "endDate">
->;
+  Pick<Metric, "name" | "metricType" | "frequency" | "valueFormat" | "status">
+> & {
+  initialValue?: number | null;
+  numericTarget?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
+};
 
 /** Attach an existing outcome by id, or create a new one from a title. */
 export interface AttachOutcomeInput {

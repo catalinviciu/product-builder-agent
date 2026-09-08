@@ -109,6 +109,16 @@ export function withStoreMutex<T>(fn: (store: Store) => Promise<{ store: Store; 
   return next;
 }
 
+/**
+ * Read-only counterpart to withStoreMutex. Reads the store and returns a value
+ * without writing anything back. Use this for every GET handler — going through
+ * withStoreMutex would rewrite store.json (and rotate a backup) on every read,
+ * and could write stale data over a concurrent edit.
+ */
+export async function withStoreRead<T>(fn: (store: Store) => T | Promise<T>): Promise<T> {
+  return fn(await readStore());
+}
+
 // ── Lookups ───────────────────────────────────────────────────────────
 
 export interface FoundEntity {

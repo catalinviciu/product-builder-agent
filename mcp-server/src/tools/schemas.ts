@@ -52,6 +52,7 @@ export const MetricValueFormatSchema = z.enum([
 export const CreateMetricInputSchema = z.object({
   name: z.string().min(1),
   metricType: z.enum(["business", "product"]).optional(),
+  status: z.enum(["active", "paused"]).optional(),
   frequency: MetricFrequencySchema.optional(),
   valueFormat: MetricValueFormatSchema.optional(),
   parentMetricId: z.string().optional(),
@@ -61,16 +62,18 @@ export const CreateMetricInputSchema = z.object({
   endDate: z.string().optional(),
 });
 
+// Target fields also accept null, which clears them — see UpdateMetricPatch
+// in StoreAdapter.ts. Every other field rejects null; the API 400s on it.
 export const MetricPatchSchema = z.object({
   name: z.string().min(1).optional(),
   metricType: z.enum(["business", "product"]).optional(),
   frequency: MetricFrequencySchema.optional(),
   valueFormat: MetricValueFormatSchema.optional(),
   status: z.enum(["active", "paused"]).optional(),
-  initialValue: z.number().optional(),
-  numericTarget: z.number().optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
+  initialValue: z.number().nullable().optional(),
+  numericTarget: z.number().nullable().optional(),
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
 });
 
 // ── Create-entity input ───────────────────────────────────────────────

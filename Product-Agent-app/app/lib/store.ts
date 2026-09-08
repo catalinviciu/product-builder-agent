@@ -7,7 +7,7 @@ import {
   migrateProductLineToMetrics,
   getMetric,
   getChildMetrics,
-  outcomeForMetric,
+  outcomesForMetric,
   activeOutcomeForMetric,
   nearestOutcomeAncestor,
   canParentMetric,
@@ -778,8 +778,9 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector(immer((set, 
       for (const child of getChildMetrics(pl, metricId)) {
         child.parentMetricId = metric.parentMetricId;
       }
-      const outcome = outcomeForMetric(pl, metricId);
-      if (outcome) outcome.metricId = undefined;
+      // Every outcome on the metric has to let go, not just the active one — a
+      // finished outcome left holding the id points at a metric that is gone.
+      for (const outcome of outcomesForMetric(pl, metricId)) outcome.metricId = undefined;
       pl.metrics = pl.metrics.filter((m) => m.id !== metricId);
       if (metric.parentMetricId) syncOutcomeParentage(pl, metric.parentMetricId);
       else for (const root of pl.metrics.filter((m) => !m.parentMetricId)) syncOutcomeParentage(pl, root.id);

@@ -67,7 +67,7 @@ Example: a skill calls `pa_get_entity({ entityId: "po-1a" })`.
 5. **Response back.** The adapter unwraps `{ ok: true, data: ... }`, returns the entity.
 6. **MCP response.** The tool handler stringifies the entity and returns it as a `text` content block to Claude.
 
-Writes follow the same path with one extra hop: `withStoreMutex()` in `Product-Agent-app/app/api/store/_lib/storeAccess.ts` serializes the read→mutate→write cycle so two concurrent calls cannot race on the file.
+Writes follow the same path with one extra hop: `withStoreMutex()` in `Product-Agent-app/app/lib/storeAccess.ts` serializes the read→mutate→write cycle so two concurrent calls cannot race on the file. GET handlers use `withStoreRead()` instead, from the same file, so reads never rewrite the file.
 
 ---
 
@@ -85,6 +85,7 @@ All tools live in `src/tools/register.ts`. They map 1:1 to `StoreAdapter` method
 | `pa_get_ancestors` | Parent chain root → leaf | `GET /api/store/entity/:id/ancestors` |
 | `pa_get_subtree` | Entity + descendants to depth N | `GET /api/store/subtree/:id?depth=N` |
 | `pa_get_context` | `{ productLine, ancestors, entity, descendants }` in one call | `GET /api/store/context/:id?...` |
+| `pa_get_story` | One story by id from a solution entity | `GET /api/store/entity/:id/story/:storyId` |
 
 ### Writes
 
@@ -93,15 +94,38 @@ All tools live in `src/tools/register.ts`. They map 1:1 to `StoreAdapter` method
 | `pa_create_entity` | Creates an entity, validates parent/level | `POST /api/store/entity` |
 | `pa_update_entity` | Patches safe fields (title, description, status, persona, ICE, …) | `PATCH /api/store/entity/:id` |
 | `pa_delete_entity` | Deletes a **leaf only** — refuses with HTTP 409 + `blockedBy` child ids if non-leaf (matches UI behaviour) | `DELETE /api/store/entity/:id` |
-| `pa_add_block` | Appends a block (accordion/pills/quote/metric) | `POST /api/store/entity/:id/block` |
-| `pa_update_block` | Patches a block by index (label/content/items/…) | `PATCH /api/store/entity/:id/block/:idx` |
+| `pa_add_block` | Appends a block (accordion/pills/quote) | `POST /api/store/entity/:id/block` |
+| `pa_update_block` | Patches a block by id | `PATCH /api/store/entity/:id/block/:blockId` |
+| `pa_delete_block` | Deletes one block by id | `DELETE /api/store/entity/:id/block/:blockId` |
+| `pa_move_block` | Moves a block to a new 0-based position | `POST /api/store/entity/:id/block/:blockId/move` |
+| `pa_update_story` | Merges a patch into one story by id, leaving other stories untouched | `PATCH /api/store/entity/:id/story/:storyId` |
+| `pa_delete_story` | Deletes one story by id | `DELETE /api/store/entity/:id/story/:storyId` |
 | `pa_update_product_line_settings` | Patches settings fields (codebasePath, designSystem, analyticsPlatform, storyMap, detectionError) | `PATCH /api/store/product-line/:id/settings` |
+
+### Metrics
+
+A metric is a first-class object on the product line, not a block. It forms the metric tree through `parentMetricId` and exists with or without an outcome; an outcome (BO/PO) extends a metric via `Entity.metricId`.
+
+| Tool | Effect | API endpoint |
+|:-----|:-------|:-------------|
+| `pa_list_metrics` | Returns the full metric registry, each metric digested (series replaced by `pointCount`/`latestDate`/`latestValue`) | `GET /api/store/product-line/:id/metric` |
+| `pa_get_metric` | Returns one metric by id, with its full recorded `dataSeries` — the only read that carries the series | `GET /api/store/product-line/:id/metric/:metricId` |
+| `pa_get_metric_tree` | Returns the metric tree nested, with digested metrics and trimmed outcome summaries per node — cheaper than `pa_list_metrics` plus cross-referencing entities | `GET /api/store/product-line/:id/metric-tree` |
+| `pa_create_metric` | Creates a metric, optionally under a parent metric | `POST /api/store/product-line/:id/metric` |
+| `pa_update_metric` | Patches name/metricType/frequency/valueFormat/status or a target field; null on a target field clears it | `PATCH /api/store/product-line/:id/metric/:metricId` |
+| `pa_delete_metric` | Deletes a metric; children rise to take its place, every attached outcome (active and finished) is detached not deleted | `DELETE /api/store/product-line/:id/metric/:metricId` |
+| `pa_record_metric_value` | Upserts one data point, snapped to the metric's recording period | `POST /api/store/product-line/:id/metric/:metricId/value` |
+| `pa_delete_metric_value` | Deletes one data point by date (snapped the same way) | `DELETE /api/store/product-line/:id/metric/:metricId/value?date=...` |
+| `pa_reorder_metrics` | Reorders the siblings under one parent metric (or the roots); returns just that sibling row | `POST /api/store/product-line/:id/metric/reorder` |
+| `pa_reparent_metric` | Moves a metric under another metric, or to the top of the tree | `POST /api/store/product-line/:id/metric/:metricId/reparent` |
+| `pa_attach_outcome` | Attaches an existing or new outcome to a metric | `POST /api/store/product-line/:id/metric/:metricId/outcome` |
+| `pa_detach_outcome` | Detaches the active outcome, or a specific one via `entityId` | `DELETE /api/store/product-line/:id/metric/:metricId/outcome` |
 
 ### Design rules
 
 - **Narrow over toggles.** No über-tool with many optional flags. Smaller schemas = cheaper tokens + easier for Claude to pick correctly.
 - **No identity in inputs.** Tools never accept `userId` / `orgId`. Identity comes from the adapter's auth token. See **Multi-tenant model** below.
-- **Safe-field patching.** `pa_update_entity` and `pa_update_block` use allow-lists in `Product-Agent-app/app/api/store/_lib/storeAccess.ts` (`SAFE_ENTITY_FIELDS`, `SAFE_BLOCK_FIELDS`). Unknown keys are silently dropped — no surprise mutations of `id`, `level`, `children`, etc.
+- **Safe-field patching.** `pa_update_entity` and `pa_update_block` use allow-lists in `Product-Agent-app/app/lib/storeAccess.ts` (`SAFE_ENTITY_FIELDS`, `SAFE_BLOCK_FIELDS`). Unknown keys are silently dropped — no surprise mutations of `id`, `level`, `children`, etc.
 
 ---
 

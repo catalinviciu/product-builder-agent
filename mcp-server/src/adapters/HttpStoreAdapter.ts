@@ -9,6 +9,9 @@ import type {
   EntityContext,
   EntityNode,
   ProductLineSummary,
+  MetricTreeNode,
+  MetricSummary,
+  DeleteMetricResult,
 } from "../types.js";
 import type {
   StoreAdapter,
@@ -163,8 +166,16 @@ export class HttpStoreAdapter implements StoreAdapter {
     return metricId ? `${base}/${encodeURIComponent(metricId)}` : base;
   }
 
-  listMetrics(productLineId: string): Promise<Metric[]> {
+  listMetrics(productLineId: string): Promise<MetricSummary[]> {
     return this.request(this.metricPath(productLineId));
+  }
+
+  getMetric(productLineId: string, metricId: string): Promise<Metric> {
+    return this.request(this.metricPath(productLineId, metricId));
+  }
+
+  getMetricTree(productLineId: string): Promise<MetricTreeNode[]> {
+    return this.request(`/api/store/product-line/${encodeURIComponent(productLineId)}/metric-tree`);
   }
 
   createMetric(productLineId: string, input: CreateMetricInput): Promise<Metric> {
@@ -181,7 +192,7 @@ export class HttpStoreAdapter implements StoreAdapter {
     });
   }
 
-  deleteMetric(productLineId: string, metricId: string): Promise<Metric[]> {
+  deleteMetric(productLineId: string, metricId: string): Promise<DeleteMetricResult> {
     return this.request(this.metricPath(productLineId, metricId), { method: "DELETE" });
   }
 
@@ -189,6 +200,19 @@ export class HttpStoreAdapter implements StoreAdapter {
     return this.request(`${this.metricPath(productLineId, metricId)}/value`, {
       method: "POST",
       body: JSON.stringify({ date, value }),
+    });
+  }
+
+  deleteMetricValue(productLineId: string, metricId: string, date: string): Promise<Metric> {
+    return this.request(`${this.metricPath(productLineId, metricId)}/value?date=${encodeURIComponent(date)}`, {
+      method: "DELETE",
+    });
+  }
+
+  reorderMetrics(productLineId: string, parentMetricId: string | null, metricIds: string[]): Promise<MetricSummary[]> {
+    return this.request(`${this.metricPath(productLineId)}/reorder`, {
+      method: "POST",
+      body: JSON.stringify({ parentMetricId, metricIds }),
     });
   }
 
@@ -206,8 +230,9 @@ export class HttpStoreAdapter implements StoreAdapter {
     });
   }
 
-  detachOutcome(productLineId: string, metricId: string): Promise<Metric> {
-    return this.request(`${this.metricPath(productLineId, metricId)}/outcome`, { method: "DELETE" });
+  detachOutcome(productLineId: string, metricId: string, entityId?: string): Promise<Metric> {
+    const q = entityId ? `?entityId=${encodeURIComponent(entityId)}` : "";
+    return this.request(`${this.metricPath(productLineId, metricId)}/outcome${q}`, { method: "DELETE" });
   }
 
   moveBlock(entityId: string, blockId: string, toIndex: number): Promise<Entity> {
