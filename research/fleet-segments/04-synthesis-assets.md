@@ -178,3 +178,41 @@ intermodal volume (18.08M units, +8.5% YoY).
    payloads; the unified workflow is still the differentiator.
 6. **Separate the two utilisation definitions explicitly in the UI.** Conflating
    time and dollar utilisation would be immediately disqualifying in rental.
+
+---
+
+## 9. Agriculture — the case that breaks the frame (unverified)
+
+The agriculture segment report is a **hypothesis document, not research**: the
+WebSearch budget was exhausted before it ran, so it carries no live sources. It
+is included because its central structural argument is worth testing, not
+because its contents are established.
+
+Its argument: agriculture inverts the utilisation logic that every other segment
+in this study shares. **Equipment idle 46 weeks a year is correct behaviour, not
+underutilisation.** Value is measured in yield per acre, and the binding
+constraint is timeliness — a combine that fails during a two-week harvest window
+costs a season, not a repair bill. Accordingly:
+
+- Annual uptime is meaningless; only **in-window uptime** matters.
+- Downtime is properly expressed as **acres not covered per day**, not dollars or
+  hours.
+- Utilisation percentage, uptime percentage and cost per mile all break at the
+  root rather than at the margins.
+
+Two claims worth verifying because they would change a go/no-go decision:
+
+1. **The dealer is effectively the fleet department**, holding both the wrench
+   and, through OEM telematics portals, the data — a deeper incumbency than the
+   dealer relationship in any other segment.
+2. **Right-to-repair and telematics-data access are two different fights.** The
+   2023 AFBF-Deere memorandum and Colorado's 2023 law address repair access —
+   manuals, tools, parts — not open API access to the operational data stream.
+   Industry discourse appears to conflate them. If correct, a vendor's data
+   access model cannot rely on right-to-repair progress.
+
+Its viability assessment — guardedly negative for a general fleet product, with
+narrower wedges in custom operators (who genuinely behave like a fleet, chasing
+acres across farms), equipment dealers, and a cross-brand in-window health layer
+that explicitly does not try to be a farm management system — is a reasonable
+hypothesis and nothing more until verified.

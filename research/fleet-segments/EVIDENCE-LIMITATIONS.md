@@ -94,3 +94,22 @@ by side without that caveat is producing a misleading result.
   owner-operator and rental buyer segments against each other.
 - **A Verizon fleet figure of 64,688 vehicles** surfaced in a 2026-dated search
   result but appears to be circa-2009 data. Not used as current.
+
+## Search budget exhaustion
+
+The session-wide WebSearch budget (200 calls) was consumed by the parallel
+research agents. Three reports were affected, in increasing severity:
+
+| Report | Impact |
+|---|---|
+| Forklifts / MHE | Four queries succeeded before exhaustion. OSHA citation data, injury statistics, ITA shipment data and the WERC 2025 DC Measures report are sourced. OEM telematics platforms, lease and dealer-maintenance contract structures, and the lithium-ion transition are drawn from industry structure rather than fresh search, and labelled accordingly. |
+| Construction owned equipment | About 15 queries succeeded. Unsearched: PM-interval compliance detail, downtime-as-crew-idle-cost, Samsara and Trackunit specifics, Procore integration, OSHA equipment incident data, Tier 4 emissions detail, ARA's rate index, and small-tool-specific shrinkage rates. Flagged as gaps in the report rather than filled. |
+| Agriculture | **Zero queries succeeded.** The report contains no live-sourced research and is drawn entirely from model knowledge with a January 2026 cutoff. Marked as a hypothesis document. |
+
+None of the three agents fabricated figures to cover the gap. Each flagged what
+it could not verify, which is the correct behaviour and means the gaps are
+visible rather than hidden.
+
+**Highest-value follow-up if search budget is restored:** verify the agriculture
+report end to end; close the construction equipment gaps listed above; and
+verify the forklift OEM telematics and dealer-contract sections.
