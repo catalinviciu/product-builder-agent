@@ -9,6 +9,7 @@
 !/.github/
 !/.mcp.json
 !/.vscode/
+!/research/
 
 # Allow only the shared Claude Code hooks/settings inside .claude/
 !/.claude/
