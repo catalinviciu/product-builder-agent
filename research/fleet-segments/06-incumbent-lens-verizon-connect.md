@@ -193,16 +193,56 @@ pricing. It is not a way to take share in trucking.
   ([TruckerCloud](https://www.truckercloud.com/blog/4-technology-trends-defining-commercial-auto-insurance-in-2026)),
   but this is weak evidence because it comes from a vendor.
 
-**Implication for Verizon Connect.** The bottleneck is not the data format:
-aggregators already solve that. The bottleneck is the **broker renewal
-workflow**, where nobody asks for telematics data. Verizon Connect already
-connects to insurers through its marketplace. Two things are missing:
+### Confidence check on "nobody asked": LOW as a causal explanation
 
-- a consent-based "share with my insurer or broker" flow inside Reveal;
-- a feed or report the broker can drop straight into a renewal submission.
+The *share rate* is fairly well supported: 36% of fleets shared in 2024 and
+30% in 2025. But both figures come from the same vendor. "Nobody asked" is
+what fleets *say* is the reason, and it probably isn't the real one:
 
-Whether any insurer actually *prices* that data differently is still the key
-unknown to validate.
+- **Each side blames the other.** In the same 2024 survey, **75% of insurers
+  said getting fleets to share is their biggest hurdle**, while 74% of fleets
+  said they were never asked
+  ([Insurance Business](https://www.insurancebusinessmag.com/us/news/auto-motor/telematics-use-grows-in-insurance-as-fleets-report-fewer-claims-crashes--sambasafety-511920.aspx)).
+  That pattern points to a broken handoff, not to one side simply being
+  passive.
+- **Only fleets with good data gain from sharing.** A fleet with worse-than-
+  average data has every reason not to volunteer it. *(inference, no direct
+  source)*
+- **The payoff is uncertain:**
+  - Only about **1 in 4 fleets** got lower premiums from telematics (SambaSafety
+    2024, same source).
+  - Only **14% of top insurers** have launched usage-based insurance products;
+    another 32% are piloting
+    ([Insurance Business](https://www.insurancebusinessmag.com/us/news/auto-motor/commercial-auto-telematics-hitting-a-tipping-point--what-does-this-mean-for-insurers-464515.aspx)).
+  - Insurers often can't operationalise the data. Claims teams' telematics
+    evidence never reaches the underwriter at renewal. Commercial auto has run
+    at a loss (combined ratio above 100) in 12 of the last 13 years even though
+    ~90% of fleets use telematics
+    ([Carrier Management](https://www.carriermanagement.com/features/2025/11/24/281755.htm)).
+  - Premiums are driven mainly by verdict severity, not by how drivers behave
+    (ATRI, doc 05).
+- **Collecting data creates legal exposure.** Stored safety alerts that nobody
+  acted on can be used to argue negligent supervision
+  ([CLM](https://www.theclm.org/Magazine/articles/telematics-trucking-litigation-sword-shield/2716),
+  [The Data Scientist](https://thedatascientist.com/how-big-data-and-telematics-are-reshaping-commercial-vehicle-litigation/)).
+  Sharing data widens the set of parties that hold it. *(the second point is
+  inference)*
+- **Where there is a clear, priced offer, fleets do share.** Progressive Smart
+  Haul enrols fleets directly through their ELD vendor, with an average saving
+  of $1,261
+  ([Geotab](https://www.geotab.com/progressive-smart-haul/)).
+
+**Implication for Verizon Connect (revised).** The binding constraint is most
+likely **on the insurer side**: a lack of priced, operational programmes. It is
+not fleets waiting to be asked. A "share with my insurer" button will not move
+premiums unless an insurer has committed to a discount. So:
+
+- **Test first:** among Verizon Connect Marketplace insurance programmes
+  (Nirvana, CMT and others), what share of customers who connected actually
+  got a lower premium, and by how much?
+- **Build only if the answer is yes:** priced programmes with one-click
+  enrolment, modelled on Smart Haul. If the answer is no, the
+  insurance-savings retention lever in §3A is weak.
 
 ## 6. Validation for the incumbent version
 
