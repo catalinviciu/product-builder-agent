@@ -88,10 +88,19 @@ pricing. It is not a way to take share in trucking.
   *(calc)* The insurance bill is **about 3–12 times** the telematics bill. An
   11% premium saving, the figure Verizon Connect itself cites, is worth about
   $17–33 per vehicle per month. That is roughly the whole subscription.
-- 79% of fleets that don't share telematics data with insurers say that
-  **nobody asked** ([SambaSafety](https://www.globenewswire.com/news-release/2025/10/15/3167243/0/en/88-of-Fleets-Now-Use-Telematics-for-Safety-But-Only-30-Share-Data-with-Insurers.html)).
-  Verizon Connect can be the party that asks. It already has the insurer
-  marketplace, and Verizon Business has the SMB sales channel.
+- 79% of the fleets that don't share telematics data say that **neither their
+  insurer nor their insurance broker ever asked for it**. That is roughly 55%
+  of all fleets surveyed *(calc)*, not "most fleets". 62% of those fleets
+  expect no difficulty sharing, and only 15% of brokers offer telematics
+  services ([SambaSafety](https://www.globenewswire.com/news-release/2025/10/15/3167243/0/en/88-of-Fleets-Now-Use-Telematics-for-Safety-But-Only-30-Share-Data-with-Insurers.html),
+  [Insurance Business](https://www.insurancebusinessmag.com/us/news/auto-motor/insurance-alliance-sambasafety-release-report-on-telematics-use-462743.aspx)).
+  Caveat: SambaSafety sells telematics data services to insurers, and the
+  sample is small (152 fleets, 180 brokers, 70 insurers; June–July 2025).
+- Verizon Connect **cannot be the party that asks**. Only an insurer can
+  price the data. What Verizon Connect can do is remove the friction around
+  that request, as §5 describes: offer a one-click, consent-based share, get
+  the data into brokers' renewal workflow, and connect to insurers and data
+  aggregators.
 - **Recommended move:** a "pays for itself" guarantee. Each quarter, produce
   a safety-proof report ready for the insurance agent. Each month, show a
   meter of expected premium savings against the subscription fee. This goes
@@ -152,7 +161,50 @@ pricing. It is not a way to take share in trucking.
 | Verizon decides to sell or spin off Verizon Connect | A neutral aggregator strategy becomes rational for a buyer (e.g. an insurer or data company) |
 | Insurers stop discounting single-vendor programmes (as with Progressive ending its Motive programme, [FreightWaves](https://www.freightwaves.com/news/10-discount-gone-progressive-ends-motive-dashcam-enrollments-signals-new-telematics-program)) | Neutral proof becomes a must-have, and the incumbent must join or be commoditised |
 
-## 5. Validation for the incumbent version
+## 5. How telematics data reaches insurers today
+
+**There is no single format that insurers require.**
+
+- **A standard exists, but I found no evidence it is widely used.** ACORD, the
+  body that sets insurance data standards, publishes a telematics messaging
+  standard called *VehicleTelematicsNotify*. It is an XML format that lets a
+  telematics provider send trip or daily data to several insurers without
+  custom coding for each one. It dates from about 2015. I found nothing showing
+  it is widely used for commercial fleets
+  ([ACORD](https://www.acord.org/ACORD-about/acord-news/2015/03/11/are-you-using-the-acord-telematics-standard)).
+- **In practice, data reaches insurers through four channels:**
+
+| Channel | How it works | Examples |
+|---|---|---|
+| Programme tied to one device vendor | The fleet consents in its device vendor's system, and the insurer scores the data with its own model | Progressive Smart Haul: up to 20% off, average saving $1,261 ([Geotab](https://www.geotab.com/progressive-smart-haul/), [CCJ](https://www.ccjdigital.com/business/article/14937424/progressive-says-it-is-using-eld-data-for-policy-discounts)); Samsara–Northland; Motive–Sentry |
+| Direct link to the vendor's system | The insurer builds a connection; the fleet approves it on a consent screen | Samsara's insurance API ([Samsara developers](https://developers.samsara.com/docs/insuretech)) |
+| Aggregator that converts every vendor's data into one format | One connection for the insurer, many device vendors behind it | Terminal, 290 integrations ([Terminal](https://www.withterminal.com/)); TruckerCloud ([TruckerCloud](https://truckercloud.com/post/how-mid-market-insurers-can-compete-with-telematics-without-big-carrier-budgets)); LexisNexis Telematics Exchange ([LexisNexis](https://risk.lexisnexis.com/products/telematics-exchange)); Verisk Data Exchange via the Geotab marketplace ([Verisk](https://www.verisk.com/company/newsroom/new-verisk-data-exchange-integration-for-insurance-telematics-now-available-on-the-geotab-marketplace/)) |
+| Ad hoc, at renewal | The broker attaches data exports or safety reports to the renewal submission, alongside loss history and FMCSA scores | [Trucordia](https://www.trucordia.com/blog/your-safety-investment-deserves-more-credit-at-renewal) |
+
+- **Each insurer uses its own score.** There is no shared rating variable yet.
+  TruckerCloud is only now filing its FleetFile score with state regulators as
+  a rating variable
+  ([PR Newswire](https://www.prnewswire.com/news-releases/truckercloud-launches-fleetfile-a-crash-risk-score-commercial-auto-insurers-can-apply-across-their-book-302885991.html)).
+- **Telematics is becoming a condition of cover.** Some programmes now require
+  telematics or dashcams just to be eligible for cover
+  ([Business Insurance](https://www.businessinsurance.com/telematics-becomes-baseline-for-fleet-cover/)).
+  A vendor claims that about 60% of insurers use telematics somewhere in
+  underwriting
+  ([TruckerCloud](https://www.truckercloud.com/blog/4-technology-trends-defining-commercial-auto-insurance-in-2026)),
+  but this is weak evidence because it comes from a vendor.
+
+**Implication for Verizon Connect.** The bottleneck is not the data format:
+aggregators already solve that. The bottleneck is the **broker renewal
+workflow**, where nobody asks for telematics data. Verizon Connect already
+connects to insurers through its marketplace. Two things are missing:
+
+- a consent-based "share with my insurer or broker" flow inside Reveal;
+- a feed or report the broker can drop straight into a renewal submission.
+
+Whether any insurer actually *prices* that data differently is still the key
+unknown to validate.
+
+## 6. Validation for the incumbent version
 
 1. Cohort analysis: do Verizon Connect customers with a linked insurance
    partner (Nirvana, CMT and others) churn less and pay more? *(needs internal

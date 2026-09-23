@@ -141,7 +141,7 @@ still open in the most penetrated segment in fleet software.
 | Who feels it most | Carriers with 5–250 trucks. They are big enough to run ELDs and cameras, but too small for captives or large self-insured retentions, so they pay about 2x per mile | Large fleets with deep pockets, which makes them nuclear-verdict targets. Many carry large self-insured retentions, and 73% rank safety #1 |
 | Most valuable outcome | Lower premium at renewal, and staying on broker whitelists | Lower loss costs and stronger litigation defence. Evidence for the monthly "should we own this fleet" review, since a documented safety record is part of the case against outsourcing |
 | Buyer | Owner or CFO, with the VP Safety | VP Safety / Risk Manager, with Legal and Finance |
-| Channel | Insurance agents and MGAs, since 79% of fleets were never asked for data; broker onboarding platforms | Direct sales; the risk-management function; captive managers |
+| Channel | Insurance agents and MGAs, since 79% of fleets that don't share data were never asked for it (about 55% of all fleets); broker onboarding platforms | Direct sales; the risk-management function; captive managers |
 | Emerging adjacency | Access to group captives, which want members that can prove strong loss control | Group and agency captives for mid-size fleets |
 
 **Start with for-hire carriers of 10–250 trucks at insurance renewal.** Their
@@ -211,7 +211,7 @@ advocate.
    they sent at their last renewal and what the underwriter asked for. Have
    they lost broker access since Montgomery?
 2. **5 agents or MGAs.** Would a standard vendor-neutral packet change pricing
-   or their willingness to quote? Why do 79% of them never ask for the data?
+   or their willingness to quote? Why do they rarely ask fleets for data? (Only 15% of brokers offer telematics services.)
 3. **3 broker compliance leads.** What would make a carrier "defensible" enough
    to whitelist? Would they accept a credential the carrier shares with
    permissions?
