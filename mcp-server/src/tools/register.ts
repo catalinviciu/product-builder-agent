@@ -11,8 +11,39 @@ import {
   ProductLineSettingsPatchSchema,
   StoryPatchSchema,
 } from "./schemas.js";
-import type { Block, Entity, ProductLineSettings, Story } from "../types.js";
+import type { Block, Entity, EntityNode, ProductLineSettings, Story } from "../types.js";
 import type { CreateMetricInput, UpdateMetricPatch } from "../adapters/StoreAdapter.js";
+
+/**
+ * Sent to the client in the MCP `initialize` reply; Claude Code puts it in the
+ * agent's system prompt for the whole session. Clients read it once at connect,
+ * so a change here needs a rebuild and a `/mcp` reconnect to take effect.
+ */
+export const MCP_SERVER_INSTRUCTIONS = [
+  "Product Agent holds this user's product context as a tree: business outcome > product outcome > opportunity > solution > assumption > test.",
+  "Before answering a question or doing a task about the product, call pa_get_outline (on the entity the user pointed you at, or on the product line; use pa_list_product_lines if you don't know it) to see what exists, including done, dropped and archived work.",
+  "Then open only the entities you need with pa_get_entity.",
+  "Don't call pa_get_context or pa_get_subtree with a deep depth on an outcome: the result is too large.",
+  "Before proposing a new entity, check the outline for an existing or dropped one with the same idea.",
+].join(" ");
+
+/**
+ * Plain-text map of the tree: one indented line per entity, `level | status | title | id`.
+ * Every status is kept, closed work included. Mirrors buildOutline() in the cloud app.
+ */
+function formatOutline(pl: { id: string; name: string }, ancestors: Entity[], roots: EntityNode[]): string {
+  const lines: string[] = [];
+  const line = (e: Entity, indent: number) =>
+    lines.push(`${"  ".repeat(indent)}${e.level} | ${e.status} | ${e.title} | ${e.id}`);
+  const walk = (n: EntityNode, indent: number) => {
+    line(n.entity, indent);
+    for (const c of n.children) walk(c, indent + 1);
+  };
+  ancestors.forEach((a, i) => line(a, i));
+  for (const r of roots) walk(r, ancestors.length);
+  const header = `Product line: ${pl.name} (${pl.id}) | ${lines.length} entities | format: level | status | title | id`;
+  return [header, ...lines].join("\n");
+}
 
 /**
  * Registers all Product Agent MCP tools on the given server.
@@ -98,6 +129,32 @@ export function registerTools(server: McpServer, adapter: StoreAdapter): void {
     },
     async ({ entityId, ancestors, descendantsDepth, productLineMeta }) =>
       ok(await adapter.getContext(entityId, { ancestors, descendantsDepth, productLineMeta }))
+  );
+
+  server.registerTool(
+    "pa_get_outline",
+    {
+      title: "Get tree outline (map)",
+      description: "Call this FIRST for any question or task about the product. Returns the tree as plain text, one indented line per entity: level | status | title | id. Every status is included (done, dropped and archived too), so you can see what was already built, tested or dropped. Pass entityId to get that entity's ancestors plus its full subtree, or productLineId for the whole product line. Then open only the entities you need with pa_get_entity.",
+      inputSchema: {
+        productLineId: z.string().optional(),
+        entityId: z.string().optional(),
+      },
+    },
+    async ({ productLineId, entityId }) => {
+      let text: string;
+      if (entityId) {
+        const ctx = await adapter.getContext(entityId, { ancestors: true, descendantsDepth: 99, productLineMeta: false });
+        text = formatOutline(ctx.productLine, ctx.ancestors, [{ entity: ctx.entity, children: ctx.descendants }]);
+      } else if (productLineId) {
+        const pl = await adapter.getProductLine(productLineId);
+        const roots = await Promise.all(pl.tree.rootChildren.map((id) => adapter.getSubtree(id, 99)));
+        text = formatOutline(pl, [], roots);
+      } else {
+        throw new Error("Pass entityId or productLineId");
+      }
+      return { content: [{ type: "text" as const, text }] };
+    }
   );
 
   server.registerTool(

@@ -97,17 +97,18 @@ These are practical maximums to keep the UI readable. The app's `getEntityPrevie
 
 ### Step 1: Read context via MCP
 
-1. Call `pa_get_context(parentId, { ancestors: true, descendantsDepth: 1, productLineMeta: true })` — this returns `{ productLine, ancestors, entity, descendants }` in one call.
+1. Call `pa_get_outline({ entityId: parentId })`: it lists every entity under the parent Product Outcome at all depths, with statuses, including done, dropped and archived ones. Use it to see what already exists in this branch before you create anything.
+2. Call `pa_get_context(parentId, { ancestors: true, descendantsDepth: 1, productLineMeta: true })` — this returns `{ productLine, ancestors, entity, descendants }` in one call.
    - `entity` = the parent Product Outcome
    - `ancestors[0]` = the Business Outcome above it
    - `productLine` = the product line with personas
    - `descendants` = existing opportunities under this PO
    - `productLine.id` = the productLineId you'll need for writing
-2. Review the PO title, description, metric, and status.
-3. Review the BO title, description, and metric.
+3. Review the PO title, description, metric, and status.
+4. Review the BO title, description, and metric.
    The outcome's metric is on the product line — look it up by the entity's `metricId` with `pa_get_metric`, which is the only read that returns the full recorded series.
-4. Note the personas attached to the product line.
-5. Scan `descendants` (existing opportunities) — note their titles and statuses.
+5. Note the personas attached to the product line.
+6. Scan `descendants` (existing opportunities) — note their titles and statuses.
 
 ### Step 2: Critical thinking — reason through the opportunity
 
@@ -116,7 +117,7 @@ Before interviewing, think through what the builder is proposing against the str
 **Assess relevance:**
 - Does this opportunity connect to the parent PO's metric? Could solving this pain plausibly move the number?
 - Does it align with the business outcome above? Or is it a real user pain that belongs under a different PO?
-- Is it already covered by an existing opportunity under this PO? (Check the titles you read in Step 1.) If so, the builder may need to add a solution to the existing opportunity rather than create a new one.
+- Is it already covered by an existing opportunity under this PO? (Check the outline titles from Step 1, including dropped and done opportunities and solutions.) If so, the builder may need to add a solution to the existing opportunity rather than create a new one. If a dropped one has the same idea, open it with `pa_get_entity` to learn why it was dropped, and raise that with the builder.
 
 **Check for common biases:**
 - **Recency bias:** Is the builder reacting to one recent incident and generalising? (e.g., one user had this problem → "all users have this problem")

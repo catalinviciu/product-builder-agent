@@ -2,7 +2,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { HttpStoreAdapter } from "./adapters/HttpStoreAdapter.js";
-import { registerTools } from "./tools/register.js";
+import { MCP_SERVER_INSTRUCTIONS, registerTools } from "./tools/register.js";
 
 /**
  * Product Agent MCP server entry point.
@@ -19,10 +19,10 @@ async function main(): Promise<void> {
 
   const adapter = new HttpStoreAdapter({ baseUrl, authToken });
 
-  const server = new McpServer({
-    name: "product-agent-mcp",
-    version: "0.1.0",
-  });
+  const server = new McpServer(
+    { name: "product-agent-mcp", version: "0.1.0" },
+    { instructions: MCP_SERVER_INSTRUCTIONS }
+  );
 
   registerTools(server, adapter);
 

@@ -50,7 +50,7 @@ Ask for whatever is missing and wait for the answer - do not proceed on assumpti
 
 1. **Load `pm-context`.** Then confirm you have both required inputs - the snapshot and the outcome anchor. Ask the user for whichever is missing and wait for it before continuing.
 2. **Read the entire snapshot** end to end. Identify: company, participant(s) and persona mapping, interview date, interview type, and every finding (opportunity-evidence, insights, quotes, recording/snapshot links).
-3. **Pull the outcome subtree** with `pa_get_context` (or `pa_get_entity` on the outcome, then `pa_get_entity` per child). List every child opportunity with its exact title, ID, status, and persona.
+3. **Pull the outcome's outline** with `pa_get_outline({ entityId: <outcome id> })`. List every child opportunity with its exact title, ID and status from the outline. Fetch an opportunity with `pa_get_entity` only when you need its persona or content. Do not call `pa_get_context` at deep depth on an outcome, the result is too large.
 4. **Map snapshot findings to opportunities** (see "Mapping & Verdicts").
 5. **Draft the evidence entries** for every opportunity that has a signal - including "no demand signal" where it is informative (e.g. the persona who would have raised it did not). Apply the weighting/anti-bias rules.
 6. **PREVIEW before writing.** Present a table of every opportunity, its verdict, and a one-line summary of the entry you will add - plus any block consolidation and any red flags. Get the user's confirmation before any write. (Writes to the tree are not trivially reversible; treat them as medium-risk.)
