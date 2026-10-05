@@ -281,6 +281,7 @@
 | Step | Story | Components |
 |:-----|:------|:-----------|
 | **Copy entity anchor** | Copy a context anchor for any entity to reference it in an AI agent | `AIActionsMenu` · `EntityView` |
+| **Ask the agent without an anchor** | Ask a coding agent a question or give it a task about the product without pasting an anchor, and the agent finds the relevant entities itself from the tree outline, including done, dropped and archived work | `pa_get_outline` · `MCP server instructions` |
 | **Generate solution planning prompt** | Click 'Plan & implement this solution' on a Solution entity — if codebase path and design system are configured, copies a full planning prompt with resolved values (no placeholders); otherwise redirects to Settings with a banner listing the missing fields | `AIActionsMenu` · `EntityView` · `buildSolutionPlanningPrompt` · `ProductLineSettingsView` |
 | **Generate opportunity writing prompt** | Copy an AI writing prompt from a Product Outcome to launch the opportunity writer skill for a new opportunity | `AIActionsMenu` · `EntityView` · `buildOpportunityWriterPrompt` |
 |  | Copy an AI writing prompt from an existing Opportunity to launch the opportunity writer skill for editing | `AIActionsMenu` · `EntityView` · `buildOpportunityWriterPrompt` |

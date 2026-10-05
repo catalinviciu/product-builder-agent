@@ -86,16 +86,17 @@ You operate in a two-phase workflow. Complete Phase 1, present results, and wait
 
 ### Step 1: Read the opportunity and existing solutions
 
-1. Call `pa_get_context(opportunityId, { ancestors: true, descendantsDepth: 1, productLineMeta: true })` — returns `{ productLine, ancestors, entity, descendants }`.
+1. Call `pa_get_outline({ entityId: opportunityId })`: it lists the existing solutions at every status, including done, dropped and archived, plus their assumptions and tests. Do not propose a solution that matches an existing or dropped one. If a dropped one is close, open it with `pa_get_entity` to see why it was dropped.
+2. Call `pa_get_context(opportunityId, { ancestors: true, descendantsDepth: 1, productLineMeta: true })` — returns `{ productLine, ancestors, entity, descendants }`.
    - `entity` = the opportunity with all blocks
    - `ancestors[0]` = parent Product Outcome
    - `productLine` = product line metadata including personas
    - `productLine.id` = the productLineId needed for writing
    - `descendants` = existing solution children (check for duplicates before brainstorming)
-2. Note the opportunity's title, description, and all blocks (Trigger, Current Workaround, Competition View, Expected Outcome).
-3. Note the parent Product Outcome's title, description, and metric for strategic context. The metric lives on the product line — look it up by the PO's `metricId` with `pa_get_metric`, which is the only read that returns the full recorded series.
-4. Read product line personas from `productLine.personas`.
-5. Review `descendants` — note each existing solution's title, description, status, and blocks. Do NOT generate solutions that duplicate these.
+3. Note the opportunity's title, description, and all blocks (Trigger, Current Workaround, Competition View, Expected Outcome).
+4. Note the parent Product Outcome's title, description, and metric for strategic context. The metric lives on the product line — look it up by the PO's `metricId` with `pa_get_metric`, which is the only read that returns the full recorded series.
+5. Read product line personas from `productLine.personas`.
+6. Review `descendants` — note each existing solution's title, description, status, and blocks. Do NOT generate solutions that duplicate these.
 
 ### Step 2: Execute research (mandatory)
 

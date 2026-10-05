@@ -1605,6 +1605,18 @@
           ]
         },
         {
+          "title": "Ask the agent without an anchor",
+          "stories": [
+            {
+              "action": "Ask a coding agent a question or give it a task about the product without pasting an anchor, and the agent finds the relevant entities itself from the tree outline, including done, dropped and archived work",
+              "components": [
+                "pa_get_outline",
+                "MCP server instructions"
+              ]
+            }
+          ]
+        },
+        {
           "title": "Generate solution planning prompt",
           "stories": [
             {
