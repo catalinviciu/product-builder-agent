@@ -137,9 +137,10 @@ One line per event, appended. Old lines are never edited.
 ```markdown
 - Run 1, Round 1 | Technical feasibility | [<test title>](#entity/<id>) | PASS | Executed
 - Run 1, Round 1 | Usability | [<test title>](#entity/<id>) | FAIL | Simulated | "<quoted observation>"
-- Run 1, Round 1 | Journey change -> v2 | <one-line summary>
+- Run 1, Round 1 | Spec changes | <part of the spec> - <change> (from [<test title>](#entity/<id>))
+- Run 1, Round 1 | Prototype evolved -> v2 | <one-line summary>
 - Run 1, Round 2 | Re-test of a passed test | [<test title>](#entity/<id>) | PASS on v2
-- Run 1, Round 2 | Journey change discarded | broke [<test title>](#entity/<id>)
+- Run 1, Round 2 | Spec change undone in spec and prototype | broke [<test title>](#entity/<id>)
 - Run 2 | Builder feedback applied | <one-line summary>
 ```
 
