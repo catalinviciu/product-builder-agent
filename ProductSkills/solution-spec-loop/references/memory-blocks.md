@@ -82,6 +82,9 @@ Written at the end of each run (Step 15), replacing the previous run's version.
 | Prototype | v<n> (tested), v<n+1> (untested) | ... |
 | Rounds used | <1 or 2> | ... |
 
+**Assumptions still open**
+- [<assumption>](#entity/<id>) (<category>) - <why: failed without a re-test, or waiting for a human test>
+
 **Untested since round 2**
 - [<option>](#entity/<id>): <change> - touches [<assumption>](#entity/<id>)
 
@@ -183,7 +186,7 @@ Standard blocks from assumption-tester: `Impact if True`, `Evidence`. The loop r
 - Run 1, Round 1 | [<test title>](#entity/<id>) | PASS/FAIL | <evidence level> | <one-line observation>
 ```
 
-Status: `explore` until a usability or feasibility test passes, then `done`. If a later run of that test fails (a re-test of a passed test), set it back to `explore`. Value and viability assumptions stay `explore` until a human test passes.
+Status: set per the status rules in `SKILL.md` each time a result is recorded. In short: `done` after a pass, `explore` while untested or after a fail, `dropped` when an adaptation replaced the approach it depended on (with a line in Evidence linking the replacement), back to `explore` if a passed test fails its re-test. Value and viability assumptions stay `explore` until a human test passes.
 
 ---
 

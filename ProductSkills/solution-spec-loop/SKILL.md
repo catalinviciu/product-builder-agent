@@ -3,7 +3,7 @@ name: solution-spec-loop
 description: Runs the solution spec loop on one opportunity. Maps the existing code, brainstorms 5 directions, has an advisor refine them into at least 2 solution options, gets human approval, then builds a story map per option for human review and a baseline prototype from the real starting screen, and tests every critical usability and feasibility assumption in up to 2 rounds. After every round it updates the whole solution spec (description, blocks, journey, stories) from what the round learned and builds the next prototype version, so the next round tests the evolved solution. Value and viability assumptions get an AI pre-mortem and a test plan for humans. Everything is recorded in the Product Agent tree, and a finished run can be followed by a new run that starts from the builder's feedback and the previous learnings. Use when the builder runs the "Run solution spec loop" AI action on an opportunity, or asks to spec solutions for an opportunity end to end. Do NOT use to brainstorm only (solutions-brainstormer) or to test one solution's assumptions by hand (assumption-tester).
 metadata:
   author: Cata Viciu
-  version: 1.2.0
+  version: 1.3.0
   category: product
   tags: [solution spec, discovery, assumption testing, prototyping, autoresearch]
   dependencies:
@@ -117,6 +117,35 @@ The loop drives existing skills that normally stop at every gate for the builder
 - A question nobody could answer comes back as an open question with the reading used. Record it in the Spec Loop block.
 - Spawned agents can't spawn agents of their own. Where a sub-skill needs an independent reviewer (the slicer's backbone review gate), the agent hands the material back to you and you run the review (Step 7a).
 - Only the human gates in this skill stop the run: Step 1 (codebase), Step 6 (option review) and Step 7b (story map review). The drop check can add one more (Step 13).
+
+---
+
+# STATUS RULES
+
+The tree's statuses are how the builder sees where things stand, so they must match the latest results. Set them in the same step that records a result, with `pa_update_entity({ entityId, patch: { status } })`. Step 15 checks them all again before the run ends.
+
+**Tests**
+
+| When | Test status |
+|---|---|
+| Written at Step 9 | `draft` |
+| A usability or feasibility test has run (PASS or FAIL) | `done` |
+| A value or viability test with only an AI pre-mortem | stays `draft` until a person runs it |
+
+**Assumptions** follow the latest result of their tests:
+
+| Latest result | Assumption status |
+|---|---|
+| Not tested yet, or only an AI pre-mortem | `explore` |
+| A test passed | `done` |
+| A test failed and will be re-tested in the next round | `explore` |
+| A test failed and the run ended without a re-test | `explore`, listed as open in the scorecard |
+| A test failed and the adaptation replaced the approach it depended on | `dropped`, with a line in its Evidence block: "Invalidated in Run <n>, Round <r>. Replaced by [<new assumption>](#entity/<id>)." |
+| A test that had passed fails its re-test | back to `explore` |
+
+Value and viability assumptions never become `done` from AI work. Only a passed human test does that.
+
+**Solutions** stay `explore` while the loop runs. Only the drop check (Step 13) changes one, to `dropped`. Never set `commit` or `done` on a solution: that's the builder's call.
 
 ---
 
@@ -257,8 +286,9 @@ For each test:
    - Usability: walk the current prototype with the helper's `run` command, one action at a time, as the persona, and report what happened.
    - Feasibility: research spike against the codebase. Read code, and if needed write throwaway code in a scratch folder outside the repo. Never modify the codebase.
 2. Spawn the **grader** with the frozen criteria, the tester's report and, for usability tests, the walkthrough log (`walkthrough.json`). It returns PASS or FAIL with the observation each verdict rests on.
-3. Record per `references/memory-blocks.md`: a `Result: Run <n>, Round <r>` block and the `Learning` block on the test (a re-run adds a new Result block next to the earlier ones and rewrites `Learning`), status `done`; update the assumption's `Evidence` block; add a line to the solution's Iteration Log.
-4. Tell the builder in one line: test, verdict, next test.
+3. Record per `references/memory-blocks.md`: a `Result: Run <n>, Round <r>` block and the `Learning` block on the test (a re-run adds a new Result block next to the earlier ones and rewrites `Learning`); update the assumption's `Evidence` block; add a line to the solution's Iteration Log.
+4. **Set the statuses now**, per the status rules: the test to `done`, and the assumption from this result (`done` on PASS, `explore` on FAIL, back to `explore` if a test that had passed fails its re-test). Don't leave it for later.
+5. Tell the builder in one line: test, verdict, next test.
 
 Options can run their rounds in parallel. Within one option, tests run one at a time.
 
@@ -266,7 +296,7 @@ Options can run their rounds in parallel. Within one option, tests run one at a 
 
 Spawn the **pre-mortem** agent for every value and viability test, once per test. It doesn't depend on the prototype, so it can run alongside round 1. Its only evidence is what's in the tree: the outcome metrics and recorded values, and the opportunity's blocks. No external data sources.
 
-Record its output on the test as an `AI Pre-mortem` block with evidence level `ai-premortem`, plus a `Human Test Plan` block. The test stays `status: "draft"`: a human runs it. The assumption stays `explore`. Never count a pre-mortem as a pass.
+Record its output on the test as an `AI Pre-mortem` block with evidence level `ai-premortem`, plus a `Human Test Plan` block. The test stays `status: "draft"`: a human runs it. The assumption stays `explore` (status rules). Never count a pre-mortem as a pass.
 
 ### Step 12: Evolve the solution (after every round)
 
@@ -277,7 +307,7 @@ Runs after every round, for every active option, whether or not anything failed.
 **2. Adaptation check** (only for failed critical feasibility tests and fired kill criteria). Spawn the **advisor** with the adaptation-check brief: the option, the tester report and grader verdict, the codebase and as-is map. It looks for a change that gets around the blocker while the option still addresses the opportunity's pain and can move the metric: a different technical approach, another data source or service, a narrower scope, a reordered journey, or moving the blocked part out of the walking skeleton. It returns the adaptation, or `NO ADAPTATION` with every change it considered and why each fails.
 
 - If any blocker came back `NO ADAPTATION`, go to Step 13 for that option. Don't run the PM.
-- Otherwise each adaptation becomes part of the PM's change, and gets a new feasibility test (through Step 9) that tests the adapted approach in the next round. The failed test stays as it was.
+- Otherwise each adaptation becomes part of the PM's change, and gets a new feasibility test (through Step 9) that tests the adapted approach in the next round. The failed test stays as it was. If the adaptation replaces the approach the failed assumption depended on, set that assumption to `dropped` and link its replacement in its Evidence block (status rules).
 
 **3. Update the whole spec.** Spawn the option's **PM** agent with the failures, the adaptations, the findings from passing tests and the Learnings block. It updates, in one pass, so they always describe the same solution:
 
@@ -296,13 +326,13 @@ Prefer the simpler change: removing or merging a step beats adding one. Change o
 - Spawn the **assumption mapper** on **the changed parts only**. New critical usability or feasibility assumptions go through Step 9 and join the next round. New value or viability assumptions go through Step 9, then Step 11.
 - The Prototype block lists the new version as an untested candidate. It becomes current only after the ratchet passes in the next round.
 
-**6. Undo together.** If a ratchet test fails in round 2, the change that broke it is undone everywhere it landed: the journey, the stories, the description and blocks, and the prototype (in v3, along with this round's other changes). The Learnings block records what was tried and why it was undone.
+**6. Undo together.** If a ratchet test fails in round 2, the change that broke it is undone everywhere it landed: the journey, the stories, the description and blocks, and the prototype (in v3, along with this round's other changes). Its assumption goes back to `explore` (Step 10 already did this). The Learnings block records what was tried and why it was undone.
 
 ### Step 13: Drop check
 
 Drop an option only when the adaptation check found no way around a blocker: every change it considered either still hits the blocker, stops addressing the opportunity's pain, can't move the metric, or turns the option into a copy of another option. A test failing twice is not on its own a reason to drop; run the adaptation check again.
 
-To drop: set the solution `status: "dropped"`, add a `Drop Reason` block listing the blocker and the adaptations considered, and log it in the Spec Loop block.
+To drop: set the solution `status: "dropped"`, add a `Drop Reason` block listing the blocker and the adaptations considered, and log it in the Spec Loop block. Leave the dropped option's assumptions and tests as they are: they're the record of why.
 
 If fewer than 2 options remain, **stop and ask the builder**: offer the backup pool. A replacement enters at Step 7a with its own 2-round budget.
 
@@ -320,9 +350,11 @@ After round `r`:
 
 ### Step 15: Scorecard
 
-**Consistency check first.** For each active option, read the description, Why It Works, Trade-offs, the High-Level User Journey, the stories and the latest prototype version. They must describe the same flow. If any part is behind, continue the PM to bring it in line (spec text and stories only; don't build another prototype version) and log it as a spec change.
+**Status check first.** Call `pa_get_outline` on each active option. Walk every assumption and test under it and compare its status with its latest result, per the status rules. Fix every mismatch with `pa_update_entity` and log each fix in the Iteration Log ("Status fixed: ..."). Don't write the scorecard until every status matches.
 
-Then write the `Spec Loop Scorecard` block on the opportunity per `references/memory-blocks.md`: options side by side, assumptions by evidence level, untested changes, human tests waiting, and one recommended next step. Set the Spec Loop block status to `complete`.
+**Then the consistency check.** For each active option, read the description, Why It Works, Trade-offs, the High-Level User Journey, the stories and the latest prototype version. They must describe the same flow. If any part is behind, continue the PM to bring it in line (spec text and stories only; don't build another prototype version) and log it as a spec change.
+
+Then write the `Spec Loop Scorecard` block on the opportunity per `references/memory-blocks.md`: options side by side, assumptions by evidence level, assumptions still open and why, untested changes, human tests waiting, and one recommended next step. Set the Spec Loop block status to `complete`.
 
 Tell the builder in three lines or fewer: how many options survived, where the scorecard is, which human tests come first. Add that they can give feedback and run the action again for a follow-up run.
 
@@ -381,3 +413,4 @@ Log lines carry the run number ("Run 2, Round 1"). At the end, rewrite the score
 13. **The prototype starts from the real starting screen.** It comes from the as-is map's cited files, or for greenfield from the screen approved at Step 6. No agent picks its own.
 14. **No raw IDs for humans.** Link entities as `[Title](#entity/<id>)` in blocks and name them by title in messages. Write types out in full.
 15. **Spec and prototype move together.** After every round the whole spec (description, Why It Works, Trade-offs, journey, stories) is updated from what the round learned, and the next round tests a new prototype version built from it.
+16. **Statuses match results.** Set test and assumption statuses when each result is recorded, per the status rules, and check them all before the scorecard. No run ends with a status that doesn't match its latest result.
