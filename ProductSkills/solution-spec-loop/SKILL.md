@@ -89,17 +89,21 @@ Walkthrough logs go to `Product-Agent-app/data/spec-loop/<opp-slug>/<solution-sl
 
 # AGENTS AND MODELS
 
-Spawn agents with the Agent tool. Use the model alias, which resolves to the latest version.
+Launch each role as a subagent with your tool's subagent feature (for example the Agent tool in Claude Code, or subagents in Kiro). Pick the model per role by tier, using the latest version your tool offers. If your tool can't choose a model per subagent, use its default and record that in the Spec Loop block under "Decisions made without the builder".
 
-| Role | Model | Writes to the tree? |
+| Role | Model tier | Writes to the tree? |
 |------|-------|---------------------|
 | Orchestrator (you) | session model | Yes: run state, entities, results, learnings |
-| Advisor (product designer + engineering architect) | `opus` | No. Returns options. |
-| PM (journey, story map, prototype) | `opus` | Yes, only its own solution: stories, journey block, Prototype block, prototype file |
-| Assumption mapper | `opus` | No. Returns assumptions and tests. |
-| Tester (usability and feasibility) | `sonnet` | No. Returns observations. |
-| Grader | `opus` | No. Returns PASS / FAIL with reasons. |
-| Pre-mortem (value and viability) | `opus` | No. Returns a dry run and a human test plan. |
+| Advisor (product designer + engineering architect) | strongest | No. Returns options. |
+| PM (journey, story map, prototype) | strongest | Yes, only its own solution: stories, journey block, Prototype block, prototype file |
+| Assumption mapper | strongest | No. Returns assumptions and tests. |
+| Tester (usability and feasibility) | fast | No. Returns observations. |
+| Grader | strongest | No. Returns PASS / FAIL with reasons. |
+| Pre-mortem (value and viability) | strongest | No. Returns a dry run and a human test plan. |
+
+With Claude models, strongest is Opus and fast is Sonnet.
+
+**Continuing an agent.** Some steps hand an agent's work back to you and then continue it (the PM around the backbone review, and after a failed gate check). If your tool can send a follow-up message to the same agent, do that. If it can't, launch a new agent with the same brief, the previous agent's full output, and the new message. Either way the agent picks up where the last one stopped.
 
 The tester never sees the pass/fail criteria. The grader never sees the builder's hopes, only the frozen criteria and the tester's observations.
 
@@ -186,9 +190,9 @@ From here to the end of the run, nothing stops for the builder except the drop c
 For each option, spawn a **PM** agent (brief in `references/agent-briefs.md`). It runs in two parts:
 
 1. **Backbone.** It slices the **to-be** story map with `user-story-slicer` from the as-is map and the option's journey (stories cover what changes; unchanged steps stay as backbone context), and stops after the backbone. It returns the backbone table, the axis ledger and the verbatim text of the slicer's build step 7.
-2. **Backbone review.** Spawn a fresh reviewer agent with exactly those three things and nothing else, per the slicer's backbone review gate. On FAIL, resume the PM with the verdict (SendMessage to the same agent), get the fixed backbone, and review again with a fresh reviewer. Loop until PASS.
-3. **Stories and prototype.** Resume the PM with the PASS verdict. It finishes the slicer (slice outcomes, stories written to the solution), builds prototype `v1.html` of the walking skeleton stories with `prototype-builder` at `<Prototype root><solution-slug>/v1.html` (solution slug = first 5 words of the title, slugified), and updates the solution's `Prototype` block to link v1 as current.
-4. **Gate check.** Run the helper's `check` on v1. On FAIL, resume the PM with the failures to fix v1 in place (v1 hasn't been tested yet), and check again until PASS.
+2. **Backbone review.** Spawn a fresh reviewer agent with exactly those three things and nothing else, per the slicer's backbone review gate. On FAIL, continue the PM with the verdict (see "Continuing an agent"), get the fixed backbone, and review again with a fresh reviewer. Loop until PASS.
+3. **Stories and prototype.** Continue the PM with the PASS verdict. It finishes the slicer (slice outcomes, stories written to the solution), builds prototype `v1.html` of the walking skeleton stories with `prototype-builder` at `<Prototype root><solution-slug>/v1.html` (solution slug = first 5 words of the title, slugified), and updates the solution's `Prototype` block to link v1 as current.
+4. **Gate check.** Run the helper's `check` on v1. On FAIL, continue the PM with the failures to fix v1 in place (v1 hasn't been tested yet), and check again until PASS.
 
 PM agents for different options can run in parallel.
 
@@ -228,7 +232,7 @@ A round's tests are:
 
 For each test:
 
-1. Spawn the **tester** (`sonnet`) with the tester brief. It gets the artifact (prototype path or codebase), the persona, and the neutral task. It does NOT get the criteria.
+1. Spawn the **tester** (fast model) with the tester brief. It gets the artifact (prototype path or codebase), the persona, and the neutral task. It does NOT get the criteria.
    - Usability: walk the current prototype with the helper's `run` command, one action at a time, as the persona, and report what happened.
    - Feasibility: research spike against the codebase. Read code, and if needed write throwaway code in a scratch folder outside the repo. Never modify the codebase.
 2. Spawn the **grader** with the frozen criteria, the tester's report and, for usability tests, the walkthrough log (`walkthrough.json`). It returns PASS or FAIL with the observation each verdict rests on.
