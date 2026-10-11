@@ -2,11 +2,11 @@
 
 ## What is a User Story?
 
-A description of a change in system behavior from the perspective of a user. It describes something a user wants to do with the system that it doesn't do today.
+A description of a change in system behavior from the perspective of the beneficiary, the person the platform does the work for. For a user-facing story it is something a user wants to do with the system that it doesn't do today. For a platform-only story it is observable output the beneficiary relies on, produced without them acting: the behaviour change is what the platform now delivers for them, not a click they make.
 
 A user story is NOT a requirements document. It's an invitation to a conversation.
 
-**When AI builds:** The conversation must conclude *before* the story reaches AI. The story AI receives is the final output of that conversation, not the starting point.
+**When AI builds:** The conversation must conclude *before* the story reaches AI. The story AI receives is the final output of that conversation, not the starting point. It's the spec the AI will build.
 
 ---
 
@@ -31,9 +31,9 @@ so that [benefit/value]
 ```
 
 **Rules:**
-- The role must be a specific human who interacts with the system -- not "a user" and never "a developer"
-- The action describes a change in system behavior, not an implementation detail
-- The "so that" clause is the most important part -- it tells the team *why*
+- The role is the beneficiary the platform serves, a specific human -- not "a user", never "a developer", never "the system". For a user-facing story that is the person who interacts with the system. For a platform-only story it is whoever relies on the output, even though they never touch the flow.
+- The action describes a change in system behavior, not an implementation detail. For a platform-only story it is the output the beneficiary now gets, not an action they take.
+- The "so that" clause is the most important part - it tells the team *why*
 - The "so that" clause is optional only when it adds zero information
 
 ---
@@ -50,7 +50,6 @@ I [action/need]
 so that [benefit/value]
 
 ### Context
-- **Stack:** [tech stack, frameworks, languages]
 - **Existing system:** [what's already built that this touches]
 - **Constraints:** [conventions, patterns, rules to follow]
 
@@ -66,6 +65,7 @@ so that [benefit/value]
 - [What the reviewer should visually inspect]
 - [What to spot-check in the output]
 - [Specific user flows to walk through manually]
+- [Platform-only: verify the job ran, the output landed, and it matches the source data -- there is no UI to walk]
 ```
 
 **Note:** Acceptance Criteria are NOT included in this skill's output. They are written by a separate skill after the team confirms the story set.
@@ -74,10 +74,9 @@ so that [benefit/value]
 
 | Section | For human devs | For AI |
 |---|---|---|
-| **Context** | They already know this (tribal knowledge) | Must be stated -- AI has no institutional memory |
 | **Out of Scope** | Discussed at standup if unclear | AI will infer scope without it -- often wrong |
 | **Dependencies** | They check by asking teammates | AI needs explicit pointers to existing code/APIs |
-| **Human Verification** | They demo at sprint review | The PM/reviewer needs a script to validate AI output |
+| **Human Verification** | They demo at sprint review | The PM/reviewer needs a script to validate AI output. Platform-only: check the job ran, the output landed, and it matches source data, not a UI walkthrough |
 
 ---
 

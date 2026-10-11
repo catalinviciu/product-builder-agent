@@ -11,6 +11,10 @@
     "kster": {
       "type": "http",
       "url": "https://kster.ai/api/mcp"
+    },
+    "kster-staging": {
+      "type": "http",
+      "url": "https://kster-app-staging-n72bwcdveq-ew.a.run.app/api/mcp"
     }
   }
 }

@@ -54,3 +54,9 @@ When multiple patterns apply, choose the split that:
 
 1. **Lets you deprioritize or discard a story** -- the 80/20 principle says most value comes from a small share of the functionality
 2. **Produces more equally-sized stories** -- an 8-point story split into four 2s is better than a 5 and a 3
+
+---
+
+## Horizontal release slices
+
+A vertical slice is one story: a thin change touching whatever layers it needs to deliver value. A **horizontal release slice** groups vertical stories across the backbone into an end-to-end increment. For the Slice outcome, walking-skeleton, sequencing, and story-assignment rules, follow Phase 4 and Phase 5 of `../SKILL.md`.

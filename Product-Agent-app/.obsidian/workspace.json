@@ -20,8 +20,21 @@
               "icon": "lucide-file",
               "title": "STORY_MAP"
             }
+          },
+          {
+            "id": "617fa81d74652fff",
+            "type": "leaf",
+            "state": {
+              "type": "release-notes",
+              "state": {
+                "currentVersion": "1.12.7"
+              },
+              "icon": "lucide-book-up",
+              "title": "Release Notes 1.12.7"
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -170,7 +183,7 @@
       "bases:Create new base": false
     }
   },
-  "active": "8f3f5600c2f68fd7",
+  "active": "617fa81d74652fff",
   "lastOpenFiles": [
     "app/components/AccountMenu.tsx",
     "app/lib/ThemePreferenceContext.tsx",
