@@ -1,9 +1,9 @@
 ---
 name: solution-spec-loop
-description: Runs the solution spec loop on one opportunity. Maps the existing code, brainstorms 5 directions, has an advisor refine them into at least 2 solution options, gets human approval, then builds a story map and baseline prototype per option and tests every critical usability and feasibility assumption in up to 2 rounds, updating the journey and prototype after each round. Value and viability assumptions get an AI pre-mortem and a test plan for humans. Everything is recorded in the Product Agent tree. Use when the builder runs the "Run solution spec loop" AI action on an opportunity, or asks to spec solutions for an opportunity end to end. Do NOT use to brainstorm only (solutions-brainstormer) or to test one solution's assumptions by hand (assumption-tester).
+description: Runs the solution spec loop on one opportunity. Maps the existing code, brainstorms 5 directions, has an advisor refine them into at least 2 solution options, gets human approval, then builds a story map per option for human review and a baseline prototype from the real starting screen, and tests every critical usability and feasibility assumption in up to 2 rounds, updating the journey and prototype after each round. Value and viability assumptions get an AI pre-mortem and a test plan for humans. Everything is recorded in the Product Agent tree, and a finished run can be followed by a new run that starts from the builder's feedback and the previous learnings. Use when the builder runs the "Run solution spec loop" AI action on an opportunity, or asks to spec solutions for an opportunity end to end. Do NOT use to brainstorm only (solutions-brainstormer) or to test one solution's assumptions by hand (assumption-tester).
 metadata:
   author: Cata Viciu
-  version: 1.0.0
+  version: 1.1.0
   category: product
   tags: [solution spec, discovery, assumption testing, prototyping, autoresearch]
   dependencies:
@@ -115,8 +115,8 @@ The loop drives existing skills that normally stop at every gate for the builder
 
 - Gates in a sub-skill are answered by the brief or decided by the sub-skill from the tree, and the decision is returned to you. Record decisions in the Spec Loop block under "Decisions made without the builder".
 - A question nobody could answer comes back as an open question with the reading used. Record it in the Spec Loop block.
-- Spawned agents can't spawn agents of their own. Where a sub-skill needs an independent reviewer (the slicer's backbone review gate), the agent hands the material back to you and you run the review (Step 7).
-- Only the two human gates in this skill stop the run: Step 1 (codebase) and Step 6 (option review). The drop check can add a third (Step 13).
+- Spawned agents can't spawn agents of their own. Where a sub-skill needs an independent reviewer (the slicer's backbone review gate), the agent hands the material back to you and you run the review (Step 7a).
+- Only the human gates in this skill stop the run: Step 1 (codebase), Step 6 (option review) and Step 7b (story map review). The drop check can add one more (Step 13).
 
 ---
 
@@ -126,7 +126,11 @@ The loop drives existing skills that normally stop at every gate for the builder
 
 ### Step 0: Resume or start
 
-Call `pa_get_entity(opportunityId)`. If it has a `Spec Loop` block whose status is not `complete`, read it and resume from the recorded step. Never start a second run over an unfinished one without asking.
+Call `pa_get_entity(opportunityId)`.
+
+- No `Spec Loop` block: this is run 1. Go to Step 1.
+- A `Spec Loop` block whose status is not `complete`: read it and resume from the recorded step. Never start a second run over an unfinished one without asking.
+- A `Spec Loop` block whose status is `complete`: offer a follow-up run (see "Follow-up runs" at the end of the protocol). Don't start over from Step 1.
 
 Then make sure the walkthrough helper runs: if `ProductSkills/solution-spec-loop/scripts/node_modules` is missing, run `npm install` in that folder. If Chromium is missing, run `npx playwright install chromium` there. If neither works, tell the builder now; usability tests can't run without it.
 
@@ -141,6 +145,8 @@ Ask in one message:
 > If there is a codebase: where does the related workflow start (a user action) and where does it end?"
 
 Wait for the reply. Record codebase, start and end in the Spec Loop block (create it now, per `references/memory-blocks.md`).
+
+**Never show a raw ID to the builder.** In every block and every message, name an entity by its title and, in blocks, link it as `[Title](#entity/<id>)`. The app opens the entity on click; agents read the ID from the link. Write types out in full, as `references/memory-blocks.md` lists them.
 
 ### Step 2: Read the context
 
@@ -162,6 +168,8 @@ Skip for greenfield. Otherwise run `code-to-story-map-archeologist` in spec-loop
 
 The as-is map is shared by every option.
 
+**Record the starting screen.** From the map, take the screen where the user acts at the start point: its name as the user sees it, its route if it has one, and the component files that render it, as cited in the map. Write it to the Spec Loop block as **Starting screen**. Every option's journey and every prototype starts from this screen. For greenfield, the starting screen is set per option at Step 6.
+
 ### Step 4: Brainstorm 5 directions
 
 Run `solutions-brainstormer` Phases 1 and 2 yourself, in spec-loop mode:
@@ -173,28 +181,41 @@ Run `solutions-brainstormer` Phases 1 and 2 yourself, in spec-loop mode:
 
 ### Step 5: Advisor refines the options
 
-Spawn the **advisor** (brief in `references/agent-briefs.md`) with: outcome + metric, opportunity, as-is map, the 5 directions, existing and dropped solutions.
+Spawn the **advisor** (brief in `references/agent-briefs.md`) with: outcome + metric, opportunity, as-is map, starting screen, the 5 directions, existing and dropped solutions.
 
 It returns at least 2 refined options, each with a journey sketch, why it moves the metric, UX and technical risks, and **kill criteria**, plus the directions it set aside and why (the backup pool).
 
 ### Step 6: Option review (HUMAN GATE)
 
-Present the refined options and the backup pool. Ask the builder to approve, edit, swap in a pool direction, or drop options. At least 2 must remain.
+Present the refined options and the backup pool. For each option, show the screen its journey starts from: the recorded starting screen, or for greenfield the new screen the advisor proposes. Ask the builder to approve, edit, swap in a pool direction, or drop options, and to correct a starting screen if it's wrong. At least 2 must remain.
 
 Wait for the reply. Then, for each approved option, write a solution entity per the brainstormer's Phase 3 schema (`status: "explore"`, blocks Why It Works, Trade-offs, High-Level User Journey), plus a `Kill Criteria` block. Record the solution IDs and the backup pool in the Spec Loop block.
 
-From here to the end of the run, nothing stops for the builder except the drop check (Step 13).
+The next stop for the builder is the story map review (Step 7b).
 
-### Step 7: Story map and baseline prototype per option
+### Step 7a: Story map per option
 
-For each option, spawn a **PM** agent (brief in `references/agent-briefs.md`). It runs in two parts:
+For each option, spawn a **PM** agent (brief in `references/agent-briefs.md`). PM agents for different options can run in parallel.
 
 1. **Backbone.** It slices the **to-be** story map with `user-story-slicer` from the as-is map and the option's journey (stories cover what changes; unchanged steps stay as backbone context), and stops after the backbone. It returns the backbone table, the axis ledger and the verbatim text of the slicer's build step 7.
 2. **Backbone review.** Spawn a fresh reviewer agent with exactly those three things and nothing else, per the slicer's backbone review gate. On FAIL, continue the PM with the verdict (see "Continuing an agent"), get the fixed backbone, and review again with a fresh reviewer. Loop until PASS.
-3. **Stories and prototype.** Continue the PM with the PASS verdict. It finishes the slicer (slice outcomes, stories written to the solution), builds prototype `v1.html` of the walking skeleton stories with `prototype-builder` at `<Prototype root><solution-slug>/v1.html` (solution slug = first 5 words of the title, slugified), and updates the solution's `Prototype` block to link v1 as current.
-4. **Gate check.** Run the helper's `check` on v1. On FAIL, continue the PM with the failures to fix v1 in place (v1 hasn't been tested yet), and check again until PASS.
+3. **Stories.** Continue the PM with the PASS verdict. It finishes the slicer (slice outcomes, stories written to the solution) and returns the backbone as a Mermaid diagram, the stories by slice, and every decision and open question.
 
-PM agents for different options can run in parallel.
+### Step 7b: Story map review (HUMAN GATE)
+
+AI story maps miss steps a person who knows the product sees at once, so the builder reviews them before anything is built on top.
+
+Present, per option: the backbone diagram, the stories by slice with the walking skeleton marked, and the PM's decisions and open questions. Say the stories are on each solution's Stories tab. Ask the builder to reply with feedback, or to edit the stories in the app and reply `done`.
+
+Wait for the reply. Then continue each option's PM with the feedback, and with the stories as they are now in the tree (re-read them with `pa_get_entity`; the builder may have edited them). The PM applies the feedback. If the backbone changed, run the Step 7a backbone review again. Record the feedback in the Spec Loop block. Ask again only if the builder's reply asked for another look.
+
+From here to the end of the run, nothing stops for the builder except the drop check (Step 13).
+
+### Step 7c: Baseline prototype per option
+
+1. **Prototype.** Continue the PM. It builds prototype `v1.html` of the walking skeleton stories with `prototype-builder` at `<Prototype root><solution-slug>/v1.html` (solution slug = first 5 words of the title, slugified), starting from the **starting screen**: the brief names the screen, its route and its component files, and the PM replicates that screen from those files. It returns the files it replicated. It updates the solution's `Prototype` block to link v1 as current.
+2. **Starting screen check.** Compare the files the PM replicated with the starting screen's files. If they differ, or the first screen of v1 isn't the starting screen, continue the PM to rebuild v1 from the right screen. Never accept a starting screen the PM chose itself.
+3. **Gate check.** Run the helper's `check` on v1. On FAIL, continue the PM with the failures to fix v1 in place (v1 hasn't been tested yet), and check again until PASS.
 
 ---
 
@@ -236,7 +257,7 @@ For each test:
    - Usability: walk the current prototype with the helper's `run` command, one action at a time, as the persona, and report what happened.
    - Feasibility: research spike against the codebase. Read code, and if needed write throwaway code in a scratch folder outside the repo. Never modify the codebase.
 2. Spawn the **grader** with the frozen criteria, the tester's report and, for usability tests, the walkthrough log (`walkthrough.json`). It returns PASS or FAIL with the observation each verdict rests on.
-3. Record per `references/memory-blocks.md`: `Result R<r>` and `Learning` blocks on the test (a re-run in round 2 adds `Result R2` next to `Result R1` and rewrites `Learning`), status `done`; update the assumption's `Evidence` block; add a line to the solution's Iteration Log.
+3. Record per `references/memory-blocks.md`: a `Result: Run <n>, Round <r>` block and the `Learning` block on the test (a re-run adds a new Result block next to the earlier ones and rewrites `Learning`), status `done`; update the assumption's `Evidence` block; add a line to the solution's Iteration Log.
 4. Tell the builder in one line: test, verdict, next test.
 
 Options can run their rounds in parallel. Within one option, tests run one at a time.
@@ -259,7 +280,7 @@ A failure is a reason to change the option, not to drop it. Run this step for ev
 **Then the update.** Spawn the option's **PM** agent with the failures, the adaptations and the learnings. It:
 
 1. Changes the journey to address the failures. Prefer the simpler change: removing or merging a step beats adding one.
-2. Applies the change to the story map (`stories`) and the High-Level User Journey block. If the backbone changes, it returns the new backbone first and you run the Step 7 backbone review again before it writes stories.
+2. Applies the change to the story map (`stories`) and the High-Level User Journey block. If the backbone changes, it returns the new backbone first and you run the Step 7a backbone review again before it writes stories.
 3. Builds the next prototype version `v{r+1}.html` from the current one. Never overwrite an existing version. Run the helper's `check` on it; the PM fixes the new version until PASS.
 4. Returns the list of what changed.
 
@@ -277,7 +298,7 @@ Drop an option only when the adaptation check found no way around a blocker: eve
 
 To drop: set the solution `status: "dropped"`, add a `Drop Reason` block listing the blocker and the adaptations considered, and log it in the Spec Loop block.
 
-If fewer than 2 options remain, **stop and ask the builder** (third human gate): offer the backup pool. A replacement enters at Step 7 with its own 2-round budget.
+If fewer than 2 options remain, **stop and ask the builder**: offer the backup pool. A replacement enters at Step 7a with its own 2-round budget.
 
 ### Step 14: Stop or continue
 
@@ -295,7 +316,43 @@ After round `r`:
 
 Write the `Spec Loop Scorecard` block on the opportunity per `references/memory-blocks.md`: options side by side, assumptions by evidence level, untested changes, human tests waiting, and one recommended next step. Set the Spec Loop block status to `complete`.
 
-Tell the builder in three lines or fewer: how many options survived, where the scorecard is, which human tests come first.
+Tell the builder in three lines or fewer: how many options survived, where the scorecard is, which human tests come first. Add that they can give feedback and run the action again for a follow-up run.
+
+---
+
+## Follow-up runs
+
+A finished run is a starting point, not an end. After reviewing the scorecard, the prototypes and the story maps, the builder can edit things in the app and run the action again. A follow-up run starts from what the previous runs learned, so nothing is redone from scratch.
+
+### Step F1: Collect feedback (HUMAN GATE)
+
+Step 0 found a `complete` Spec Loop block. Ask in one message:
+
+> "Run <n> finished on <date>. Start run <n+1>? Tell me what to change: feedback on options, journeys, story maps or prototypes. If you edited stories or blocks in the app, say so and I'll pick them up. You can also bring in a direction from the backup pool."
+
+Wait for the reply. Record it in the Spec Loop block as the run's feedback, increase **Run**, set status to `running`.
+
+### Step F2: Read what carries over
+
+For each active option, read: the solution and its blocks (Learnings, Iteration Log, Kill Criteria, Prototype), its stories as they are now (the builder's edits included), its assumptions and tests with results, and the scorecard's **untested since round 2** list. Reuse the codebase, the as-is map and the starting screen from the Spec Loop block. Don't repeat Steps 1-6.
+
+A backup-pool direction the builder brings in becomes a new solution (Step 6 schema) and enters at Step 7a with its own budget.
+
+### Step F3: Apply the feedback to each option
+
+Continue a PM per option (a new agent given the PM brief, the feedback, the Learnings block and the current stories). It changes the journey and the story map to apply the feedback and the untested changes from the last run. If the backbone changed, run the Step 7a backbone review.
+
+Then run **Step 7b** again: the builder reviews the changed story maps before anything is built.
+
+### Step F4: Next prototype version
+
+The PM builds the next version (`v{n+1}.html`) from the current one, from the same starting screen (Step 7c checks apply). Never overwrite an earlier version.
+
+### Step F5: Run the loop again
+
+Map assumptions on the changed parts only (Step 8), plus anything listed as untested since round 2. Freeze criteria (Step 9). Then Steps 10-14 with a **fresh 2-round budget**. In this run's round 1, the ratchet set is every usability test that passed in earlier runs, re-run on the new version.
+
+Log lines carry the run number ("Run 2, Round 1"). At the end, rewrite the scorecard (Step 15) and keep one line per earlier run under **Previous runs**.
 
 ---
 
@@ -311,5 +368,7 @@ Tell the builder in three lines or fewer: how many options survived, where the s
 8. **Never overwrite a prototype version.** v1, v2, v3 stay side by side.
 9. **Write only under this opportunity.** Its blocks, its new solutions and their assumptions and tests. Never edit sibling opportunities, outcomes or existing solutions.
 10. **Never set a story's `done` or `doneAt`.**
-11. **Only the human gates stop the run.** Steps 1, 6 and, when triggered, 13. Everything else is decided by the loop and recorded.
+11. **Only the human gates stop the run.** Steps 1, 6, 7b, F1 and, when triggered, 13. Everything else is decided by the loop and recorded.
 12. **Record before moving on.** A test without its Result and Learning blocks hasn't finished.
+13. **The prototype starts from the real starting screen.** It comes from the as-is map's cited files, or for greenfield from the screen approved at Step 6. No agent picks its own.
+14. **No raw IDs for humans.** Link entities as `[Title](#entity/<id>)` in blocks and name them by title in messages. Write types out in full.
