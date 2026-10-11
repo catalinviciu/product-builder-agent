@@ -3,7 +3,7 @@ name: solution-spec-loop
 description: Runs the solution spec loop on one opportunity. Maps the existing code, brainstorms 5 directions, has an advisor refine them into at least 2 solution options, gets human approval, then builds a story map per option for human review and a baseline prototype from the real starting screen, and tests every critical usability and feasibility assumption in up to 2 rounds. After every round it updates the whole solution spec (description, blocks, journey, stories) from what the round learned and builds the next prototype version, so the next round tests the evolved solution. Value and viability assumptions get an AI pre-mortem and a test plan for humans. Everything is recorded in the Product Agent tree, and a finished run can be followed by a new run that starts from the builder's feedback and the previous learnings. Use when the builder runs the "Run solution spec loop" AI action on an opportunity, or asks to spec solutions for an opportunity end to end. Do NOT use to brainstorm only (solutions-brainstormer) or to test one solution's assumptions by hand (assumption-tester).
 metadata:
   author: Cata Viciu
-  version: 1.3.0
+  version: 1.4.0
   category: product
   tags: [solution spec, discovery, assumption testing, prototyping, autoresearch]
   dependencies:
@@ -95,7 +95,7 @@ Launch each role as a subagent with your tool's subagent feature (for example th
 |------|-------|---------------------|
 | Orchestrator (you) | session model | Yes: run state, entities, results, learnings |
 | Advisor (product designer + engineering architect) | strongest | No. Returns options. |
-| PM (journey, story map, prototype) | strongest | Yes, only its own solution: stories, journey block, Prototype block, prototype file |
+| PM (journey, story map, prototype) | strongest | Yes, only its own solution: stories, journey and spec blocks, prototype files. Never the Prototype block. |
 | Assumption mapper | strongest | No. Returns assumptions and tests. |
 | Tester (usability and feasibility) | fast | No. Returns observations. |
 | Grader | strongest | No. Returns PASS / FAIL with reasons. |
@@ -144,6 +144,16 @@ The tree's statuses are how the builder sees where things stand, so they must ma
 | A test that had passed fails its re-test | back to `explore` |
 
 Value and viability assumptions never become `done` from AI work. Only a passed human test does that.
+
+**Prototype block.** You own each solution's `Prototype` block (format in `references/memory-blocks.md`), not the PM. Update it with `pa_update_block` at exactly these points, so it always links every version that exists:
+
+| When | Prototype block |
+|---|---|
+| v1 passes its gate check (Step 7c) | v1 is **Current** |
+| Step 12 or Step F4 builds a new version | add it as **Candidate (untested)**; Current stays |
+| The candidate's round finishes and every re-test of a passed test passed on it | the candidate becomes **Current**; the old one moves to **Earlier versions** |
+| A re-test fails on the candidate | it stays listed as **Candidate**, marked "failed a re-test; change undone in v<n+1>" |
+| The run ends with a version built after round 2 | it stays **Candidate (untested)** |
 
 **Solutions** stay `explore` while the loop runs. Only the drop check (Step 13) changes one, to `dropped`. Never set `commit` or `done` on a solution: that's the builder's call.
 
@@ -242,9 +252,10 @@ From here to the end of the run, nothing stops for the builder except the drop c
 
 ### Step 7c: Baseline prototype per option
 
-1. **Prototype.** Continue the PM. It builds prototype `v1.html` of the walking skeleton stories with `prototype-builder` at `<Prototype root><solution-slug>/v1.html` (solution slug = first 5 words of the title, slugified), starting from the **starting screen**: the brief names the screen, its route and its component files, and the PM replicates that screen from those files. It returns the files it replicated. It updates the solution's `Prototype` block to link v1 as current.
+1. **Prototype.** Continue the PM. It builds prototype `v1.html` of the walking skeleton stories with `prototype-builder` at `<Prototype root><solution-slug>/v1.html` (solution slug = first 5 words of the title, slugified), starting from the **starting screen**: the brief names the screen, its route and its component files, and the PM replicates that screen from those files. It returns the files it replicated.
 2. **Starting screen check.** Compare the files the PM replicated with the starting screen's files. If they differ, or the first screen of v1 isn't the starting screen, continue the PM to rebuild v1 from the right screen. Never accept a starting screen the PM chose itself.
 3. **Gate check.** Run the helper's `check` on v1. On FAIL, continue the PM with the failures to fix v1 in place (v1 hasn't been tested yet), and check again until PASS.
+4. **Prototype block.** Write the solution's `Prototype` block with v1 as Current (status rules).
 
 ---
 
@@ -292,6 +303,8 @@ For each test:
 
 Options can run their rounds in parallel. Within one option, tests run one at a time.
 
+When the round's tests are done, **update each option's Prototype block** (status rules): if the round tested a candidate and every re-test of a passed test passed on it, make it Current; if one failed, mark the candidate as failed.
+
 ### Step 11: Value and viability pre-mortem
 
 Spawn the **pre-mortem** agent for every value and viability test, once per test. It doesn't depend on the prototype, so it can run alongside round 1. Its only evidence is what's in the tree: the outcome metrics and recorded values, and the opportunity's blocks. No external data sources.
@@ -324,7 +337,7 @@ Prefer the simpler change: removing or merging a step beats adding one. Change o
 - Add a `Spec changes` line to the Iteration Log for each change, linking the test behind it.
 - Rewrite the solution's `Learnings` block.
 - Spawn the **assumption mapper** on **the changed parts only**. New critical usability or feasibility assumptions go through Step 9 and join the next round. New value or viability assumptions go through Step 9, then Step 11.
-- The Prototype block lists the new version as an untested candidate. It becomes current only after the ratchet passes in the next round.
+- **Update the Prototype block now**: add the new version as Candidate (untested), keep the current one as Current (status rules). Step 10 promotes it after the next round, if its re-tests pass.
 
 **6. Undo together.** If a ratchet test fails in round 2, the change that broke it is undone everywhere it landed: the journey, the stories, the description and blocks, and the prototype (in v3, along with this round's other changes). Its assumption goes back to `explore` (Step 10 already did this). The Learnings block records what was tried and why it was undone.
 
@@ -350,7 +363,7 @@ After round `r`:
 
 ### Step 15: Scorecard
 
-**Status check first.** Call `pa_get_outline` on each active option. Walk every assumption and test under it and compare its status with its latest result, per the status rules. Fix every mismatch with `pa_update_entity` and log each fix in the Iteration Log ("Status fixed: ..."). Don't write the scorecard until every status matches.
+**Status check first.** Call `pa_get_outline` on each active option. Walk every assumption and test under it and compare its status with its latest result, per the status rules. Fix every mismatch with `pa_update_entity` and log each fix in the Iteration Log ("Status fixed: ..."). Also list the prototype files in each option's folder and check its Prototype block: every version file is linked, and Current is the latest version that passed its re-tests. Fix the block if not. Don't write the scorecard until statuses and Prototype blocks match.
 
 **Then the consistency check.** For each active option, read the description, Why It Works, Trade-offs, the High-Level User Journey, the stories and the latest prototype version. They must describe the same flow. If any part is behind, continue the PM to bring it in line (spec text and stories only; don't build another prototype version) and log it as a spec change.
 
@@ -386,7 +399,7 @@ Then run **Step 7b** again: the builder reviews the changed story maps before an
 
 ### Step F4: Next prototype version
 
-The PM builds the next version (`v{n+1}.html`) from the current one, applying every spec change a user would see, from the same starting screen (Step 7c checks apply). Never overwrite an earlier version. Round 1 of this run tests it.
+The PM builds the next version (`v{n+1}.html`) from the current one, applying every spec change a user would see, from the same starting screen (Step 7c checks apply). Never overwrite an earlier version. Add it to the Prototype block as Candidate (untested). Round 1 of this run tests it.
 
 ### Step F5: Run the loop again
 
@@ -414,3 +427,4 @@ Log lines carry the run number ("Run 2, Round 1"). At the end, rewrite the score
 14. **No raw IDs for humans.** Link entities as `[Title](#entity/<id>)` in blocks and name them by title in messages. Write types out in full.
 15. **Spec and prototype move together.** After every round the whole spec (description, Why It Works, Trade-offs, journey, stories) is updated from what the round learned, and the next round tests a new prototype version built from it.
 16. **Statuses match results.** Set test and assumption statuses when each result is recorded, per the status rules, and check them all before the scorecard. No run ends with a status that doesn't match its latest result.
+17. **The Prototype block links every version.** You update it when a version is built, promoted or fails a re-test. The PM never writes it.

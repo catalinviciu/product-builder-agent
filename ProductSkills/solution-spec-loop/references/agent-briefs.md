@@ -185,8 +185,7 @@ screen. If the walking skeleton can't start there, stop and return why.
 <For greenfield: "Starting screen: <the new screen approved at option review>. Build it as a
 new screen from the design system.">
 
-Add or update the solution's Prototype block:
-**[Current: v1](<served-url>/v1.html)** - baseline walking skeleton, not yet tested.
+Don't update the Prototype block. The orchestrator writes it after the gate check.
 
 Return: the prototype path, the component files you replicated for the starting screen,
 the screens built, and what the prototype left out.
@@ -221,7 +220,7 @@ Then copy v{r}.html to v{r+1}.html and apply every change a user would see. Neve
 v{r}.html. The prototype keeps opening on the same starting screen. If nothing a user sees
 changed, don't build a new version and say so.
 
-Don't update the Prototype block. The orchestrator does that after the ratchet.
+Don't update the Prototype block. The orchestrator adds the new version as a candidate.
 
 Return: the spec changes list (each change, the part of the spec it touched, and the test
 or finding behind it) and the new prototype path, or "no new version" with the reason.

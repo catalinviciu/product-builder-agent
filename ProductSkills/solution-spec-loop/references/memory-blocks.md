@@ -149,7 +149,7 @@ One line per event, appended. Old lines are never edited.
 
 ### `Prototype`
 
-Owned by the prototype-builder format. In this loop it links the current tested version and, when one exists, the untested candidate:
+Written by the orchestrator only, never the PM, at the points listed under "Prototype block" in `SKILL.md`. It links every version that exists: the current tested version, the candidate when there is one, and all earlier versions.
 
 ```markdown
 **[Current: v2](<served-url>/v2.html)** - passed the round 2 re-test.
