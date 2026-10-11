@@ -51,6 +51,16 @@ Product Agent works with two AI coding tools. Both are optional — you can use 
 - **Claude Code** — install from [docs.anthropic.com](https://docs.anthropic.com/en/docs/claude-code). See [SETUP.md](./SETUP.md) for setup.
 - **GitHub Copilot in VS Code** — requires VS Code 1.99+ with the GitHub Copilot extension. See [SETUP-COPILOT.md](./SETUP-COPILOT.md) for setup.
 
+### 4. Playwright Chromium (optional, for the solution spec loop)
+
+The solution spec loop tests prototypes in a headless Chromium browser. The loop installs its helper on first run, but the browser download is about 150 MB, so you may prefer to do it ahead of time:
+
+```bash
+cd ProductSkills/solution-spec-loop/scripts
+npm install
+npx playwright install chromium
+```
+
 ## Getting Started
 
 ### Step 1: Clone the repository
@@ -205,12 +215,17 @@ The `ProductSkills/` folder contains AI agent skills — behavioral instructions
 | **user-story-slicer** | Slices a user journey or system process into INVEST-compliant story cards |
 | **user-story-ac-writer** | Writes Gherkin acceptance criteria and analytics events per story |
 | **vocabulary-miner** | Mines emotional vocabulary from online communities for audience research |
+| **code-to-story-map-archeologist** | Reverse-engineers a Jeff Patton style story map from an existing codebase, for one workflow between a start and an end point |
+| **codebase-detector** | Scans your codebase and detects the design system and analytics platform, then saves them to the product line settings |
+| **interview-evidence-opportunity-documentation** | Routes evidence from an interview snapshot onto the opportunities under a product outcome, for and against |
+| **pm-context** | Explains the Opportunity Solution Tree and the rules for staying in problem space vs. solution space |
+| **writing** | Writes clear, concise prose free of AI tells; the other skills load it before writing anything |
 
 These skills are invoked through the AI Actions menu in the UI — you don't need to reference them manually.
 
 ## Solution Spec Loop
 
-Run **Run solution spec loop** from an opportunity's AI Actions menu. The AI takes the opportunity from 5 brainstormed directions to at least 2 tested solution options, and records every goal, result and learning in the discovery tree. It works like Karpathy's [autoresearch](https://github.com/karpathy/autoresearch): pass/fail criteria are frozen before a test runs, tests run one at a time, and a change to a solution only stays if the tests it already passed still pass.
+Run **Run solution spec loop** from an opportunity's AI Actions menu and paste the prompt into an AI agent that can run subagents with a choice of model per subagent, such as Claude Code or Kiro. Paste it outside plan mode: after two questions, the loop runs on its own. The AI takes the opportunity from 5 brainstormed directions to at least 2 tested solution options, and records every goal, result and learning in the discovery tree. It works like Karpathy's [autoresearch](https://github.com/karpathy/autoresearch): pass/fail criteria are frozen before a test runs, tests run one at a time, and a change to a solution only stays if the tests it already passed still pass.
 
 The diagram shows:
 

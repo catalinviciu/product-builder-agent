@@ -13,7 +13,7 @@ Give each agent only what its brief lists. Extra context leaks hopes and expecte
 
 ---
 
-## Advisor (`opus`)
+## Advisor (strongest model)
 
 Used at Step 5 (refine options), Step 9 (bad-solution check) and Step 12 (adaptation check).
 
@@ -94,7 +94,7 @@ Return either:
 
 ---
 
-## PM (`opus`)
+## PM (strongest model)
 
 Used at Step 7 (baseline) and Step 12 (update).
 
@@ -122,7 +122,7 @@ after the backbone and return:
 - the axis ledger
 - the verbatim text of the slicer's build step 7
 - the decisions and open questions so far
-I'll run the review and resume you with the verdict.
+I'll run the review and continue you with the verdict.
 ```
 
 Backbone reviewer, a fresh agent each time, given exactly three things:
@@ -139,10 +139,10 @@ axis it sits on.
 <verbatim build step 7>
 ```
 
-On FAIL, resume the PM: `Backbone review: FAIL. <verdict>. Fix the backbone and return the
+On FAIL, continue the PM: `Backbone review: FAIL. <verdict>. Fix the backbone and return the
 same three things.` Review again with a fresh reviewer until PASS.
 
-Part 2, resuming the PM:
+Part 2, continuing the PM:
 
 ```
 Backbone review: PASS.
@@ -177,7 +177,7 @@ Rules:
 - Change only what the failures call for.
 - Update the High-Level User Journey block and the stories (re-slice only the touched steps).
   If the backbone changes, return the new backbone table, axis ledger and build step 7 before
-  writing stories; I'll run the backbone review and resume you.
+  writing stories; I'll run the backbone review and continue you.
 - Copy v{r}.html to v{r+1}.html, then change v{r+1}.html. Never edit v{r}.html.
 - Don't update the Prototype block. The orchestrator does that after the ratchet.
 
@@ -187,7 +187,7 @@ prototype path.
 
 ---
 
-## Assumption mapper (`opus`)
+## Assumption mapper (strongest model)
 
 Used at Step 8 (full map) and Step 12 (changed parts only).
 
@@ -217,7 +217,7 @@ Return per assumption:
 
 ---
 
-## Tester (`sonnet`)
+## Tester (fast model)
 
 Used at Step 10. Never include the criteria.
 
@@ -271,7 +271,7 @@ Report:
 
 ---
 
-## Grader (`opus`)
+## Grader (strongest model)
 
 Used at Step 10, after every test.
 
@@ -293,7 +293,7 @@ Return:
 
 ---
 
-## Pre-mortem (`opus`)
+## Pre-mortem (strongest model)
 
 Used at Step 11, for value and viability tests.
 
