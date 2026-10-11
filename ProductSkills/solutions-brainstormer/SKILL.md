@@ -1,7 +1,7 @@
 ---
 name: solutions-brainstormer
 description: Reads a parent opportunity from Product Agent via MCP, researches the problem space, and brainstorms 5 distinct solution approaches using first-principles thinking. Presents them for review, then writes the chosen solutions as correctly-structured entities into the discovery tree.
-version: 3.0
+version: 3.1
 ---
 
 > **Load the `writing` skill before drafting any prose.** Read `ProductSkills/writing/SKILL.md`
@@ -71,6 +71,21 @@ Custom blocks are allowed when needed (e.g., `Research Source` for lateral insig
 | `description` | 800 characters (~4–6 sentences) | Shown inline in the entity view as a lead paragraph. |
 | Block `label` | 40 characters | Rendered as an accordion header — must fit on one line. |
 | Block `content` | 3000 characters per block | Split blocks by topic, not by length — one block per distinct aspect of the solution. |
+
+---
+
+# SPEC-LOOP MODE
+
+Applies only when the prompt or brief says `Mode: spec-loop`, meaning the `solution-spec-loop` skill is driving you. Otherwise skip this section.
+
+In spec-loop mode nobody answers your gates. The loop decides, and records the decision.
+
+- **Phase 1:** research is still mandatory. If the brief names an as-is story map, read it and treat what exists as the starting point. Answer your own clarifying question from the opportunity, its outcomes and the as-is map. Don't wait for the builder.
+- **Phase 2:** generate the 5 solutions as normal. Skip the Write Plan and don't stop.
+- **Phase 3:** never run it. The 5 directions are not written to the tree; the loop's advisor refines them first.
+- **Return:** the research insights with sources, the hard constraints, your clarifying question with the answer you chose and why, and the 5 solutions in the Phase 2 format.
+
+Strict rule 1 doesn't apply, because nothing is written. Every other rule holds.
 
 ---
 

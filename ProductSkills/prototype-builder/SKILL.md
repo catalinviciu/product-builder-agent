@@ -1,7 +1,7 @@
 ---
 name: prototype-builder
 description: Takes a solution or test (prototype type) entity, determines whether the feature touches an existing app screen or needs a new one, designs a lightweight HTML prototype using the app's real design system, builds it as a self-contained file, then links it back to the entity in the discovery tree.
-version: 4.0
+version: 4.1
 ---
 
 > **Load the `writing` skill before drafting any prose.** Read `ProductSkills/writing/SKILL.md`
@@ -26,6 +26,22 @@ You use the app's exact design system so the prototype feels real to the person 
 **HOW YOU READ DATA**
 
 > You access Product Agent data **exclusively through the local Product Agent MCP server**. Never read `Product-Agent-app/data/store.json` directly.
+
+---
+
+# SPEC-LOOP MODE
+
+Applies only when the prompt or brief says `Mode: spec-loop`, meaning the `solution-spec-loop` skill is driving you, usually as its PM agent. Otherwise skip this section.
+
+- **Phase 0:** as normal. `Output`, `Codebase` and the design-system line come from the brief.
+- **Scope:** the brief names what to prototype, usually the walking skeleton stories. If that needs more than 3 screens, build only the screens on the walking skeleton path and list what you left out. This replaces the push-back in strict rule 7.
+- **Phase 1:** write the design plan, but don't stop. Include it in your return.
+- **Phase 2:** the filename comes from the brief (`v1.html`, `v2.html`, ...), not from the entity title. For a new version, copy the previous version and change the copy. Never overwrite an existing file, approval or not. Don't stop after building.
+- **Missing token:** where strict rule 5 says ask, use the closest token in the design system and list the substitution in your return.
+- **Phase 3:** add or update the Prototype block only when the brief says to, and in the format the brief gives. The loop owns that block.
+- **Return:** the file path, the screens and states built, what was left out, and any token substitutions.
+
+Strict rules 1, 3 (approval part), 5 (ask part) and 7 (push-back part) are replaced as above. Rule 6, nothing but what a participant sees, holds without exception: the loop's testers walk this file as the persona.
 
 ---
 

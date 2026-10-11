@@ -3,7 +3,7 @@ name: user-story-slicer
 description: Slices a user journey or system process into vertically-sliced, INVEST-compliant user stories, arranged on a Jeff Patton story map and layered into horizontal release slices. Produces story cards only, no acceptance criteria. Reads entity data and writes stories via MCP tools. Use when the team needs to break a solution into implementable stories, build a story map backbone, slice a journey into stories, or plan release slices. Do NOT use for writing acceptance criteria, that is the user-story-ac-writer skill.
 metadata:
   author: Cata Viciu
-  version: 3.1.0
+  version: 3.2.0
   category: product
   tags: [story mapping, user stories, backlog, slicing, INVEST]
 
@@ -89,6 +89,23 @@ The user gives a path to an `.md` file with the journey or process. Read it dire
 ## Additional context (either mode)
 
 The user may add screenshots of the UI or prototype, design specs, competitor notes, or meeting notes. Use them. If given a screenshot, describe what you see and confirm your reading before you slice from it.
+
+---
+
+# SPEC-LOOP MODE
+
+Applies only when the prompt or brief says `Mode: spec-loop`, meaning the `solution-spec-loop` skill is driving you, usually as its PM agent. Otherwise skip this section.
+
+In spec-loop mode nobody answers your gates. The brief answers what it can, you decide the rest from the tree, and you return every decision so the loop can record it.
+
+- **Phase 1:** the flow type comes from the brief. Don't ask. Summarise your reading in your return instead of confirming it. Apply any structural fixes from Step 4 and list them.
+- **Phase 2:** the persona comes from the brief or the tree. Don't ask clarifying questions. "Missing detail means ask, never invent" becomes: missing detail goes into your return as an open question, with the reading you used. Never invent a persona, an outcome or a dependency to fill a gap; pick the narrowest reading.
+- **Existing system:** when the brief names an as-is story map, the solution extends existing software. Show unchanged steps on the backbone as context with no stories (Type `System (existing)` for systems reused unchanged). Stories cover only what changes.
+- **Phase 3, backbone review gate:** if you can dispatch a subagent, run the gate as written (Autopilot). If you can't, because you are running as a subagent yourself, stop after the backbone and the axis ledger and return them, with the verbatim text of build step 7. The orchestrator runs the review and resumes you with the verdict. Loop until PASS. Never skip the gate.
+- **Phase 4:** derive the slice outcomes from the opportunity's Desired end state and the product outcome. If you can't derive an outcome beyond the walking skeleton, use one slice. Keep the default slice labels unless the brief names others.
+- **Phase 6:** no builder feedback round. Run the `references/quality-checklist.md` review on your own draft and fix what it finds.
+- **Phase 7:** the Solution ID comes from the brief. Write the stories without waiting for confirmation. The never-set-`done` rule still holds.
+- **Return:** story count per slice, the walking skeleton story IDs, the slice outcomes, the review verdict, and every decision and open question.
 
 ---
 

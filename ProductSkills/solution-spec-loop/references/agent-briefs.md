@@ -72,37 +72,65 @@ observable by an agent walking a prototype or reading code.
 
 Used at Step 7 (baseline) and Step 12 (update).
 
-### Step 7: baseline
+### Step 7: baseline (two parts)
+
+Part 1, the first message:
 
 ```
-You are the PM for one solution option. Build its to-be story map and a baseline prototype.
+You are the PM for one solution option. Build its to-be story map, then a baseline prototype.
+Both skills you use have a SPEC-LOOP MODE section. Follow it.
 
 Inputs:
 - Solution entity ID: <solutionId> (read it with pa_get_entity)
 - Persona: <name and description>
+- Flow type: <full journey | platform-only>
 - As-is story map: <path, or "greenfield">
 - Codebase: <path, or "greenfield">
 - Prototype output: <Prototype root><solution-slug>/
 - Design system: <Instructions line from the prompt>
 
-Steps:
-1. Follow ProductSkills/user-story-slicer/SKILL.md on the solution's High-Level User Journey
-   block. Spec-loop answers to its gates:
-   - Flow type: full journey (unless the journey has no user actions: platform-only)
-   - Persona: the one above. Don't ask.
-   - Slice labels: defaults (Walking Skeleton, Enhancement, GA)
-   - Clarifying questions and assumptions: decide from the inputs; list every assumption you
-     made in your return
-   - Existing system: use the as-is map. Stories cover what changes. Unchanged steps stay on
-     the backbone as context, with no stories.
-   Write the stories with pa_update_entity (slicer Phase 5). Never set done or doneAt.
-2. Follow ProductSkills/prototype-builder/SKILL.md for the walking skeleton stories only.
-   Spec-loop answers: skip the Phase 1 and Phase 2 confirmations; filename is v1.html; the
-   file contains only what a participant sees.
-3. Add or update the solution's Prototype block to link v1.
+Part 1 now: follow ProductSkills/user-story-slicer/SKILL.md on the solution's High-Level
+User Journey block, through Phase 3. You can't dispatch the backbone review yourself, so stop
+after the backbone and return:
+- the backbone table
+- the axis ledger
+- the verbatim text of the slicer's build step 7
+- the decisions and open questions so far
+I'll run the review and resume you with the verdict.
+```
 
-Return: story count per slice, the walking skeleton story IDs, the prototype path, and the
-assumptions you made.
+Backbone reviewer, a fresh agent each time, given exactly three things:
+
+```
+You review a story map backbone. You get the backbone table, the axis ledger, and the
+one-axis rule. For each Activity, decide whether one named axis explains every sibling
+Task, and whether any Task is really a UI mechanism, a read/display concern, or a
+same-surface CRUD sibling. Return PASS, or FAIL naming the offending Task and the illegal
+axis it sits on.
+
+<backbone table>
+<axis ledger>
+<verbatim build step 7>
+```
+
+On FAIL, resume the PM: `Backbone review: FAIL. <verdict>. Fix the backbone and return the
+same three things.` Review again with a fresh reviewer until PASS.
+
+Part 2, resuming the PM:
+
+```
+Backbone review: PASS.
+
+Part 2 now:
+1. Finish the slicer (Phases 4-7). Write the stories with pa_update_entity. Never set done
+   or doneAt.
+2. Follow ProductSkills/prototype-builder/SKILL.md for the walking skeleton stories only.
+   Filename: v1.html. The file contains only what a participant sees.
+3. Add or update the solution's Prototype block:
+   **[Current: v1](<served-url>/v1.html)** - baseline walking skeleton, not yet tested.
+
+Return: story count per slice, the walking skeleton story IDs, the slice outcomes, the
+prototype path, what the prototype left out, and every decision and open question.
 ```
 
 ### Step 12: update after a round
@@ -122,6 +150,8 @@ Rules:
 - Prefer the simpler change. Removing or merging a step beats adding one.
 - Change only what the failures call for.
 - Update the High-Level User Journey block and the stories (re-slice only the touched steps).
+  If the backbone changes, return the new backbone table, axis ledger and build step 7 before
+  writing stories; I'll run the backbone review and resume you.
 - Copy v{r}.html to v{r+1}.html, then change v{r+1}.html. Never edit v{r}.html.
 - Don't update the Prototype block. The orchestrator does that after the ratchet.
 

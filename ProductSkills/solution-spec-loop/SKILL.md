@@ -89,10 +89,11 @@ The tester never sees the pass/fail criteria. The grader never sees the builder'
 
 # SPEC-LOOP MODE FOR SUB-SKILLS
 
-The loop drives existing skills that normally stop at every gate for the builder. Inside this loop, every brief says `Mode: spec-loop`. In that mode:
+The loop drives existing skills that normally stop at every gate for the builder. Each of them has a `SPEC-LOOP MODE` section that says what changes when the prompt or brief says `Mode: spec-loop`: solutions-brainstormer, code-to-story-map-archeologist, user-story-slicer, prototype-builder and assumption-tester. Every brief you send starts with that line.
 
-- Gates in a sub-skill are answered by the brief, not by the builder. The brief carries the answers (persona, flow type, slice labels, bounds, which outputs to write).
-- A sub-skill question the brief doesn't answer is returned to you as an open question. You answer it from the tree, or, if the tree can't answer it, record it in the Spec Loop block as an open question and pick the simplest reading.
+- Gates in a sub-skill are answered by the brief or decided by the sub-skill from the tree, and the decision is returned to you. Record decisions in the Spec Loop block under "Decisions made without the builder".
+- A question nobody could answer comes back as an open question with the reading used. Record it in the Spec Loop block.
+- Spawned agents can't spawn agents of their own. Where a sub-skill needs an independent reviewer (the slicer's backbone review gate), the agent hands the material back to you and you run the review (Step 7).
 - Only the two human gates in this skill stop the run: Step 1 (codebase) and Step 6 (option review). The kill rule can add a third (Step 13).
 
 ---
@@ -162,11 +163,11 @@ From here to the end of the run, nothing stops for the builder except the kill r
 
 ### Step 7: Story map and baseline prototype per option
 
-For each option, spawn a **PM** agent. It:
+For each option, spawn a **PM** agent (brief in `references/agent-briefs.md`). It runs in two parts:
 
-1. Uses the as-is map and the option's journey to slice the **to-be** story map with `user-story-slicer` (stories cover what changes; unchanged steps stay as backbone context), and writes `stories` to the solution.
-2. Builds prototype `v1.html` of the walking skeleton stories only, with `prototype-builder`, at `<Prototype root><solution-slug>/v1.html` (solution slug = first 5 words of the title, slugified).
-3. Adds or updates the solution's `Prototype` block to point at v1.
+1. **Backbone.** It slices the **to-be** story map with `user-story-slicer` from the as-is map and the option's journey (stories cover what changes; unchanged steps stay as backbone context), and stops after the backbone. It returns the backbone table, the axis ledger and the verbatim text of the slicer's build step 7.
+2. **Backbone review.** Spawn a fresh reviewer agent with exactly those three things and nothing else, per the slicer's backbone review gate. On FAIL, resume the PM with the verdict (SendMessage to the same agent), get the fixed backbone, and review again with a fresh reviewer. Loop until PASS.
+3. **Stories and prototype.** Resume the PM with the PASS verdict. It finishes the slicer (slice outcomes, stories written to the solution), builds prototype `v1.html` of the walking skeleton stories with `prototype-builder` at `<Prototype root><solution-slug>/v1.html` (solution slug = first 5 words of the title, slugified), and updates the solution's `Prototype` block to link v1 as current.
 
 PM agents for different options can run in parallel.
 
@@ -226,7 +227,7 @@ Record its output on the test as an `AI Pre-mortem` block with evidence level `a
 If any test in the round failed, spawn the option's **PM** agent with the failures and learnings. It:
 
 1. Changes the journey to address the failures. Prefer the simpler change: removing or merging a step beats adding one.
-2. Applies the change to the story map (`stories`) and the High-Level User Journey block.
+2. Applies the change to the story map (`stories`) and the High-Level User Journey block. If the backbone changes, it returns the new backbone first and you run the Step 7 backbone review again before it writes stories.
 3. Builds the next prototype version `v{r+1}.html` from the current one. Never overwrite an existing version.
 4. Returns the list of what changed.
 
