@@ -41,6 +41,7 @@ Created at Step 1, updated after every step. Rewrite it, don't append. It's how 
 ```markdown
 **Status:** running | waiting for builder | complete
 **Run:** <n>   **Step:** <number and name>   **Round:** <0 | 1 | 2>
+**Entry:** opportunity | existing solutions (<design review | test loop> per solution)
 **Started:** <YYYY-MM-DD>
 
 **Codebase:** <path | greenfield>

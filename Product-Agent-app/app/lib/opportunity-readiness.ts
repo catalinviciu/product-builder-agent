@@ -40,3 +40,18 @@ export function getSpecLoopMissing(store: EntityStore, productLine: ProductLine,
 
   return missing;
 }
+
+/**
+ * What a solution is missing before the spec loop can start from it: its opportunity's
+ * readiness, plus a real High-Level User Journey on the solution itself.
+ */
+export function getSolutionSpecLoopMissing(store: EntityStore, productLine: ProductLine, solutionId: string): string[] {
+  const sol = store[solutionId];
+  if (!sol || sol.level !== "solution") return ["solution"];
+  const missing = sol.parentId ? getSpecLoopMissing(store, productLine, sol.parentId).map((m) => `opportunity ${m}`) : ["opportunity"];
+  const journey = sol.blocks.find(
+    (b) => b.type === "accordion" && b.label.trim().toLowerCase() === "high-level user journey",
+  );
+  if (!journey || journey.type !== "accordion" || isPlaceholderText(journey.content)) missing.push("High-Level User Journey");
+  return missing;
+}

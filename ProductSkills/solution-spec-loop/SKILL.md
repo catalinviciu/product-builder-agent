@@ -1,9 +1,9 @@
 ---
 name: solution-spec-loop
-description: Runs the solution spec loop on one opportunity. Maps the existing code, brainstorms 5 directions, has an advisor refine them into at least 2 solution options, gets human approval, then builds a story map per option for human review and a baseline prototype from the real starting screen, puts every prototype version through a design critique against the design system's DESIGN.md, and tests every critical usability and feasibility assumption in up to 2 rounds. After every round it updates the whole solution spec (description, blocks, journey, stories) from what the round learned and builds the next prototype version, so the next round tests the evolved solution. Value and viability assumptions get an AI pre-mortem and a test plan for humans. Everything is recorded in the Product Agent tree, and a finished run can be followed by a new run that starts from the builder's feedback and the previous learnings. Use when the builder runs the "Run solution spec loop" AI action on an opportunity, or asks to spec solutions for an opportunity end to end. Do NOT use to brainstorm only (solutions-brainstormer) or to test one solution's assumptions by hand (assumption-tester).
+description: Runs the solution spec loop on one opportunity. Maps the existing code, brainstorms 5 directions, has an advisor refine them into at least 2 solution options, gets human approval, then builds a story map per option for human review and a baseline prototype from the real starting screen, puts every prototype version through a design critique against the design system's DESIGN.md, and tests every critical usability and feasibility assumption in up to 2 rounds. After every round it updates the whole solution spec (description, blocks, journey, stories) from what the round learned and builds the next prototype version, so the next round tests the evolved solution. Value and viability assumptions get an AI pre-mortem and a test plan for humans. Everything is recorded in the Product Agent tree, and a finished run can be followed by a new run that starts from the builder's feedback and the previous learnings. Use when the builder runs the "Run solution spec loop" AI action on an opportunity or a solution, asks to spec solutions for an opportunity end to end, or asks to design-review or test one or more existing solutions. Do NOT use to brainstorm only (solutions-brainstormer) or to test one solution's assumptions by hand (assumption-tester).
 metadata:
   author: Cata Viciu
-  version: 1.5.0
+  version: 1.6.0
   category: product
   tags: [solution spec, discovery, assumption testing, prototyping, autoresearch]
   dependencies:
@@ -42,21 +42,22 @@ You coordinate. Spawned agents do the thinking-heavy work. You own the run state
 
 # INPUT
 
-The "Run solution spec loop" AI action on an opportunity copies this prompt (sections separated by `---`):
+The "Run solution spec loop" AI action copies this prompt (sections separated by `---`). On an opportunity it has no `Solution IDs` line; on a solution it names that solution. A builder can also list several solutions of the same opportunity, comma-separated.
 
 ```
 Use skill: ProductSkills/solution-spec-loop/SKILL.md
 
 Product Line: <name> (id: <productLineId>)
 Opportunity ID: <id>
+Solution IDs: <id>[, <id>...]        (only when starting from existing solutions)
 Codebase (from settings): <path | not set>
 Prototype root: Product-Agent-app/public/prototypes/<pl-slug>/<opp-slug>/
 Instructions: <design system steering line>
 
-Data: pa_get_entity("<opportunityId>")
+Data: pa_get_entity("<opportunityId or solutionId>")
 ```
 
-The action only copies the prompt when the opportunity has a real description, a persona (its own or an ancestor's), real content in Trigger, Current Workaround and Desired end state, a parent product outcome with a metric, and the product line has a design system. Step 2 checks the same things again.
+On a solution, the action also needs a real High-Level User Journey on the solution. In both cases it only copies the prompt when the opportunity has a real description, a persona (its own or an ancestor's), real content in Trigger, Current Workaround and Desired end state, a parent product outcome with a metric, and the product line has a design system. Step 2 checks the same things again.
 
 All data is read and written through the Product Agent MCP tools. Never read `store.json` directly.
 
@@ -168,6 +169,8 @@ Value and viability assumptions never become `done` from AI work. Only a passed 
 
 Call `pa_get_entity(opportunityId)`.
 
+- The prompt has `Solution IDs`: start from those solutions (see "Starting from existing solutions" below). If the opportunity has a `Spec Loop` block that isn't `complete`, ask before starting another run.
+- No `Spec Loop` block, and the opportunity already has active solutions (status `explore` or `commit`): ask in the Step 1 message whether to start from some of them (name them) or brainstorm new options.
 - No `Spec Loop` block: this is run 1. Go to Step 1.
 - A `Spec Loop` block whose status is not `complete`: read it and resume from the recorded step. Never start a second run over an unfinished one without asking.
 - A `Spec Loop` block whose status is `complete`: offer a follow-up run (see "Follow-up runs" at the end of the protocol). Don't start over from Step 1.
@@ -187,6 +190,22 @@ Ask in one message:
 Wait for the reply. Record codebase, start and end in the Spec Loop block (create it now, per `references/memory-blocks.md`).
 
 **Never show a raw ID to the builder.** In every block and every message, name an entity by its title and, in blocks, link it as `[Title](#entity/<id>)`. The app opens the entity on click; agents read the ID from the link. Write types out in full, as `references/memory-blocks.md` lists them.
+
+### Starting from existing solutions
+
+Used when the prompt names `Solution IDs`, or the builder picked existing solutions at Step 1. The run works on those solutions only. It skips brainstorming and the option review, and joins each solution at the first step that's missing.
+
+1. **Read each solution**: its blocks, stories, Prototype block, assumptions and tests (`pa_get_outline` on the solution). All must sit under the same opportunity; if not, ask the builder which opportunity to run first.
+2. **Ask, in the Step 1 message**, besides the codebase and the workflow bounds: for each solution that already has a prototype, "Start with a **design review** of its current prototype, or go straight to the **test loop**?" Suggest the design review when the prototype has never had one.
+3. **Steps 2 and 3 as normal**: context, DESIGN.md, as-is map and starting screen. Create the Spec Loop block (or increase **Run** if one exists), with these solutions as the options and **Entry: existing solutions**. Skip Steps 4 to 6.
+4. **Kill criteria.** If a solution has no `Kill Criteria` block, spawn the advisor (Step 5 brief, kill criteria only) and write one.
+5. **Join each solution where it is:**
+   - No stories: Step 7a, then the Step 7b review.
+   - Stories but no prototype: Step 7c (design critique included).
+   - A prototype exists: copy it to `<Prototype root><solution-slug>/v1.html` unless it's already versioned there (never move or edit the original), and make it Current in the Prototype block. Then, by the builder's choice: **design review** runs the design critique on it before Step 8; **test loop** goes straight to Step 8, and the Iteration Log records that this version skipped its critique at the builder's request.
+6. **From Step 8 on, as normal**, with two differences:
+   - Existing assumptions and tests are kept. The assumption mapper adds only missing critical ones. Existing tests that never ran go through the bad-solution check before their criteria freeze; tests that already ran keep their results.
+   - There's no backup pool. Step 13 asks the builder before dropping a solution, not only when fewer than 2 remain.
 
 ### Step 2: Read the context
 
@@ -366,7 +385,7 @@ Drop an option only when the adaptation check found no way around a blocker: eve
 
 To drop: set the solution `status: "dropped"`, add a `Drop Reason` block listing the blocker and the adaptations considered, and log it in the Spec Loop block. Leave the dropped option's assumptions and tests as they are: they're the record of why.
 
-If fewer than 2 options remain, **stop and ask the builder**: offer the backup pool. A replacement enters at Step 7a with its own 2-round budget.
+If fewer than 2 options remain, **stop and ask the builder**: offer the backup pool. A replacement enters at Step 7a with its own 2-round budget. When the run started from existing solutions, ask the builder before any drop (there's no backup pool).
 
 ### Step 14: Stop or continue
 
@@ -447,4 +466,4 @@ Log lines carry the run number ("Run 2, Round 1"). At the end, rewrite the score
 15. **Spec and prototype move together.** After every round the whole spec (description, Why It Works, Trade-offs, journey, stories) is updated from what the round learned, and the next round tests a new prototype version built from it.
 16. **Statuses match results.** Set test and assumption statuses when each result is recorded, per the status rules, and check them all before the scorecard. No run ends with a status that doesn't match its latest result.
 17. **The Prototype block links every version.** You update it when a version is built, promoted or fails a re-test. The PM never writes it.
-18. **Every prototype version passes a design critique before it's tested.** The critic never sees the assumptions, tests or criteria, and disputes are settled by the DESIGN.md first.
+18. **Every prototype version passes a design critique before it's tested**, unless the builder chose to send an existing prototype straight to the test loop. The critic never sees the assumptions, tests or criteria, and disputes are settled by the DESIGN.md first.

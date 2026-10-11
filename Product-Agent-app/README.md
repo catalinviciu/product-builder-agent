@@ -182,7 +182,7 @@ Every entity in the tree has an **AI Actions** dropdown menu with context-aware 
 **At the entity level (varies by level):**
 - **Write/update opportunity** — AI writes a structured opportunity from your input (product outcome and opportunity levels)
 - **Brainstorm solutions** — AI researches the problem and proposes 5 distinct approaches (opportunity level)
-- **Run solution spec loop** — AI specs at least 2 solution options and tests their usability and feasibility assumptions on prototypes, in up to 2 rounds. Needs a filled-in opportunity and a product outcome with a metric (opportunity level)
+- **Run solution spec loop** — AI specs at least 2 solution options and tests their usability and feasibility assumptions on prototypes, in up to 2 rounds. Needs a filled-in opportunity and a product outcome with a metric (opportunity level). Also on a solution: starts from that solution and lets you choose a design review of its prototype or the test loop (solution level)
 - **Test assumptions** — AI surfaces critical assumptions and designs tests (solution level)
 - **Build prototype** — AI builds a working prototype from your solution context
 - **Plan implementation** — AI generates a full implementation plan with codebase context (solution level)
@@ -237,6 +237,7 @@ The diagram shows:
 - **Dropping an option:** only when it can't be adapted. The loop asks you if fewer than 2 options remain.
 - **Value and viability:** go to an AI pre-mortem and a test plan for humans.
 - **The end:** a scorecard on the opportunity. Tests, assumptions and options show as links you can click, never as IDs.
+- **Starting from existing solutions:** run the action on a solution, or pick existing solutions when it starts on an opportunity. It skips brainstorming, joins each solution where it is (story map, prototype, or tests), and asks whether to start with a design review of the current prototype or go straight to the test loop.
 - **Follow-up runs:** give feedback, edit the story maps if you like, and run the action again. The next run starts from your feedback and everything learned so far, with a fresh 2-round budget.
 
 ```mermaid
