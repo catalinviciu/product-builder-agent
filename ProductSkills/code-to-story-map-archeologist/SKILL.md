@@ -3,7 +3,7 @@ name: code-to-story-map-archeologist
 description: Reverse-engineers a Jeff Patton style user story map from an existing codebase. Point it at a workflow, a start point, and an end point, plus the repo it sits in (GitLab cloud or local). It traces the code, follows dependencies across repos when needed, reconstructs the activities and steps the user and system move through, shows the backbone as a Mermaid diagram, and writes the map to an MD file with coarse one-liner stories describing the functionality that already exists. Use when you want to understand what a shipped feature does, document an undocumented flow, onboard onto unfamiliar code, or recover the story map behind working software. Does NOT write buildable INVEST stories, acceptance criteria, or edit any source-of-truth story map.
 metadata:
   author: Cata Viciu
-  version: 1.3.0
+  version: 1.4.0
   category: product
   tags: [concept design, solution design, solution spec]
   dependencies:
@@ -40,6 +40,23 @@ The stories you write are NOT buildable units. They are one-liners naming the fu
 - Read the line aloud. A tutorial click ("click save") is too granular - fold it into the goal. Something a person would say they can do ("save the draft") is right.
 
 **You MUST read `references/story-map-format.md` for the bar and worked examples before you write any story line.** The rules above are the summary, not the whole rule.
+
+---
+
+# SPEC-LOOP MODE
+
+Applies only when the prompt or brief says `Mode: spec-loop`, meaning the `solution-spec-loop` skill is driving you. Otherwise skip this section.
+
+In spec-loop mode the builder already answered your questions at the start of the loop. Don't ask again.
+
+- **Phase 1:** the start point, end point and repo come from the brief. If one is missing, stop and return what is missing. Never guess a bound.
+- **Phase 2:** trace as normal. The cross-repo gate still applies: locate and name every System step's repo, service and endpoint. Don't ask about a deeper trace; stay at option 2 and mark any System step that looks like a multi-step pipeline as "deeper trace available" in the file.
+- **Gate 1 and Gate 2:** run the backbone self-check and the response check, then carry on. Don't wait for confirmation.
+- **Phase 5:** write the file to the output path in the brief.
+- If the `gitlab` or `dev-portal-mcp` tools aren't available, trace what the local repo shows and list each unresolved System step under "Not verified" with the reason "tool not available in this session".
+- **Return:** the file path, the backbone as a Mermaid diagram, and the "Not verified" list.
+
+Strict rule 10 (confirm at both gates) is suspended. Every other rule holds, evidence discipline most of all.
 
 ---
 

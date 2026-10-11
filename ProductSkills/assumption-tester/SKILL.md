@@ -1,7 +1,7 @@
 ---
 name: assumption-tester
 description: Reads a solution from Product Agent via MCP tool calls, identifies critical assumptions across 5 Teresa Torres categories, designs a lightweight test for each, then writes assumption and test entities into the discovery tree. Operates in 4 phases, each requiring explicit builder confirmation before proceeding.
-version: 2.0
+version: 2.1
 ---
 
 > **Load the `writing` skill before drafting any prose.** Read `ProductSkills/writing/SKILL.md`
@@ -130,6 +130,23 @@ Never list trivial or obvious assumptions. If it would be surprising if the assu
 - **Test options:**
   - *Survey:* "When did you last update your resume?" (Reveals frequency of use)
   - *Prototype:* Give users a blank text box and ask them to write their last job's accomplishments. (If they freeze up, formatting is irrelevant — content generation is the real blocker)
+
+---
+
+# SPEC-LOOP MODE
+
+Applies only when the prompt or brief says `Mode: spec-loop`, meaning the `solution-spec-loop` skill is driving you as its assumption mapper. Otherwise skip this section.
+
+- **Phase 0:** if the solution is thin, don't ask the builder. Return `THIN` with the blocks that are missing content.
+- **Scope:** the brief says whether to map the whole solution or only the listed changes. Skip assumptions that already exist on the solution.
+- **Categories:** viability, desirability (the loop calls it value), usability and feasibility. Add ethical only if the solution handles personal data or makes decisions for the user.
+- **Phase 1 and Phase 2:** no confirmation gates. Apply the critical filter strictly and design one test per assumption.
+- **Test type by category:** usability -> `prototype`, feasibility -> `research_spike`, value -> `prototype` or `survey`, viability -> `data_mining` or `survey`.
+- **Neutral task:** every test also gets a neutral task: what the tester is asked to do, with no hint of the expected result. The loop's tester sees the task, never the criteria.
+- **Phase 3:** never run it. Return the assumptions and tests. The loop checks the criteria, freezes them, then writes the entities itself.
+- **Return per assumption:** title, category, Impact if True, Evidence; and its test: type, title, description, Define Test, neutral task, Pass / Fail Criteria.
+
+Strict rule 1 doesn't apply, because nothing is written. Rule 7 matters more here: the criteria you return become the loop's frozen evaluator.
 
 ---
 

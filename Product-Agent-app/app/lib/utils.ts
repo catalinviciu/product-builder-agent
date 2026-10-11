@@ -262,6 +262,35 @@ export function buildSolutionsBrainstormerPrompt(
   return sections.join("\n\n---\n\n");
 }
 
+// ── Solution spec loop prompt for AI agents ─────────────────────────────
+
+export function buildSolutionSpecLoopPrompt(
+  store: EntityStore,
+  productLine: ProductLine,
+  entityId: string,
+): string | null {
+  const entity = store[entityId];
+  if (!entity || entity.level !== "opportunity") return null;
+
+  const plSlug = slugify(productLine.name);
+  const oppSlug = slugify(entity.title, { maxWords: 5 });
+  if (!plSlug || !oppSlug) return null;
+
+  const settings = productLine.settings;
+  const sections: string[] = [];
+  sections.push(`Use skill: ProductSkills/solution-spec-loop/SKILL.md`);
+  sections.push([
+    `Product Line: ${productLine.name} (id: ${productLine.id})`,
+    `Opportunity ID: ${entity.id}`,
+    `Codebase (from settings): ${settings.codebasePath || "not set"}`,
+    `Prototype root: Product-Agent-app/public/prototypes/${plSlug}/${oppSlug}/`,
+    `Instructions: ${designSystemInstruction(settings.designSystem)}`,
+  ].join("\n"));
+  sections.push(`Data: pa_get_entity("${entity.id}")`);
+
+  return sections.join("\n\n---\n\n");
+}
+
 // ── Solution planning prompt for AI agents ──────────────────────────────
 
 /** Instruction line that points the agent at this product line's design system. */

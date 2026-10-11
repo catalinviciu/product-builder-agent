@@ -1,0 +1,12 @@
+{
+  "name": "solution-spec-loop-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Prototype walkthrough helper for the solution-spec-loop skill",
+  "scripts": {
+    "walkthrough": "node walkthrough.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.56.1"
+  }
+}
