@@ -208,6 +208,47 @@ The `ProductSkills/` folder contains AI agent skills — behavioral instructions
 
 These skills are invoked through the AI Actions menu in the UI — you don't need to reference them manually.
 
+## Solution Spec Loop
+
+Run **Run solution spec loop** from an opportunity's AI Actions menu. The AI takes the opportunity from 5 brainstormed directions to at least 2 tested solution options, and records every goal, result and learning in the discovery tree. It works like Karpathy's [autoresearch](https://github.com/karpathy/autoresearch): pass/fail criteria are frozen before a test runs, tests run one at a time, and a change to a solution only stays if the tests it already passed still pass.
+
+```mermaid
+flowchart TD
+    A["Run solution spec loop<br/>on a filled-in opportunity"] --> B[/"You: which codebase?"/]
+    B --> C["Map the existing code<br/>into an as-is story map"]
+    C --> D["Brainstorm 5 directions"]
+    D --> E["Advisor refines them into<br/>2+ options and a backup pool"]
+    E --> F[/"You: approve the options"/]
+    F --> G["Per option: to-be story map<br/>and v1 prototype of the walking skeleton"]
+    G --> H["Map critical assumptions:<br/>value, viability, usability, feasibility"]
+    H --> I["Freeze the pass/fail criteria"]
+    I --> V["Value and viability:<br/>AI pre-mortem and a test plan for humans"]
+    I --> J
+
+    subgraph LOOP ["Test loop, max 2 rounds"]
+        J["Run the next test<br/>feasibility first, then usability"] --> K["Grader: PASS or FAIL<br/>against the frozen criteria"]
+        K --> L["Record result and learning<br/>in Product Agent"]
+        L --> M{"More tests<br/>this round?"}
+        M -- yes --> J
+        M -- no --> N{"Anything<br/>failed?"}
+        N -- yes --> O{"Can the option<br/>be adapted?"}
+        O -- yes --> P["Update journey, story map<br/>and prototype to the next version"]
+        P --> Q{"Round 2<br/>done?"}
+        Q -- "no: round 2 re-tests<br/>what passed too" --> J
+    end
+
+    O -- no --> R["Drop the option<br/>(asks you if fewer than 2 remain)"]
+    N -- no --> S["Scorecard on the opportunity"]
+    Q -- yes --> S
+    R --> S
+    V --> S
+
+    classDef human fill:#fde68a,stroke:#b45309,color:#1f2937
+    class B,F human
+```
+
+The yellow steps are the only places the loop waits for you. Everything else runs on its own, and the scorecard lists what humans still need to test with real customers. Details: [`ProductSkills/solution-spec-loop/SKILL.md`](../ProductSkills/solution-spec-loop/SKILL.md).
+
 ## Stopping the Server
 
 Press `Ctrl + C` in the terminal where the server is running.
