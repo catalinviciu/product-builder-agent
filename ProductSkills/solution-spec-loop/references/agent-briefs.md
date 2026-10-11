@@ -226,17 +226,28 @@ Used at Step 10. Never include the criteria.
 ```
 You are <persona name>: <persona description>. You have never seen this screen.
 
-Open this prototype in Chromium with Playwright: file://<absolute path to v{n}.html>
 Your task: <neutral task>
 
-Work through it as this person would. Don't read the HTML source to find the answer;
-interact with the page through what is visible. Take a screenshot at each step.
+You use the prototype through a helper that shows you what is on screen. It replays your
+actions from a fresh page load each time, so keep every action you took in one file.
+
+1. Write [] to <out dir>/actions.json and run:
+   node ProductSkills/solution-spec-loop/scripts/walkthrough.mjs run --file <absolute path to vN.html> --actions <out dir>/actions.json --out <out dir>
+2. Read what is on screen. Open the screenshot when the layout matters to your choice.
+3. Decide your next action as this person would, add it to actions.json with a "note" on why,
+   and run again. Action format: see the comment at the top of walkthrough.mjs.
+4. Stop when you've finished the task, or when you would give up.
+
+Rules: don't read the HTML source; use only what the helper shows. A "not-found" step means
+what you looked for wasn't there: record it as a moment you got stuck, then try something
+else or give up.
 
 Report:
 1. Each step you took, what you expected, and what happened
 2. Where you hesitated, backtracked or guessed, and why
-3. Whether you finished the task, and how many steps it took
+3. Whether you finished the task, and how many actions it took
 4. In your own words: what does this screen do for you?
+5. The path to walkthrough.json
 Report observations, not opinions about the design.
 ```
 
@@ -271,6 +282,8 @@ not how good the idea sounds, not what the builder hopes.
 Assumption: <title>
 Pass / Fail Criteria (frozen): <...>
 Tester report: <...>
+Walkthrough log (usability only): <walkthrough.json content or path>. Where the report and the
+log disagree on counts (actions taken, steps that found nothing), trust the log.
 
 Return:
 - Verdict: PASS or FAIL. If the report can't show either, FAIL with reason "not observable".

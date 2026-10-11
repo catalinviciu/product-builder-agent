@@ -27,5 +27,8 @@ Product-Agent-app/app/lib/schemas.js.map
 mcp-server/node_modules/
 mcp-server/dist/
 
+# Skill helper scripts install their own dependencies
+ProductSkills/*/scripts/node_modules/
+
 
 .env

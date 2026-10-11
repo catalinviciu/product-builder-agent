@@ -15,7 +15,7 @@ Rank critical assumptions by importance first, then by how little evidence exist
 
 ## What a good criterion looks like
 
-- **Observable by the agent who runs the test.** A usability tester can report steps, hesitations, completion and its own reading of the screen. A feasibility tester can report files, APIs, data and the result of throwaway code. A criterion about anything else can't be graded.
+- **Observable by the agent who runs the test.** A usability tester can report steps, hesitations, completion and its own reading of the screen, and the walkthrough log counts actions and steps that found nothing. A feasibility tester can report files, APIs, data and the result of throwaway code. A criterion about anything else can't be graded.
 - **A threshold, set before the run.** "Finishes the task in 6 steps or fewer without backtracking" beats "finds it easy".
 - **Measures the outcome, not effort.** "Correctly states what the alert means" beats "opens the alert".
 - **Tied to the assumption.** Passing must make the assumption more likely true; failing must make it less likely.

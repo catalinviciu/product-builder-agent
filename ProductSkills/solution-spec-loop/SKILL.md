@@ -74,6 +74,19 @@ Reading a reference is a hard gate. A step that names one is not done until you 
 
 ---
 
+# WALKTHROUGH HELPER
+
+`scripts/walkthrough.mjs` runs prototypes in Chromium with Playwright, so every usability test and every gate check runs the same way.
+
+| Command | Use |
+|---|---|
+| `node ProductSkills/solution-spec-loop/scripts/walkthrough.mjs check --file <vN.html>` | Hard gates on a new prototype version: no HTML comments, no script or console errors, visible text after load. Exit code 1 on FAIL. Warnings (failed CDN requests, words that suggest test framing) are yours to judge. |
+| `node ProductSkills/solution-spec-loop/scripts/walkthrough.mjs run --file <vN.html> --actions <actions.json> --out <dir>` | One replay for the tester: loads the page, replays the actions, prints what is on screen now (accessibility tree and a screenshot path), and writes `<dir>/walkthrough.json`. The action format is at the top of the script. |
+
+Walkthrough logs go to `Product-Agent-app/data/spec-loop/<opp-slug>/<solution-slug>/<test-id>-r<r>/`. That folder is local and not committed.
+
+---
+
 # AGENTS AND MODELS
 
 Spawn agents with the Agent tool. Use the model alias, which resolves to the latest version.
@@ -110,6 +123,8 @@ The loop drives existing skills that normally stop at every gate for the builder
 ### Step 0: Resume or start
 
 Call `pa_get_entity(opportunityId)`. If it has a `Spec Loop` block whose status is not `complete`, read it and resume from the recorded step. Never start a second run over an unfinished one without asking.
+
+Then make sure the walkthrough helper runs: if `ProductSkills/solution-spec-loop/scripts/node_modules` is missing, run `npm install` in that folder. If Chromium is missing, run `npx playwright install chromium` there. If neither works, tell the builder now; usability tests can't run without it.
 
 ### Step 1: Ask for the codebase (HUMAN GATE)
 
@@ -173,6 +188,7 @@ For each option, spawn a **PM** agent (brief in `references/agent-briefs.md`). I
 1. **Backbone.** It slices the **to-be** story map with `user-story-slicer` from the as-is map and the option's journey (stories cover what changes; unchanged steps stay as backbone context), and stops after the backbone. It returns the backbone table, the axis ledger and the verbatim text of the slicer's build step 7.
 2. **Backbone review.** Spawn a fresh reviewer agent with exactly those three things and nothing else, per the slicer's backbone review gate. On FAIL, resume the PM with the verdict (SendMessage to the same agent), get the fixed backbone, and review again with a fresh reviewer. Loop until PASS.
 3. **Stories and prototype.** Resume the PM with the PASS verdict. It finishes the slicer (slice outcomes, stories written to the solution), builds prototype `v1.html` of the walking skeleton stories with `prototype-builder` at `<Prototype root><solution-slug>/v1.html` (solution slug = first 5 words of the title, slugified), and updates the solution's `Prototype` block to link v1 as current.
+4. **Gate check.** Run the helper's `check` on v1. On FAIL, resume the PM with the failures to fix v1 in place (v1 hasn't been tested yet), and check again until PASS.
 
 PM agents for different options can run in parallel.
 
@@ -213,9 +229,9 @@ A round's tests are:
 For each test:
 
 1. Spawn the **tester** (`sonnet`) with the tester brief. It gets the artifact (prototype path or codebase), the persona, and the neutral task. It does NOT get the criteria.
-   - Usability: walk the current prototype in Playwright as the persona and report what happened.
+   - Usability: walk the current prototype with the helper's `run` command, one action at a time, as the persona, and report what happened.
    - Feasibility: research spike against the codebase. Read code, and if needed write throwaway code in a scratch folder outside the repo. Never modify the codebase.
-2. Spawn the **grader** with the frozen criteria and the tester's report. It returns PASS or FAIL with the observation each verdict rests on.
+2. Spawn the **grader** with the frozen criteria, the tester's report and, for usability tests, the walkthrough log (`walkthrough.json`). It returns PASS or FAIL with the observation each verdict rests on.
 3. Record per `references/memory-blocks.md`: `Result R<r>` and `Learning` blocks on the test (a re-run in round 2 adds `Result R2` next to `Result R1` and rewrites `Learning`), status `done`; update the assumption's `Evidence` block; add a line to the solution's Iteration Log.
 4. Tell the builder in one line: test, verdict, next test.
 
@@ -240,7 +256,7 @@ A failure is a reason to change the option, not to drop it. Run this step for ev
 
 1. Changes the journey to address the failures. Prefer the simpler change: removing or merging a step beats adding one.
 2. Applies the change to the story map (`stories`) and the High-Level User Journey block. If the backbone changes, it returns the new backbone first and you run the Step 7 backbone review again before it writes stories.
-3. Builds the next prototype version `v{r+1}.html` from the current one. Never overwrite an existing version.
+3. Builds the next prototype version `v{r+1}.html` from the current one. Never overwrite an existing version. Run the helper's `check` on it; the PM fixes the new version until PASS.
 4. Returns the list of what changed.
 
 Then:

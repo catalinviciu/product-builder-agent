@@ -172,6 +172,7 @@ Every entity in the tree has an **AI Actions** dropdown menu with context-aware 
 **At the entity level (varies by level):**
 - **Write/update opportunity** — AI writes a structured opportunity from your input (product outcome and opportunity levels)
 - **Brainstorm solutions** — AI researches the problem and proposes 5 distinct approaches (opportunity level)
+- **Run solution spec loop** — AI specs at least 2 solution options and tests their usability and feasibility assumptions on prototypes, in up to 2 rounds. Needs a filled-in opportunity and a product outcome with a metric (opportunity level)
 - **Test assumptions** — AI surfaces critical assumptions and designs tests (solution level)
 - **Build prototype** — AI builds a working prototype from your solution context
 - **Plan implementation** — AI generates a full implementation plan with codebase context (solution level)

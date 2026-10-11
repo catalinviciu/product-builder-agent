@@ -158,6 +158,7 @@ One block per round the test ran in. A round 2 re-run (failed test or ratchet) a
 ```markdown
 **Verdict:** PASS | FAIL   **Round:** <r>   **Prototype:** v<n> | **Codebase:** <path>
 **Evidence level:** executed | simulated
+**Walkthrough log:** <path to walkthrough.json> (usability only)
 
 **Observations**
 - "<quoted from the tester report>"
