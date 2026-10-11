@@ -1,9 +1,9 @@
 ---
 name: solution-spec-loop
-description: Runs the solution spec loop on one opportunity. Maps the existing code, brainstorms 5 directions, has an advisor refine them into at least 2 solution options, gets human approval, then builds a story map per option for human review and a baseline prototype from the real starting screen, and tests every critical usability and feasibility assumption in up to 2 rounds. After every round it updates the whole solution spec (description, blocks, journey, stories) from what the round learned and builds the next prototype version, so the next round tests the evolved solution. Value and viability assumptions get an AI pre-mortem and a test plan for humans. Everything is recorded in the Product Agent tree, and a finished run can be followed by a new run that starts from the builder's feedback and the previous learnings. Use when the builder runs the "Run solution spec loop" AI action on an opportunity, or asks to spec solutions for an opportunity end to end. Do NOT use to brainstorm only (solutions-brainstormer) or to test one solution's assumptions by hand (assumption-tester).
+description: Runs the solution spec loop on one opportunity. Maps the existing code, brainstorms 5 directions, has an advisor refine them into at least 2 solution options, gets human approval, then builds a story map per option for human review and a baseline prototype from the real starting screen, puts every prototype version through a design critique against the design system's DESIGN.md, and tests every critical usability and feasibility assumption in up to 2 rounds. After every round it updates the whole solution spec (description, blocks, journey, stories) from what the round learned and builds the next prototype version, so the next round tests the evolved solution. Value and viability assumptions get an AI pre-mortem and a test plan for humans. Everything is recorded in the Product Agent tree, and a finished run can be followed by a new run that starts from the builder's feedback and the previous learnings. Use when the builder runs the "Run solution spec loop" AI action on an opportunity, or asks to spec solutions for an opportunity end to end. Do NOT use to brainstorm only (solutions-brainstormer) or to test one solution's assumptions by hand (assumption-tester).
 metadata:
   author: Cata Viciu
-  version: 1.4.0
+  version: 1.5.0
   category: product
   tags: [solution spec, discovery, assumption testing, prototyping, autoresearch]
   dependencies:
@@ -100,6 +100,7 @@ Launch each role as a subagent with your tool's subagent feature (for example th
 | Tester (usability and feasibility) | fast | No. Returns observations. |
 | Grader | strongest | No. Returns PASS / FAIL with reasons. |
 | Pre-mortem (value and viability) | strongest | No. Returns a dry run and a human test plan. |
+| Design critic (UI and UX) | strongest | No. Returns findings and replies to the designer. |
 
 With Claude models, strongest is Opus and fast is Sonnet.
 
@@ -116,7 +117,7 @@ The loop drives existing skills that normally stop at every gate for the builder
 - Gates in a sub-skill are answered by the brief or decided by the sub-skill from the tree, and the decision is returned to you. Record decisions in the Spec Loop block under "Decisions made without the builder".
 - A question nobody could answer comes back as an open question with the reading used. Record it in the Spec Loop block.
 - Spawned agents can't spawn agents of their own. Where a sub-skill needs an independent reviewer (the slicer's backbone review gate), the agent hands the material back to you and you run the review (Step 7a).
-- Only the human gates in this skill stop the run: Step 1 (codebase), Step 6 (option review) and Step 7b (story map review). The drop check can add one more (Step 13).
+- Only the human gates in this skill stop the run: Step 1 (codebase), Step 6 (option review) and Step 7b (story map review). Step 2 adds one only if the DESIGN.md can't be found, and the drop check can add one more (Step 13).
 
 ---
 
@@ -193,6 +194,12 @@ Wait for the reply. Record codebase, start and end in the Spec Loop block (creat
 2. `pa_get_context(opportunityId, { ancestors: true, descendantsDepth: 1, productLineMeta: true })` - opportunity, product outcome, business outcome, personas, settings.
 3. `pa_get_metric(metricId)` for the product outcome's metric (and the business outcome's, if set). This is the only read that returns the recorded series.
 4. Resolve the persona: the opportunity's `personaId`, else the nearest ancestor's.
+5. **Find the DESIGN.md** the design critic reviews against (see "Design critique"):
+   - Settings in `designMd` mode: it's the text in `productLine.settings.designSystem.designMd`.
+   - Settings in `skill` mode: find the skill folder named `skillName` in your tool's skill folders (for example `.claude/skills/<name>/` in the project or the home folder) and in `ProductSkills/<name>/`. The DESIGN.md is a `DESIGN.md` file inside it, usually `assets/DESIGN.md`.
+   - **Not found: ask the builder** (human gate): "I couldn't find the DESIGN.md for the `<name>` design system. Where is it? Reply with a path." Wait for the reply.
+
+   Record where it is in the Spec Loop block as **Design system**.
 
 Check the opportunity has real content (not template placeholder text in italics) in: description, Trigger, Current Workaround, Desired end state; and that the product outcome has a metric. If any is missing, stop and tell the builder to run "Refine this opportunity" first. The AI action checks this too; this is the backstop.
 
@@ -255,7 +262,19 @@ From here to the end of the run, nothing stops for the builder except the drop c
 1. **Prototype.** Continue the PM. It builds prototype `v1.html` of the walking skeleton stories with `prototype-builder` at `<Prototype root><solution-slug>/v1.html` (solution slug = first 5 words of the title, slugified), starting from the **starting screen**: the brief names the screen, its route and its component files, and the PM replicates that screen from those files. It returns the files it replicated.
 2. **Starting screen check.** Compare the files the PM replicated with the starting screen's files. If they differ, or the first screen of v1 isn't the starting screen, continue the PM to rebuild v1 from the right screen. Never accept a starting screen the PM chose itself.
 3. **Gate check.** Run the helper's `check` on v1. On FAIL, continue the PM with the failures to fix v1 in place (v1 hasn't been tested yet), and check again until PASS.
-4. **Prototype block.** Write the solution's `Prototype` block with v1 as Current (status rules).
+4. **Design critique.** Run the design critique on v1 (see "Design critique" below).
+5. **Prototype block.** Write the solution's `Prototype` block with v1 as Current (status rules).
+
+### Design critique (after every prototype version)
+
+Every prototype version gets a design review before it's tested: v1 at Step 7c, each new version at Step 12 and Step F4. The PM who built it is the **designer**. A separate **design critic** challenges it, the two talk it through, and the designer applies what they agree. Briefs for both are in `references/agent-briefs.md`.
+
+1. **Critique.** Spawn the **design critic** with: the DESIGN.md, the prototype file, the starting screen and its component files, the journey and the stories this version implements, the persona, and the earlier design reviews for this option (so settled points aren't raised again). Never give it the assumptions, tests or criteria: it reviews the design, not the test. It looks at the prototype through the walkthrough helper and may read the HTML source. It returns numbered findings, each with: UI or UX, severity (**must fix**, **should fix**, **consider**), where, the problem, the DESIGN.md section or UX principle behind it, and a proposed change.
+2. **Designer replies.** Continue the PM with the findings. For each one it answers **accept**, **counter** (a different fix, with the reason) or **reject** (with the reason, grounded in the DESIGN.md, the journey, the persona or faithfulness to the starting screen).
+3. **Critic replies.** Continue the critic with the answers. For each counter or reject it answers **agree** or **hold** (with the reason).
+4. **Agree.** Repeat steps 2 and 3 at most twice. Anything still disputed, you decide, in this order: the DESIGN.md's rules, then faithfulness to the existing starting screen, then what serves the persona's task in the journey, then the simpler option. Record the reason.
+5. **Apply.** The designer applies every agreed change to the same version file (it hasn't been tested yet, so editing in place is fine). If an agreed change alters the flow, it also updates the journey and the stories, so spec and prototype stay in step; if the backbone changes, run the Step 7a backbone review.
+6. **Check and record.** Run the helper's `check` again. Write the solution's `Design Review v<n>` block and add a line to the Iteration Log (`references/memory-blocks.md`).
 
 ---
 
@@ -330,7 +349,7 @@ Runs after every round, for every active option, whether or not anything failed.
 
 Prefer the simpler change: removing or merging a step beats adding one. Change only what the learnings call for. It returns a **spec changes** list: each change, the part of the spec it touched, and the test or finding behind it.
 
-**4. Evolve the prototype.** The PM builds `v{r+1}.html` from the current version, applying every spec change a user would see, from the same starting screen. Never overwrite an existing version. Run the helper's `check` on it; the PM fixes the new version until PASS. Skip this only when the round changed nothing a user sees, and say so in the Iteration Log.
+**4. Evolve the prototype.** The PM builds `v{r+1}.html` from the current version, applying every spec change a user would see, from the same starting screen. Never overwrite an existing version. Run the helper's `check` on it; the PM fixes the new version until PASS. Then run the **design critique** on it. Skip this part only when the round changed nothing a user sees, and say so in the Iteration Log.
 
 **5. Record.**
 
@@ -399,7 +418,7 @@ Then run **Step 7b** again: the builder reviews the changed story maps before an
 
 ### Step F4: Next prototype version
 
-The PM builds the next version (`v{n+1}.html`) from the current one, applying every spec change a user would see, from the same starting screen (Step 7c checks apply). Never overwrite an earlier version. Add it to the Prototype block as Candidate (untested). Round 1 of this run tests it.
+The PM builds the next version (`v{n+1}.html`) from the current one, applying every spec change a user would see, from the same starting screen (Step 7c checks apply). Never overwrite an earlier version. Run the **design critique** on it, then add it to the Prototype block as Candidate (untested). Round 1 of this run tests it.
 
 ### Step F5: Run the loop again
 
@@ -421,10 +440,11 @@ Log lines carry the run number ("Run 2, Round 1"). At the end, rewrite the score
 8. **Never overwrite a prototype version.** v1, v2, v3 stay side by side.
 9. **Write only under this opportunity.** Its blocks, its new solutions and their assumptions and tests. Never edit sibling opportunities, outcomes or existing solutions.
 10. **Never set a story's `done` or `doneAt`.**
-11. **Only the human gates stop the run.** Steps 1, 6, 7b, F1 and, when triggered, 13. Everything else is decided by the loop and recorded.
+11. **Only the human gates stop the run.** Steps 1, 6, 7b, F1 and, when triggered, Step 2 (DESIGN.md not found) and Step 13. Everything else is decided by the loop and recorded.
 12. **Record before moving on.** A test without its Result and Learning blocks hasn't finished.
 13. **The prototype starts from the real starting screen.** It comes from the as-is map's cited files, or for greenfield from the screen approved at Step 6. No agent picks its own.
 14. **No raw IDs for humans.** Link entities as `[Title](#entity/<id>)` in blocks and name them by title in messages. Write types out in full.
 15. **Spec and prototype move together.** After every round the whole spec (description, Why It Works, Trade-offs, journey, stories) is updated from what the round learned, and the next round tests a new prototype version built from it.
 16. **Statuses match results.** Set test and assumption statuses when each result is recorded, per the status rules, and check them all before the scorecard. No run ends with a status that doesn't match its latest result.
 17. **The Prototype block links every version.** You update it when a version is built, promoted or fails a re-test. The PM never writes it.
+18. **Every prototype version passes a design critique before it's tested.** The critic never sees the assumptions, tests or criteria, and disputes are settled by the DESIGN.md first.

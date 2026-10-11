@@ -232,6 +232,7 @@ The diagram shows:
 - **Before the loop:** map the existing code and record the screen the workflow starts on, brainstorm 5 directions, the advisor refines them into at least 2 options plus a backup pool, then a story map per option.
 - **Where it waits for you (in yellow):** choosing the codebase, approving the options, and reviewing the story maps before any prototype is built.
 - **Prototypes:** v1 of each option starts on the real starting screen from the codebase, rebuilt from its source files. No agent picks its own starting screen.
+- **Design critique:** every prototype version, before it's tested, goes to a separate design critic who challenges the UI and UX against the design system's DESIGN.md. The designer answers each finding, the two agree on changes, and the designer applies them. If the DESIGN.md can't be found, the loop asks you where it is.
 - **The test loop, capped at 2 rounds:** one test at a time, grade, record. After every round, the solution evolves: failures are adapted around, findings from passing tests are folded in, the whole spec (description, journey, stories) is updated, and the next prototype version is built, so round 2 tests the evolved solution. Round 2 also re-tests what passed in round 1, and a change that breaks one of those is undone in the spec and the prototype together.
 - **Dropping an option:** only when it can't be adapted. The loop asks you if fewer than 2 options remain.
 - **Value and viability:** go to an AI pre-mortem and a test plan for humans.
@@ -248,7 +249,8 @@ flowchart TD
     F --> G["Per option: to-be story map"]
     G --> SM[/"You: review the story maps"/]
     SM --> G2["Per option: v1 prototype of the walking skeleton,<br/>starting on the real starting screen"]
-    G2 --> H["Map critical assumptions:<br/>value, viability, usability, feasibility"]
+    G2 --> DC["Design critique: critic challenges UI and UX<br/>against DESIGN.md, designer and critic agree"]
+    DC --> H["Map critical assumptions:<br/>value, viability, usability, feasibility"]
     H --> I["Freeze the pass/fail criteria"]
     I --> V["Value and viability:<br/>AI pre-mortem and a test plan for humans"]
     I --> J
@@ -260,7 +262,7 @@ flowchart TD
         M -- yes --> J
         M -- no --> N{"Anything<br/>failed?"}
         N -- yes --> O{"Can the option<br/>be adapted?"}
-        O -- yes --> P["Evolve the solution: update description,<br/>journey and stories, build the next prototype"]
+        O -- yes --> P["Evolve the solution: update description,<br/>journey and stories, build the next prototype,<br/>design critique"]
         N -- "no: fold in findings<br/>from passing tests" --> P
         P --> Q{"Round 2 done,<br/>or nothing changed?"}
         Q -- "no: round 2 tests the new version<br/>and re-tests what passed" --> J

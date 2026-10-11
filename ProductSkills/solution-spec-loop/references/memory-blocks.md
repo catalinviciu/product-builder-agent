@@ -47,6 +47,7 @@ Created at Step 1, updated after every step. Rewrite it, don't append. It's how 
 **Workflow bounds:** <start> -> <end>
 **As-is map:** <path | none>
 **Starting screen:** <name as the user sees it> at `<route>` - `<component files>`
+**Design system:** <DESIGN.md path | product line settings (design steering)>
 
 **Options**
 - [<title>](#entity/<solutionId>) - <active | dropped: reason> - prototype v<n>
@@ -142,6 +143,7 @@ One line per event, appended. Old lines are never edited.
 - Run 1, Round 1 | Usability | [<test title>](#entity/<id>) | FAIL | Simulated | "<quoted observation>"
 - Run 1, Round 1 | Spec changes | <part of the spec> - <change> (from [<test title>](#entity/<id>))
 - Run 1, Round 1 | Prototype evolved -> v2 | <one-line summary>
+- Run 1 | Design critique of v2 | <n> changes applied, <n> kept as designed, <n> decided
 - Run 1, Round 2 | Re-test of a passed test | [<test title>](#entity/<id>) | PASS on v2
 - Run 1, Round 2 | Spec change undone in spec and prototype | broke [<test title>](#entity/<id>)
 - Run 2 | Builder feedback applied | <one-line summary>
@@ -160,6 +162,25 @@ Earlier versions: [v1](<served-url>/v1.html)
 ```
 
 The served URL is the path after `public/` under `http://localhost:3000/`.
+
+### `Design Review v<n>`
+
+One block per prototype version, written after its design critique. Never edited afterwards.
+
+```markdown
+**Prototype v<n>** - <n> findings: <n> must fix, <n> should fix, <n> consider.
+
+**Agreed and applied**
+- <UI | UX> - <change> (<DESIGN.md section or UX principle>)
+
+**Kept as designed**
+- <finding> - <the designer's reason the critic agreed with>
+
+**Decided by the orchestrator**
+- <finding> - <the decision and which rule settled it>
+
+**Worth keeping:** <what the critic said works well>
+```
 
 ### `Drop Reason`
 
