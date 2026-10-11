@@ -232,7 +232,7 @@ The diagram shows:
 - **Before the loop:** map the existing code and record the screen the workflow starts on, brainstorm 5 directions, the advisor refines them into at least 2 options plus a backup pool, then a story map per option.
 - **Where it waits for you (in yellow):** choosing the codebase, approving the options, and reviewing the story maps before any prototype is built.
 - **Prototypes:** v1 of each option starts on the real starting screen from the codebase, rebuilt from its source files. No agent picks its own starting screen.
-- **The test loop, capped at 2 rounds:** one test at a time, grade, record, and if anything failed, try to adapt the option before building the next prototype version. Round 2 also re-tests what passed in round 1.
+- **The test loop, capped at 2 rounds:** one test at a time, grade, record. After every round, the solution evolves: failures are adapted around, findings from passing tests are folded in, the whole spec (description, journey, stories) is updated, and the next prototype version is built, so round 2 tests the evolved solution. Round 2 also re-tests what passed in round 1, and a change that breaks one of those is undone in the spec and the prototype together.
 - **Dropping an option:** only when it can't be adapted. The loop asks you if fewer than 2 options remain.
 - **Value and viability:** go to an AI pre-mortem and a test plan for humans.
 - **The end:** a scorecard on the opportunity. Tests, assumptions and options show as links you can click, never as IDs.
@@ -260,14 +260,14 @@ flowchart TD
         M -- yes --> J
         M -- no --> N{"Anything<br/>failed?"}
         N -- yes --> O{"Can the option<br/>be adapted?"}
-        O -- yes --> P["Update journey, story map<br/>and prototype to the next version"]
-        P --> Q{"Round 2<br/>done?"}
-        Q -- "no: round 2 re-tests<br/>what passed too" --> J
+        O -- yes --> P["Evolve the solution: update description,<br/>journey and stories, build the next prototype"]
+        N -- "no: fold in findings<br/>from passing tests" --> P
+        P --> Q{"Round 2 done,<br/>or nothing changed?"}
+        Q -- "no: round 2 tests the new version<br/>and re-tests what passed" --> J
     end
 
     O -- no --> R["Drop the option<br/>(asks you if fewer than 2 remain)"]
-    N -- no --> S["Scorecard on the opportunity"]
-    Q -- yes --> S
+    Q -- yes --> S["Scorecard on the opportunity"]
     R --> S
     V --> S
     S -.-> FB[/"You: feedback for a follow-up run"/]

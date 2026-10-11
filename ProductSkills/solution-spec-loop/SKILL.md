@@ -1,9 +1,9 @@
 ---
 name: solution-spec-loop
-description: Runs the solution spec loop on one opportunity. Maps the existing code, brainstorms 5 directions, has an advisor refine them into at least 2 solution options, gets human approval, then builds a story map per option for human review and a baseline prototype from the real starting screen, and tests every critical usability and feasibility assumption in up to 2 rounds, updating the journey and prototype after each round. Value and viability assumptions get an AI pre-mortem and a test plan for humans. Everything is recorded in the Product Agent tree, and a finished run can be followed by a new run that starts from the builder's feedback and the previous learnings. Use when the builder runs the "Run solution spec loop" AI action on an opportunity, or asks to spec solutions for an opportunity end to end. Do NOT use to brainstorm only (solutions-brainstormer) or to test one solution's assumptions by hand (assumption-tester).
+description: Runs the solution spec loop on one opportunity. Maps the existing code, brainstorms 5 directions, has an advisor refine them into at least 2 solution options, gets human approval, then builds a story map per option for human review and a baseline prototype from the real starting screen, and tests every critical usability and feasibility assumption in up to 2 rounds. After every round it updates the whole solution spec (description, blocks, journey, stories) from what the round learned and builds the next prototype version, so the next round tests the evolved solution. Value and viability assumptions get an AI pre-mortem and a test plan for humans. Everything is recorded in the Product Agent tree, and a finished run can be followed by a new run that starts from the builder's feedback and the previous learnings. Use when the builder runs the "Run solution spec loop" AI action on an opportunity, or asks to spec solutions for an opportunity end to end. Do NOT use to brainstorm only (solutions-brainstormer) or to test one solution's assumptions by hand (assumption-tester).
 metadata:
   author: Cata Viciu
-  version: 1.1.0
+  version: 1.2.0
   category: product
   tags: [solution spec, discovery, assumption testing, prototyping, autoresearch]
   dependencies:
@@ -249,7 +249,7 @@ Round number `r` starts at 1. Per option, run the round's usability and feasibil
 
 A round's tests are:
 - Round 1: every critical usability and feasibility test.
-- Round 2: tests that failed in round 1 (re-run against v2), new tests from Step 12, and the **ratchet set**: every usability test that passed in round 1, re-run against v2. Re-run a passed feasibility test only if the v2 change touches what it tested.
+- Round 2: on v2, the version Step 12 evolved from round 1 (on v1 only if round 1 changed nothing a user sees). Tests that failed in round 1, new tests from Step 12, and the **ratchet set**: every usability test that passed in round 1, re-run on v2. Re-run a passed feasibility test only if the v2 change touches what it tested.
 
 For each test:
 
@@ -268,29 +268,35 @@ Spawn the **pre-mortem** agent for every value and viability test, once per test
 
 Record its output on the test as an `AI Pre-mortem` block with evidence level `ai-premortem`, plus a `Human Test Plan` block. The test stays `status: "draft"`: a human runs it. The assumption stays `explore`. Never count a pre-mortem as a pass.
 
-### Step 12: Adapt the solution (only if something failed)
+### Step 12: Evolve the solution (after every round)
 
-A failure is a reason to change the option, not to drop it. Run this step for every option with a failed test or a fired kill criterion.
+Runs after every round, for every active option, whether or not anything failed. The spec and the prototype move forward together: the next round always tests a new version that carries everything this round learned.
 
-**First, the adaptation check.** For each failed critical feasibility test and each fired kill criterion, spawn the **advisor** with the adaptation-check brief: the option, the tester report and grader verdict, the codebase and as-is map. It looks for a change that gets around the blocker while the option still addresses the opportunity's pain and can move the metric: a different technical approach, another data source or service, a narrower scope, a reordered journey, or moving the blocked part out of the walking skeleton. It returns the adaptation, or `NO ADAPTATION` with every change it considered and why each fails.
+**1. Collect the round's learnings.** The failures with the grader's reasons, any fired kill criteria, and the findings from tests that passed: where the persona hesitated or took another path, states and edge cases the tester hit, facts a feasibility spike turned up about the code.
+
+**2. Adaptation check** (only for failed critical feasibility tests and fired kill criteria). Spawn the **advisor** with the adaptation-check brief: the option, the tester report and grader verdict, the codebase and as-is map. It looks for a change that gets around the blocker while the option still addresses the opportunity's pain and can move the metric: a different technical approach, another data source or service, a narrower scope, a reordered journey, or moving the blocked part out of the walking skeleton. It returns the adaptation, or `NO ADAPTATION` with every change it considered and why each fails.
 
 - If any blocker came back `NO ADAPTATION`, go to Step 13 for that option. Don't run the PM.
 - Otherwise each adaptation becomes part of the PM's change, and gets a new feasibility test (through Step 9) that tests the adapted approach in the next round. The failed test stays as it was.
 
-**Then the update.** Spawn the option's **PM** agent with the failures, the adaptations and the learnings. It:
+**3. Update the whole spec.** Spawn the option's **PM** agent with the failures, the adaptations, the findings from passing tests and the Learnings block. It updates, in one pass, so they always describe the same solution:
 
-1. Changes the journey to address the failures. Prefer the simpler change: removing or merging a step beats adding one.
-2. Applies the change to the story map (`stories`) and the High-Level User Journey block. If the backbone changes, it returns the new backbone first and you run the Step 7a backbone review again before it writes stories.
-3. Builds the next prototype version `v{r+1}.html` from the current one. Never overwrite an existing version. Run the helper's `check` on it; the PM fixes the new version until PASS.
-4. Returns the list of what changed.
+- the **High-Level User Journey** block;
+- the **stories**: re-slice the touched steps, and fold findings into the touched stories' Context, Out of Scope and Human Verification (states and edge cases go in Context for the AC writer). If the backbone changes, it returns the new backbone first and you run the Step 7a backbone review again before it writes stories;
+- the solution's **description**, **Why It Works** and **Trade-offs** blocks, rewritten to describe the solution as it now is.
 
-Then:
+Prefer the simpler change: removing or merging a step beats adding one. Change only what the learnings call for. It returns a **spec changes** list: each change, the part of the spec it touched, and the test or finding behind it.
 
+**4. Evolve the prototype.** The PM builds `v{r+1}.html` from the current version, applying every spec change a user would see, from the same starting screen. Never overwrite an existing version. Run the helper's `check` on it; the PM fixes the new version until PASS. Skip this only when the round changed nothing a user sees, and say so in the Iteration Log.
+
+**5. Record.**
+
+- Add a `Spec changes` line to the Iteration Log for each change, linking the test behind it.
 - Rewrite the solution's `Learnings` block.
-- Spawn the **assumption mapper** on **the changed parts only**. New critical usability or feasibility assumptions go through Step 9 and join the next round.
-- New value or viability assumptions go through Step 9, then Step 11.
+- Spawn the **assumption mapper** on **the changed parts only**. New critical usability or feasibility assumptions go through Step 9 and join the next round. New value or viability assumptions go through Step 9, then Step 11.
 - The Prototype block lists the new version as an untested candidate. It becomes current only after the ratchet passes in the next round.
-- If a ratchet test fails in round 2, the change that broke it is discarded. The round 2 update (v3) reverts that part along with fixing the round's failures, and the Learnings block records what was tried and why it failed.
+
+**6. Undo together.** If a ratchet test fails in round 2, the change that broke it is undone everywhere it landed: the journey, the stories, the description and blocks, and the prototype (in v3, along with this round's other changes). The Learnings block records what was tried and why it was undone.
 
 ### Step 13: Drop check
 
@@ -304,9 +310,9 @@ If fewer than 2 options remain, **stop and ask the builder**: offer the backup p
 
 After round `r`:
 
-- If `r = 2`: stop. If round 2 had failures and Step 12 produced v3, list v3's changes, and any new critical assumptions they raised, as **untested since round 2** in the scorecard.
-- If `r = 1` and nothing failed and Step 12 found no new critical usability or feasibility assumptions: stop.
-- Otherwise: `r = 2`, back to Step 10.
+- If `r = 2`: stop. Step 12 still ran after round 2, so the spec is up to date and v3 exists if anything a user sees changed. List those changes, and any new critical assumptions they raised, as **untested since round 2** in the scorecard.
+- If `r = 1`, nothing failed, Step 12 made no spec changes and found no new critical usability or feasibility assumptions: stop. There is nothing new to test.
+- Otherwise: `r = 2`, back to Step 10. Round 2 tests v2.
 
 ---
 
@@ -314,7 +320,9 @@ After round `r`:
 
 ### Step 15: Scorecard
 
-Write the `Spec Loop Scorecard` block on the opportunity per `references/memory-blocks.md`: options side by side, assumptions by evidence level, untested changes, human tests waiting, and one recommended next step. Set the Spec Loop block status to `complete`.
+**Consistency check first.** For each active option, read the description, Why It Works, Trade-offs, the High-Level User Journey, the stories and the latest prototype version. They must describe the same flow. If any part is behind, continue the PM to bring it in line (spec text and stories only; don't build another prototype version) and log it as a spec change.
+
+Then write the `Spec Loop Scorecard` block on the opportunity per `references/memory-blocks.md`: options side by side, assumptions by evidence level, untested changes, human tests waiting, and one recommended next step. Set the Spec Loop block status to `complete`.
 
 Tell the builder in three lines or fewer: how many options survived, where the scorecard is, which human tests come first. Add that they can give feedback and run the action again for a follow-up run.
 
@@ -340,13 +348,13 @@ A backup-pool direction the builder brings in becomes a new solution (Step 6 sch
 
 ### Step F3: Apply the feedback to each option
 
-Continue a PM per option (a new agent given the PM brief, the feedback, the Learnings block and the current stories). It changes the journey and the story map to apply the feedback and the untested changes from the last run. If the backbone changed, run the Step 7a backbone review.
+Continue a PM per option (a new agent given the PM brief, the feedback, the Learnings block and the current stories). It applies the feedback and the untested changes from the last run to the whole spec, as in Step 12 part 3: journey, stories, description, Why It Works and Trade-offs, and returns the spec changes list. If the backbone changed, run the Step 7a backbone review.
 
 Then run **Step 7b** again: the builder reviews the changed story maps before anything is built.
 
 ### Step F4: Next prototype version
 
-The PM builds the next version (`v{n+1}.html`) from the current one, from the same starting screen (Step 7c checks apply). Never overwrite an earlier version.
+The PM builds the next version (`v{n+1}.html`) from the current one, applying every spec change a user would see, from the same starting screen (Step 7c checks apply). Never overwrite an earlier version. Round 1 of this run tests it.
 
 ### Step F5: Run the loop again
 
@@ -361,7 +369,7 @@ Log lines carry the run number ("Run 2, Round 1"). At the end, rewrite the score
 1. **Never edit a frozen Pass / Fail Criteria block.** Fix a bad criterion with a new test.
 2. **The tester never sees the criteria.** The grader decides PASS or FAIL against the criteria, nothing else.
 3. **At most 2 test rounds.** No third round, no matter what failed.
-4. **Ratchet.** A journey change stays only if every previously passed usability test still passes.
+4. **Ratchet.** A spec change stays only if every previously passed usability test still passes. When one is undone, it's undone in the spec and the prototype together.
 5. **AI pre-mortems are not evidence.** Tag them `ai-premortem`, keep the test `draft`, never mark a value or viability assumption passed.
 6. **Value and viability evidence comes only from the tree.** Outcome metrics and the opportunity's blocks.
 7. **Never modify the codebase.** Feasibility spikes write throwaway code outside the repo.
@@ -372,3 +380,4 @@ Log lines carry the run number ("Run 2, Round 1"). At the end, rewrite the score
 12. **Record before moving on.** A test without its Result and Learning blocks hasn't finished.
 13. **The prototype starts from the real starting screen.** It comes from the as-is map's cited files, or for greenfield from the screen approved at Step 6. No agent picks its own.
 14. **No raw IDs for humans.** Link entities as `[Title](#entity/<id>)` in blocks and name them by title in messages. Write types out in full.
+15. **Spec and prototype move together.** After every round the whole spec (description, Why It Works, Trade-offs, journey, stories) is updated from what the round learned, and the next round tests a new prototype version built from it.

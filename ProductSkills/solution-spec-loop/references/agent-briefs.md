@@ -192,31 +192,39 @@ Return: the prototype path, the component files you replicated for the starting 
 the screens built, and what the prototype left out.
 ```
 
-### Step 12: update after a round
+### Step 12: evolve after a round
 
 ```
-You are the PM for one solution option. Round <r> found failures. Change the journey to fix
-them, then build the next prototype version.
+You are the PM for one solution option. Round <r> has finished. Update the whole spec from
+what it learned, then build the next prototype version so the next round tests it.
 
 Inputs:
-- Solution entity ID: <solutionId>
-- Current prototype: <path to v{r}.html>
-- Failed tests, each with its assumption, verdict reason and learning: <...>
+- Solution entity ID: <solutionId> (read it with pa_get_entity)
+- Current prototype: <path to v{r}.html>   Starting screen: <name, route, files>
+- Failed tests, each with its assumption, verdict reason and learning: <... | none>
+- Adaptations from the advisor: <... | none>
+- Findings from passing tests (hesitations, other paths, states and edge cases hit, code facts): <...>
 - Tests that passed (these must keep passing): <...>
 - Learnings block: <...>
 
-Rules:
-- Prefer the simpler change. Removing or merging a step beats adding one.
-- Change only what the failures call for.
-- Update the High-Level User Journey block and the stories (re-slice only the touched steps).
-  If the backbone changes, return the new backbone table, axis ledger and build step 7 before
-  writing stories; I'll run the backbone review and continue you.
-- Copy v{r}.html to v{r+1}.html, then change v{r+1}.html. Never edit v{r}.html. The
-  prototype keeps opening on the same starting screen.
-- Don't update the Prototype block. The orchestrator does that after the ratchet.
+Update in one pass, so they describe the same solution:
+1. The High-Level User Journey block.
+2. The stories: re-slice only the touched steps; fold findings into the touched stories'
+   Context, Out of Scope and Human Verification (states and edge cases go in Context).
+   If the backbone changes, return the new backbone table, axis ledger and build step 7
+   before writing stories; I'll run the backbone review and continue you.
+3. The description, Why It Works and Trade-offs blocks, rewritten to describe the
+   solution as it now is.
+Prefer the simpler change. Change only what the failures and findings call for.
 
-Return: a numbered list of changes, each naming the failed test it addresses, and the new
-prototype path.
+Then copy v{r}.html to v{r+1}.html and apply every change a user would see. Never edit
+v{r}.html. The prototype keeps opening on the same starting screen. If nothing a user sees
+changed, don't build a new version and say so.
+
+Don't update the Prototype block. The orchestrator does that after the ratchet.
+
+Return: the spec changes list (each change, the part of the spec it touched, and the test
+or finding behind it) and the new prototype path, or "no new version" with the reason.
 ```
 
 ### Step F3: follow-up run
@@ -229,12 +237,13 @@ and its stories as they are now (the builder may have edited them; keep those ed
 Builder feedback for this run: <reply, verbatim>
 Untested since the last run: <list from the scorecard>
 
-Apply the feedback and the untested changes to the High-Level User Journey block and the
-stories. Prefer the simpler change. If the backbone changes, return the new backbone table,
+Apply the feedback and the untested changes to the whole spec in one pass: the High-Level
+User Journey block, the stories, and the description, Why It Works and Trade-offs blocks,
+so they describe the same solution. Prefer the simpler change. If the backbone changes, return the new backbone table,
 axis ledger and build step 7 before writing stories; I'll run the backbone review and
 continue you.
 
-Return: what you changed, mapped to each piece of feedback, the backbone as a Mermaid
+Return: the spec changes list, mapped to each piece of feedback, the backbone as a Mermaid
 diagram, the stories by slice, and every decision and open question.
 ```
 
