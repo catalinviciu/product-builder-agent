@@ -212,6 +212,15 @@ These skills are invoked through the AI Actions menu in the UI — you don't nee
 
 Run **Run solution spec loop** from an opportunity's AI Actions menu. The AI takes the opportunity from 5 brainstormed directions to at least 2 tested solution options, and records every goal, result and learning in the discovery tree. It works like Karpathy's [autoresearch](https://github.com/karpathy/autoresearch): pass/fail criteria are frozen before a test runs, tests run one at a time, and a change to a solution only stays if the tests it already passed still pass.
 
+The diagram shows:
+
+- **Before the loop:** map the existing code, brainstorm 5 directions, the advisor refines them into at least 2 options plus a backup pool, then a story map and v1 prototype per option, then assumptions and frozen pass/fail criteria.
+- **Where it waits for you (in yellow):** choosing the codebase and approving the options.
+- **The test loop, capped at 2 rounds:** one test at a time, grade, record, and if anything failed, try to adapt the option before building the next prototype version. Round 2 also re-tests what passed in round 1.
+- **Dropping an option:** only when it can't be adapted. The loop asks you if fewer than 2 options remain.
+- **Value and viability:** go to an AI pre-mortem and a test plan for humans.
+- **The end:** everything ends in the scorecard on the opportunity.
+
 ```mermaid
 flowchart TD
     A["Run solution spec loop<br/>on a filled-in opportunity"] --> B[/"You: which codebase?"/]
