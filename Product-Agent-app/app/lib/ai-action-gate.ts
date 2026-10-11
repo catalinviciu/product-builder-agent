@@ -15,12 +15,12 @@ type SettingsRedirect = {
  * Returns false (no copy, no event) if buildPrompt returns null.
  */
 export async function runGatedAIAction(opts: {
-  action: "plan-implement" | "prototype";
+  action: "plan-implement" | "prototype" | "spec-loop";
   productLine: ProductLine;
   requiredSettings: SettingsFieldKey[];
   actionName: string;
   returnEntityId: string;
-  scope: "solution" | "story";
+  scope: "solution" | "story" | "opportunity";
   buildPrompt: () => string | null;
   openSettingsWithRedirect: (plId: string, redirect: SettingsRedirect) => void;
 }): Promise<boolean> {

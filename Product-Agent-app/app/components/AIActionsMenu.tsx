@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, ChevronDown, Copy, FileText, PenLine, Clipboard, Check, Lightbulb, FlaskConical, LayoutTemplate, type LucideIcon } from "lucide-react";
+import { Sparkles, ChevronDown, Copy, FileText, PenLine, Clipboard, Check, Lightbulb, FlaskConical, LayoutTemplate, Repeat, type LucideIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -10,10 +10,12 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import type { Entity, EntityStore, ProductLine } from "@/app/lib/schemas";
-import { buildEntityAnchor, buildOpportunityWriterPrompt, buildSolutionPlanningPrompt, buildSolutionsBrainstormerPrompt, buildAssumptionTesterPrompt, buildPrototypePrompt } from "@/app/lib/utils";
+import { cn, buildEntityAnchor, buildOpportunityWriterPrompt, buildSolutionPlanningPrompt, buildSolutionsBrainstormerPrompt, buildAssumptionTesterPrompt, buildPrototypePrompt, buildSolutionSpecLoopPrompt } from "@/app/lib/utils";
 import type { SettingsFieldKey } from "@/app/lib/settings-redirect";
 import { useAppStore } from "@/app/lib/store";
 import { runGatedAIAction } from "@/app/lib/ai-action-gate";
+import { getSpecLoopMissing } from "@/app/lib/opportunity-readiness";
+import { trackEvent } from "@/app/lib/analytics";
 
 export interface AIAction {
   id: string;
@@ -24,8 +26,14 @@ export interface AIAction {
   getGatedText?: () => string | null;
   requiredSettings?: SettingsFieldKey[];
   actionName?: string;
-  analyticsAction?: "plan-implement" | "prototype";
+  analyticsAction?: "plan-implement" | "prototype" | "spec-loop";
+  /** Entity content the action needs but doesn't have yet. Non-empty blocks the copy. */
+  missingContent?: string[];
+  /** Shown after the copy instead of the default paste hint. */
+  copiedHint?: string;
 }
+
+const DEFAULT_COPIED_HINT = "Paste it in Claude Code (or your AI tool) in plan mode to get started";
 
 interface AIActionsMenuProps {
   entity: Entity;
@@ -118,6 +126,19 @@ function getActions(entity: Entity, entities: EntityStore, productLine: ProductL
       icon: Lightbulb,
       getText: () => buildSolutionsBrainstormerPrompt(entities, productLine, entity.id),
     });
+    actions.push({
+      id: "solution-spec-loop",
+      label: "Run solution spec loop",
+      description: "Spec at least 2 solution options and test their usability and feasibility assumptions in up to 2 prototype rounds",
+      icon: Repeat,
+      getText: () => buildSolutionSpecLoopPrompt(entities, productLine, entity.id) ?? "",
+      getGatedText: () => buildSolutionSpecLoopPrompt(entities, productLine, entity.id),
+      requiredSettings: ["designSystem"] as SettingsFieldKey[],
+      actionName: "Run Solution Spec Loop",
+      analyticsAction: "spec-loop",
+      missingContent: getSpecLoopMissing(entities, productLine, entity.id),
+      copiedHint: "Paste it in Claude Code with edits allowed, not plan mode. It asks you for the codebase, then to approve the options, and runs the rest on its own.",
+    });
   }
 
   return actions;
@@ -167,7 +188,7 @@ export function RootAIActionsButton({ actions }: { actions: AIAction[] }) {
                 </span>
                 <span className="text-[11px] text-muted-foreground/60 leading-tight">
                   {copiedId === action.id
-                    ? "Paste it in Claude Code (or your AI tool) in plan mode to get started"
+                    ? DEFAULT_COPIED_HINT
                     : action.description}
                 </span>
               </div>
@@ -192,6 +213,10 @@ export function AIActionsMenu({ entity, entities, productLine }: AIActionsMenuPr
   const actions = getActions(entity, entities, productLine);
 
   const handleCopy = async (action: AIAction, closeMenu: () => void) => {
+    if (action.missingContent && action.missingContent.length > 0) {
+      trackEvent("AIActionBlocked", { Action: action.analyticsAction, MissingFields: action.missingContent.join(",") });
+      return;
+    }
     if (action.requiredSettings && action.requiredSettings.length > 0) {
       const copied = await runGatedAIAction({
         action: action.analyticsAction ?? "plan-implement",
@@ -199,7 +224,7 @@ export function AIActionsMenu({ entity, entities, productLine }: AIActionsMenuPr
         requiredSettings: action.requiredSettings,
         actionName: action.actionName!,
         returnEntityId: entity.id,
-        scope: "solution",
+        scope: entity.level === "opportunity" ? "opportunity" : "solution",
         buildPrompt: action.getGatedText ?? action.getText,
         openSettingsWithRedirect,
       });
@@ -247,24 +272,35 @@ export function AIActionsMenu({ entity, entities, productLine }: AIActionsMenuPr
                   e.preventDefault();
                   handleCopy(action, () => setMenuOpen(false));
                 }}
-                className="flex items-start gap-3 py-2.5 cursor-pointer"
+                className={cn(
+                  "flex items-start gap-3 py-2.5",
+                  action.missingContent?.length ? "cursor-not-allowed" : "cursor-pointer",
+                )}
               >
                 <div className="shrink-0 mt-0.5">
                   {copiedId === action.id ? (
                     <Check size={14} className="text-emerald-600 dark:text-emerald-400" />
                   ) : (
-                    <action.icon size={14} className="text-muted-foreground" />
+                    <action.icon size={14} className={action.missingContent?.length ? "text-muted-foreground/40" : "text-muted-foreground"} />
                   )}
                 </div>
                 <div className="flex flex-col gap-0.5 min-w-0">
-                  <span className={copiedId === action.id ? "text-emerald-600 dark:text-emerald-400 font-medium text-xs" : "font-medium text-xs"}>
+                  <span className={cn(
+                    "font-medium text-xs",
+                    copiedId === action.id && "text-emerald-600 dark:text-emerald-400",
+                    !!action.missingContent?.length && "text-muted-foreground",
+                  )}>
                     {copiedId === action.id ? "Prompt copied!" : action.label}
                   </span>
-                  <span className="text-[11px] text-muted-foreground/60 leading-tight">
-                    {copiedId === action.id
-                      ? "Paste it in Claude Code (or your AI tool) in plan mode to get started"
-                      : action.description}
-                  </span>
+                  {action.missingContent?.length ? (
+                    <span className="text-[11px] text-amber-600 dark:text-amber-400 leading-tight">
+                      Fill in first: {action.missingContent.join(", ")}. Use &ldquo;Refine this opportunity&rdquo; to add them.
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-muted-foreground/60 leading-tight">
+                      {copiedId === action.id ? (action.copiedHint ?? DEFAULT_COPIED_HINT) : action.description}
+                    </span>
+                  )}
                 </div>
               </DropdownMenuItem>
             </div>
