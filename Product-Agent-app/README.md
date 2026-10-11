@@ -196,6 +196,7 @@ The `ProductSkills/` folder contains AI agent skills — behavioral instructions
 | **new-product-line-setup** | Interviews you in plain language and creates the initial Business Outcome, Product Outcome, and first Opportunities — no PM terminology required |
 | **opportunity-writer** | Writes structured opportunities from unstructured input, keeping content strictly in problem space |
 | **solutions-brainstormer** | Researches an opportunity and generates 5 distinct solution approaches using first-principles thinking |
+| **solution-spec-loop** | Runs an opportunity end to end: maps the existing code, refines 5 directions into at least 2 options, then tests their usability and feasibility assumptions in up to 2 prototype rounds |
 | **assumption-tester** | Surfaces critical assumptions behind solutions and designs lightweight validation tests |
 | **prototype-builder** | Builds working prototypes from solution context |
 | **wip-briefing** | Reads your full discovery tree and generates a WIP health report per active product outcome |
