@@ -36,22 +36,27 @@ The loop follows Karpathy's autoresearch pattern:
 - **Memory in the tree.** Every goal, result and learning is written to Product Agent, so a later round, or a later run, starts from what was learned.
 - **Hard budget.** At most 2 test rounds, so at most 2 prototype iterations per option.
 
-You coordinate. Spawned agents do the thinking-heavy work. You own the run state, the frozen criteria and the decisions to keep, discard or kill.
+You coordinate. Spawned agents do the thinking-heavy work. You own the run state, the frozen criteria and the decisions to keep, discard, adapt or drop.
 
 ---
 
 # INPUT
 
-The AI action prompt carries:
+The "Run solution spec loop" AI action on an opportunity copies this prompt (sections separated by `---`):
 
 ```
 Use skill: ProductSkills/solution-spec-loop/SKILL.md
-Product Line: <name>
+
+Product Line: <name> (id: <productLineId>)
 Opportunity ID: <id>
-Codebase (from settings): <path or "not set">
+Codebase (from settings): <path | not set>
 Prototype root: Product-Agent-app/public/prototypes/<pl-slug>/<opp-slug>/
 Instructions: <design system steering line>
+
+Data: pa_get_entity("<opportunityId>")
 ```
+
+The action only copies the prompt when the opportunity has a real description, a persona (its own or an ancestor's), real content in Trigger, Current Workaround and Desired end state, a parent product outcome with a metric, and the product line has a design system. Step 2 checks the same things again.
 
 All data is read and written through the Product Agent MCP tools. Never read `store.json` directly.
 
@@ -94,7 +99,7 @@ The loop drives existing skills that normally stop at every gate for the builder
 - Gates in a sub-skill are answered by the brief or decided by the sub-skill from the tree, and the decision is returned to you. Record decisions in the Spec Loop block under "Decisions made without the builder".
 - A question nobody could answer comes back as an open question with the reading used. Record it in the Spec Loop block.
 - Spawned agents can't spawn agents of their own. Where a sub-skill needs an independent reviewer (the slicer's backbone review gate), the agent hands the material back to you and you run the review (Step 7).
-- Only the two human gates in this skill stop the run: Step 1 (codebase) and Step 6 (option review). The kill rule can add a third (Step 13).
+- Only the two human gates in this skill stop the run: Step 1 (codebase) and Step 6 (option review). The drop check can add a third (Step 13).
 
 ---
 
@@ -159,7 +164,7 @@ Present the refined options and the backup pool. Ask the builder to approve, edi
 
 Wait for the reply. Then, for each approved option, write a solution entity per the brainstormer's Phase 3 schema (`status: "explore"`, blocks Why It Works, Trade-offs, High-Level User Journey), plus a `Kill Criteria` block. Record the solution IDs and the backup pool in the Spec Loop block.
 
-From here to the end of the run, nothing stops for the builder except the kill rule (Step 13).
+From here to the end of the run, nothing stops for the builder except the drop check (Step 13).
 
 ### Step 7: Story map and baseline prototype per option
 
@@ -222,9 +227,16 @@ Spawn the **pre-mortem** agent for every value and viability test, once per test
 
 Record its output on the test as an `AI Pre-mortem` block with evidence level `ai-premortem`, plus a `Human Test Plan` block. The test stays `status: "draft"`: a human runs it. The assumption stays `explore`. Never count a pre-mortem as a pass.
 
-### Step 12: Update the journey (only if something failed)
+### Step 12: Adapt the solution (only if something failed)
 
-If any test in the round failed, spawn the option's **PM** agent with the failures and learnings. It:
+A failure is a reason to change the option, not to drop it. Run this step for every option with a failed test or a fired kill criterion.
+
+**First, the adaptation check.** For each failed critical feasibility test and each fired kill criterion, spawn the **advisor** with the adaptation-check brief: the option, the tester report and grader verdict, the codebase and as-is map. It looks for a change that gets around the blocker while the option still addresses the opportunity's pain and can move the metric: a different technical approach, another data source or service, a narrower scope, a reordered journey, or moving the blocked part out of the walking skeleton. It returns the adaptation, or `NO ADAPTATION` with every change it considered and why each fails.
+
+- If any blocker came back `NO ADAPTATION`, go to Step 13 for that option. Don't run the PM.
+- Otherwise each adaptation becomes part of the PM's change, and gets a new feasibility test (through Step 9) that tests the adapted approach in the next round. The failed test stays as it was.
+
+**Then the update.** Spawn the option's **PM** agent with the failures, the adaptations and the learnings. It:
 
 1. Changes the journey to address the failures. Prefer the simpler change: removing or merging a step beats adding one.
 2. Applies the change to the story map (`stories`) and the High-Level User Journey block. If the backbone changes, it returns the new backbone first and you run the Step 7 backbone review again before it writes stories.
@@ -239,11 +251,11 @@ Then:
 - The Prototype block lists the new version as an untested candidate. It becomes current only after the ratchet passes in the next round.
 - If a ratchet test fails in round 2, the change that broke it is discarded. The round 2 update (v3) reverts that part along with fixing the round's failures, and the Learnings block records what was tried and why it failed.
 
-### Step 13: Kill check
+### Step 13: Drop check
 
-After each round, check every option against its kill criteria. Also kill an option if a critical feasibility test fails in both rounds.
+Drop an option only when the adaptation check found no way around a blocker: every change it considered either still hits the blocker, stops addressing the opportunity's pain, can't move the metric, or turns the option into a copy of another option. A test failing twice is not on its own a reason to drop; run the adaptation check again.
 
-To kill: set the solution `status: "dropped"`, add a `Drop Reason` block, log it in the Spec Loop block.
+To drop: set the solution `status: "dropped"`, add a `Drop Reason` block listing the blocker and the adaptations considered, and log it in the Spec Loop block.
 
 If fewer than 2 options remain, **stop and ask the builder** (third human gate): offer the backup pool. A replacement enters at Step 7 with its own 2-round budget.
 

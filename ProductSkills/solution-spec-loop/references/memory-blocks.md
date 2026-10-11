@@ -70,7 +70,7 @@ Written once, at Step 15.
 Written at Step 6 from the advisor's output. Never edited afterwards.
 
 ```markdown
-Drop this option if any of these happens:
+Drop this option if any of these happens and no adaptation gets around it:
 - <observable result>
 - <observable result>
 ```
@@ -120,11 +120,14 @@ The served URL is the path after `public/` under `http://localhost:3000/`.
 
 ### `Drop Reason`
 
-Added only when the loop kills the option (Step 13).
+Added only when the loop drops the option (Step 13), after the adaptation check found no way around a blocker.
 
 ```markdown
-**Dropped in round <r>.** <Which kill criterion fired, or which feasibility test failed twice.>
+**Dropped in round <r>.** <The blocker: which feasibility test failed or which kill criterion fired.>
 Evidence: <test title(s)>.
+
+**Adaptations considered**
+- <change> - <why it doesn't get around the blocker, or what it would cost the option>
 ```
 
 ---

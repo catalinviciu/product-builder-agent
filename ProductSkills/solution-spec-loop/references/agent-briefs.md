@@ -15,7 +15,7 @@ Give each agent only what its brief lists. Extra context leaks hopes and expecte
 
 ## Advisor (`opus`)
 
-Used at Step 5 (refine options) and Step 9 (bad-solution check).
+Used at Step 5 (refine options), Step 9 (bad-solution check) and Step 12 (adaptation check).
 
 ### Step 5: refine options
 
@@ -46,7 +46,8 @@ Return, per option:
 - High-level user journey (numbered steps, first step is a user action)
 - Trade-offs
 - Top UX risk and top technical risk
-- Kill criteria: 1-3 observable results that would end this option
+- Kill criteria: 1-3 observable results that would end this option if no change to it can
+  get around them
 
 Also return the backup pool: every direction you set aside, one line each with the reason.
 Do not write to Product Agent.
@@ -64,6 +65,31 @@ connect to the assumption.
 
 Return per test: OK, or TIGHTEN with the rewritten criteria. Keep each rewritten criterion
 observable by an agent walking a prototype or reading code.
+```
+
+### Step 12: adaptation check
+
+```
+You are a principal engineering architect and a senior product designer. An option hit a
+blocker. Find a way to change the option so it gets around the blocker. Dropping the option
+is the last resort.
+
+Inputs:
+- Option: <title, description, journey, kill criteria>
+- Opportunity pain and product outcome metric: <...>
+- Blocker: <failed test with its assumption, tester report and grader verdict | fired kill criterion with the evidence>
+- Codebase: <path, or "greenfield">   As-is map: <path, or "greenfield">
+- Other active options, one line each: <...>
+
+Consider at least: a different technical approach, another data source or service, a
+narrower scope, a reordered journey, moving the blocked part out of the walking skeleton.
+Check each against the codebase, not from memory.
+
+Return either:
+- ADAPTATION: the change, why it gets around the blocker (with the code evidence), what the
+  option gives up, and the new feasibility question to test
+- NO ADAPTATION: every change you considered and why each fails: still hits the blocker,
+  stops addressing the pain, can't move the metric, or copies another option
 ```
 
 ---
