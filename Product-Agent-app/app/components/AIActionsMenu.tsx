@@ -14,7 +14,7 @@ import { cn, buildEntityAnchor, buildOpportunityWriterPrompt, buildSolutionPlann
 import type { SettingsFieldKey } from "@/app/lib/settings-redirect";
 import { useAppStore } from "@/app/lib/store";
 import { runGatedAIAction } from "@/app/lib/ai-action-gate";
-import { getSpecLoopMissing } from "@/app/lib/opportunity-readiness";
+import { getSpecLoopMissing, getSolutionSpecLoopMissing } from "@/app/lib/opportunity-readiness";
 import { trackEvent } from "@/app/lib/analytics";
 
 export interface AIAction {
@@ -29,6 +29,8 @@ export interface AIAction {
   analyticsAction?: "plan-implement" | "prototype" | "spec-loop";
   /** Entity content the action needs but doesn't have yet. Non-empty blocks the copy. */
   missingContent?: string[];
+  /** How to fill in what's missing; defaults to pointing at "Refine this opportunity". */
+  missingHint?: string;
   /** Shown after the copy instead of the default paste hint. */
   copiedHint?: string;
 }
@@ -70,6 +72,20 @@ function getActions(entity: Entity, entities: EntityStore, productLine: ProductL
 
   // Solution also gets planning prompt and assumption tester
   if (entity.level === "solution") {
+    actions.push({
+      id: "solution-spec-loop",
+      label: "Run solution spec loop",
+      description: "Design-review this solution's prototype or test its usability and feasibility assumptions, evolving it in up to 2 rounds",
+      icon: Repeat,
+      getText: () => buildSolutionSpecLoopPrompt(entities, productLine, entity.id) ?? "",
+      getGatedText: () => buildSolutionSpecLoopPrompt(entities, productLine, entity.id),
+      requiredSettings: ["designSystem"] as SettingsFieldKey[],
+      actionName: "Run Solution Spec Loop",
+      analyticsAction: "spec-loop",
+      missingContent: getSolutionSpecLoopMissing(entities, productLine, entity.id),
+      missingHint: "Fill in the opportunity with \u201cRefine this opportunity\u201d and this solution\u2019s High-Level User Journey.",
+      copiedHint: "Paste it in your AI agent with edits allowed, not plan mode. It asks about the codebase and whether to start with a design review or the test loop, then runs on its own.",
+    });
     actions.push({
       id: "copy-planning",
       label: "Plan & implement this solution",
@@ -294,7 +310,7 @@ export function AIActionsMenu({ entity, entities, productLine }: AIActionsMenuPr
                   </span>
                   {action.missingContent?.length ? (
                     <span className="text-[11px] text-amber-600 dark:text-amber-400 leading-tight">
-                      Fill in first: {action.missingContent.join(", ")}. Use &ldquo;Refine this opportunity&rdquo; to add them.
+                      Fill in first: {action.missingContent.join(", ")}. {action.missingHint ?? "Use \u201cRefine this opportunity\u201d to add them."}
                     </span>
                   ) : (
                     <span className="text-[11px] text-muted-foreground/60 leading-tight">

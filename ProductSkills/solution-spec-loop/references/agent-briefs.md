@@ -246,6 +246,74 @@ Return: the spec changes list, mapped to each piece of feedback, the backbone as
 diagram, the stories by slice, and every decision and open question.
 ```
 
+### Design critique: designer replies
+
+```
+A design critic reviewed prototype v<n>. Its findings: <numbered findings>
+<On a second exchange: its replies to your last answers: <...>>
+
+For each finding answer one of:
+- ACCEPT
+- COUNTER: a different fix, and why it serves the persona better
+- REJECT: why, grounded in the DESIGN.md, the journey, the persona, or faithfulness to the
+  existing starting screen. "I prefer it" is not a reason.
+
+Don't change any file yet. I'll send you the agreed list.
+```
+
+Then, with the agreed list:
+
+```
+Apply these agreed changes to <path to v<n>.html> in place (it hasn't been tested yet):
+<agreed changes>
+If a change alters the flow, also update the High-Level User Journey block and the stories.
+If the backbone changes, return the new backbone table, axis ledger and build step 7 before
+writing stories. Return what you changed.
+```
+
+---
+
+## Design critic (strongest model)
+
+Used after every prototype version (Steps 7c, 12, F4).
+
+```
+You are a senior product designer reviewing a prototype before it goes to usability testing.
+Challenge it on UI and on UX. Be specific and useful: every finding comes with a fix.
+
+Inputs:
+- Design system (the authority on UI): <DESIGN.md path or content>
+- Prototype: <absolute path to v<n>.html>
+- Starting screen it must replicate: <name, route, component files>
+- Persona: <name and description>
+- Journey and the stories this version implements: <...>
+- Earlier design reviews for this option (don't raise settled points again): <... | none>
+
+Look at it as a user would: run
+  node ProductSkills/solution-spec-loop/scripts/walkthrough.mjs run --file <path> --actions <file> --out <dir>
+with [] to see the first screen, then add actions to reach each state. Open the screenshots.
+You may also read the HTML source.
+
+Check:
+- UI: tokens, type, spacing, components and states used as the DESIGN.md defines them;
+  visual hierarchy; consistency with the starting screen's existing design.
+- UX: can the persona see what to do next at every step; labels and wording; feedback after
+  each action; empty, loading and error states; the number of steps; accessibility basics
+  (contrast, focus order, target size).
+
+Return numbered findings. For each: UI or UX; severity (must fix / should fix / consider);
+where (screen and element); the problem; the DESIGN.md section or UX principle behind it;
+the proposed change. Then one line on what works well and must be kept.
+```
+
+When the designer has answered:
+
+```
+The designer answered your findings: <answers>
+For each COUNTER or REJECT, reply AGREE, or HOLD with the reason. Don't add new findings
+unless the designer's counter creates a new problem.
+```
+
 ---
 
 ## Assumption mapper (strongest model)

@@ -270,22 +270,30 @@ export function buildSolutionSpecLoopPrompt(
   entityId: string,
 ): string | null {
   const entity = store[entityId];
-  if (!entity || entity.level !== "opportunity") return null;
+  if (!entity || (entity.level !== "opportunity" && entity.level !== "solution")) return null;
+
+  // Started from a solution: the loop runs on that solution under its opportunity
+  const opportunity = entity.level === "solution" ? (entity.parentId ? store[entity.parentId] : undefined) : entity;
+  if (!opportunity || opportunity.level !== "opportunity") return null;
 
   const plSlug = slugify(productLine.name);
-  const oppSlug = slugify(entity.title, { maxWords: 5 });
+  const oppSlug = slugify(opportunity.title, { maxWords: 5 });
   if (!plSlug || !oppSlug) return null;
 
   const settings = productLine.settings;
   const sections: string[] = [];
   sections.push(`Use skill: ProductSkills/solution-spec-loop/SKILL.md`);
-  sections.push([
+  const lines = [
     `Product Line: ${productLine.name} (id: ${productLine.id})`,
-    `Opportunity ID: ${entity.id}`,
+    `Opportunity ID: ${opportunity.id}`,
+  ];
+  if (entity.level === "solution") lines.push(`Solution IDs: ${entity.id}`);
+  lines.push(
     `Codebase (from settings): ${settings.codebasePath || "not set"}`,
     `Prototype root: Product-Agent-app/public/prototypes/${plSlug}/${oppSlug}/`,
     `Instructions: ${designSystemInstruction(settings.designSystem)}`,
-  ].join("\n"));
+  );
+  sections.push(lines.join("\n"));
   sections.push(`Data: pa_get_entity("${entity.id}")`);
 
   return sections.join("\n\n---\n\n");
