@@ -137,7 +137,7 @@ function getActions(entity: Entity, entities: EntityStore, productLine: ProductL
       actionName: "Run Solution Spec Loop",
       analyticsAction: "spec-loop",
       missingContent: getSpecLoopMissing(entities, productLine, entity.id),
-      copiedHint: "Paste it in your AI agent with edits allowed, not plan mode. It asks you for the codebase, then to approve the options, and runs the rest on its own.",
+      copiedHint: "Paste it in your AI agent with edits allowed, not plan mode. It asks you about the codebase, the options and the story maps, and runs the rest on its own. Run it again later for a follow-up run.",
     });
   }
 

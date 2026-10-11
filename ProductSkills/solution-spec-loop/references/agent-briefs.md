@@ -29,6 +29,7 @@ Inputs:
 - Opportunity (description, Trigger, Current Workaround, Desired end state, other blocks): <...>
 - Persona: <name and description>
 - As-is story map: <path, or "greenfield">
+- Starting screen: <name, route, component files | "greenfield">
 - 5 brainstormed directions: <...>
 - Existing and dropped solutions under this opportunity, with drop reasons: <...>
 
@@ -43,7 +44,8 @@ Task:
 Return, per option:
 - Title (<=120 chars) and description (<=800 chars)
 - Why it moves the metric (one paragraph, tied to the opportunity's pain)
-- High-level user journey (numbered steps, first step is a user action)
+- High-level user journey (numbered steps, first step is a user action on the starting
+  screen; for greenfield, name the new screen the journey starts on)
 - Trade-offs
 - Top UX risk and top technical risk
 - Kill criteria: 1-3 observable results that would end this option if no change to it can
@@ -96,15 +98,15 @@ Return either:
 
 ## PM (strongest model)
 
-Used at Step 7 (baseline) and Step 12 (update).
+Used at Step 7a (story map), Step 7b (feedback), Step 7c (baseline prototype), Step 12 (update) and Step F3 (follow-up run).
 
-### Step 7: baseline (two parts)
+### Step 7a: story map
 
 Part 1, the first message:
 
 ```
-You are the PM for one solution option. Build its to-be story map, then a baseline prototype.
-Both skills you use have a SPEC-LOOP MODE section. Follow it.
+You are the PM for one solution option. Build its to-be story map; later, a baseline
+prototype. Both skills you use have a SPEC-LOOP MODE section. Follow it.
 
 Inputs:
 - Solution entity ID: <solutionId> (read it with pa_get_entity)
@@ -112,6 +114,7 @@ Inputs:
 - Flow type: <full journey | platform-only>
 - As-is story map: <path, or "greenfield">
 - Codebase: <path, or "greenfield">
+- Starting screen: <name, route, component files | the new screen approved at option review>
 - Prototype output: <Prototype root><solution-slug>/
 - Design system: <Instructions line from the prompt>
 
@@ -147,16 +150,46 @@ Part 2, continuing the PM:
 ```
 Backbone review: PASS.
 
-Part 2 now:
-1. Finish the slicer (Phases 4-7). Write the stories with pa_update_entity. Never set done
-   or doneAt.
-2. Follow ProductSkills/prototype-builder/SKILL.md for the walking skeleton stories only.
-   Filename: v1.html. The file contains only what a participant sees.
-3. Add or update the solution's Prototype block:
-   **[Current: v1](<served-url>/v1.html)** - baseline walking skeleton, not yet tested.
+Part 2 now: finish the slicer (Phases 4-7). Write the stories with pa_update_entity. Never
+set done or doneAt. Don't build the prototype yet: the builder reviews the story map first.
 
-Return: story count per slice, the walking skeleton story IDs, the slice outcomes, the
-prototype path, what the prototype left out, and every decision and open question.
+Return: the backbone as a Mermaid diagram, the stories by slice with the walking skeleton
+marked, the slice outcomes, and every decision and open question.
+```
+
+### Step 7b: builder feedback
+
+```
+The builder reviewed your story map. Feedback: <reply, verbatim>
+The stories as they are now in the tree may include the builder's own edits: re-read them
+with pa_get_entity before changing anything, and keep those edits.
+
+Apply the feedback to the stories and the High-Level User Journey block. If the backbone
+changes, return the new backbone table, axis ledger and build step 7 before writing stories;
+I'll run the backbone review and continue you.
+
+Return: what you changed, mapped to each piece of feedback, and anything you didn't change
+and why.
+```
+
+### Step 7c: baseline prototype
+
+```
+Build the baseline prototype. Follow ProductSkills/prototype-builder/SKILL.md for the walking
+skeleton stories only. Filename: v1.html. The file contains only what a participant sees.
+
+Starting screen: <name> at <route>, rendered by <component files>.
+The prototype opens on this screen. Read those files and replicate the screen faithfully
+(existing-screen mode), then add the new feature. Don't choose or invent another starting
+screen. If the walking skeleton can't start there, stop and return why.
+<For greenfield: "Starting screen: <the new screen approved at option review>. Build it as a
+new screen from the design system.">
+
+Add or update the solution's Prototype block:
+**[Current: v1](<served-url>/v1.html)** - baseline walking skeleton, not yet tested.
+
+Return: the prototype path, the component files you replicated for the starting screen,
+the screens built, and what the prototype left out.
 ```
 
 ### Step 12: update after a round
@@ -178,11 +211,31 @@ Rules:
 - Update the High-Level User Journey block and the stories (re-slice only the touched steps).
   If the backbone changes, return the new backbone table, axis ledger and build step 7 before
   writing stories; I'll run the backbone review and continue you.
-- Copy v{r}.html to v{r+1}.html, then change v{r+1}.html. Never edit v{r}.html.
+- Copy v{r}.html to v{r+1}.html, then change v{r+1}.html. Never edit v{r}.html. The
+  prototype keeps opening on the same starting screen.
 - Don't update the Prototype block. The orchestrator does that after the ratchet.
 
 Return: a numbered list of changes, each naming the failed test it addresses, and the new
 prototype path.
+```
+
+### Step F3: follow-up run
+
+```
+You are the PM for one solution option, starting run <n>. Earlier runs are recorded in the
+tree: read the solution with pa_get_entity, including its Learnings and Iteration Log blocks
+and its stories as they are now (the builder may have edited them; keep those edits).
+
+Builder feedback for this run: <reply, verbatim>
+Untested since the last run: <list from the scorecard>
+
+Apply the feedback and the untested changes to the High-Level User Journey block and the
+stories. Prefer the simpler change. If the backbone changes, return the new backbone table,
+axis ledger and build step 7 before writing stories; I'll run the backbone review and
+continue you.
+
+Return: what you changed, mapped to each piece of feedback, the backbone as a Mermaid
+diagram, the stories by slice, and every decision and open question.
 ```
 
 ---

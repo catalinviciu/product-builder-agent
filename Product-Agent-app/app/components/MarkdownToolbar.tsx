@@ -7,6 +7,27 @@ import {
   Bold, Italic, Link, List, ListOrdered, Eye, EyeOff,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
+import { useAppStore } from "@/app/lib/store";
+
+/** Internal link to an entity in the current product line: [Title](#entity/<id>). */
+const ENTITY_LINK_PREFIX = "#entity/";
+
+function EntityLink({ entityId, children }: { entityId: string; children: React.ReactNode }) {
+  const navigateTo = useAppStore((s) => s.navigateTo);
+  const exists = useAppStore((s) => !!s.productLines[s.currentProductLineId]?.entities[entityId]);
+  if (!exists) return <span title="This item no longer exists">{children}</span>;
+  return (
+    <a
+      href={`${ENTITY_LINK_PREFIX}${entityId}`}
+      onClick={(e) => {
+        e.preventDefault();
+        navigateTo(entityId);
+      }}
+    >
+      {children}
+    </a>
+  );
+}
 
 export function MarkdownBlock({ content }: { content: string }) {
   if (!content) return null;
@@ -31,6 +52,9 @@ export function MarkdownBlock({ content }: { content: string }) {
         remarkPlugins={[remarkGfm]}
         components={{
           a: ({ href, children }) => {
+            if (href?.startsWith(ENTITY_LINK_PREFIX)) {
+              return <EntityLink entityId={href.slice(ENTITY_LINK_PREFIX.length)}>{children}</EntityLink>;
+            }
             const isExternal = href && /^(https?|file):\/\//.test(href);
             return <a href={href} {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{children}</a>;
           }

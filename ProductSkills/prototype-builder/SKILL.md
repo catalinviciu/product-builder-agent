@@ -34,6 +34,7 @@ You use the app's exact design system so the prototype feels real to the person 
 Applies only when the prompt or brief says `Mode: spec-loop`, meaning the `solution-spec-loop` skill is driving you, usually as its PM agent. Otherwise skip this section.
 
 - **Phase 0:** as normal. `Output`, `Codebase` and the design-system line come from the brief.
+- **Starting screen:** the brief names the screen the prototype opens on, with its route and the component files that render it. Treat it as an existing screen (Phase 0 Step 4): read those files and replicate that screen faithfully, then add the feature. Never choose, guess or invent a different starting screen. If no starting screen is named and a codebase exists, stop and return that. If the brief says greenfield, build the new screen it names from the design system. Return the files you replicated.
 - **Scope:** the brief names what to prototype, usually the walking skeleton stories. If that needs more than 3 screens, build only the screens on the walking skeleton path and list what you left out. This replaces the push-back in strict rule 7.
 - **Phase 1:** write the design plan, but don't stop. Include it in your return.
 - **Phase 2:** the filename comes from the brief (`v1.html`, `v2.html`, ...), not from the entity title. For a new version, copy the previous version and change the copy. Never overwrite an existing file, approval or not. Don't stop after building.

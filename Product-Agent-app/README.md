@@ -225,26 +225,30 @@ These skills are invoked through the AI Actions menu in the UI — you don't nee
 
 ## Solution Spec Loop
 
-Run **Run solution spec loop** from an opportunity's AI Actions menu and paste the prompt into an AI agent that can run subagents with a choice of model per subagent, such as Claude Code or Kiro. Paste it outside plan mode: after two questions, the loop runs on its own. The AI takes the opportunity from 5 brainstormed directions to at least 2 tested solution options, and records every goal, result and learning in the discovery tree. It works like Karpathy's [autoresearch](https://github.com/karpathy/autoresearch): pass/fail criteria are frozen before a test runs, tests run one at a time, and a change to a solution only stays if the tests it already passed still pass.
+Run **Run solution spec loop** from an opportunity's AI Actions menu and paste the prompt into an AI agent that can run subagents with a choice of model per subagent, such as Claude Code or Kiro. Paste it outside plan mode: it stops only at its review points and runs the rest on its own. The AI takes the opportunity from 5 brainstormed directions to at least 2 tested solution options, and records every goal, result and learning in the discovery tree. It works like Karpathy's [autoresearch](https://github.com/karpathy/autoresearch): pass/fail criteria are frozen before a test runs, tests run one at a time, and a change to a solution only stays if the tests it already passed still pass.
 
 The diagram shows:
 
-- **Before the loop:** map the existing code, brainstorm 5 directions, the advisor refines them into at least 2 options plus a backup pool, then a story map and v1 prototype per option, then assumptions and frozen pass/fail criteria.
-- **Where it waits for you (in yellow):** choosing the codebase and approving the options.
+- **Before the loop:** map the existing code and record the screen the workflow starts on, brainstorm 5 directions, the advisor refines them into at least 2 options plus a backup pool, then a story map per option.
+- **Where it waits for you (in yellow):** choosing the codebase, approving the options, and reviewing the story maps before any prototype is built.
+- **Prototypes:** v1 of each option starts on the real starting screen from the codebase, rebuilt from its source files. No agent picks its own starting screen.
 - **The test loop, capped at 2 rounds:** one test at a time, grade, record, and if anything failed, try to adapt the option before building the next prototype version. Round 2 also re-tests what passed in round 1.
 - **Dropping an option:** only when it can't be adapted. The loop asks you if fewer than 2 options remain.
 - **Value and viability:** go to an AI pre-mortem and a test plan for humans.
-- **The end:** everything ends in the scorecard on the opportunity.
+- **The end:** a scorecard on the opportunity. Tests, assumptions and options show as links you can click, never as IDs.
+- **Follow-up runs:** give feedback, edit the story maps if you like, and run the action again. The next run starts from your feedback and everything learned so far, with a fresh 2-round budget.
 
 ```mermaid
 flowchart TD
     A["Run solution spec loop<br/>on a filled-in opportunity"] --> B[/"You: which codebase?"/]
-    B --> C["Map the existing code<br/>into an as-is story map"]
+    B --> C["Map the existing code<br/>and record the starting screen"]
     C --> D["Brainstorm 5 directions"]
     D --> E["Advisor refines them into<br/>2+ options and a backup pool"]
     E --> F[/"You: approve the options"/]
-    F --> G["Per option: to-be story map<br/>and v1 prototype of the walking skeleton"]
-    G --> H["Map critical assumptions:<br/>value, viability, usability, feasibility"]
+    F --> G["Per option: to-be story map"]
+    G --> SM[/"You: review the story maps"/]
+    SM --> G2["Per option: v1 prototype of the walking skeleton,<br/>starting on the real starting screen"]
+    G2 --> H["Map critical assumptions:<br/>value, viability, usability, feasibility"]
     H --> I["Freeze the pass/fail criteria"]
     I --> V["Value and viability:<br/>AI pre-mortem and a test plan for humans"]
     I --> J
@@ -266,9 +270,11 @@ flowchart TD
     Q -- yes --> S
     R --> S
     V --> S
+    S -.-> FB[/"You: feedback for a follow-up run"/]
+    FB -. "apply feedback to the story maps,<br/>fresh 2-round budget" .-> SM
 
     classDef human fill:#fde68a,stroke:#b45309,color:#1f2937
-    class B,F human
+    class B,F,SM,FB human
 ```
 
 The yellow steps are the only places the loop waits for you. Everything else runs on its own, and the scorecard lists what humans still need to test with real customers. Details: [`ProductSkills/solution-spec-loop/SKILL.md`](../ProductSkills/solution-spec-loop/SKILL.md).
